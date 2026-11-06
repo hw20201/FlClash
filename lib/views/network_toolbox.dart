@@ -5,6 +5,8 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+enum _Diagnostic { all, dns, tcp, https }
+
 /// Independent diagnostics inspired by a network toolbox; DNS and TCP use the
 /// platform network, while the HTTP probe uses the application's core.
 class NetworkToolboxView extends ConsumerStatefulWidget {
@@ -17,8 +19,9 @@ class NetworkToolboxView extends ConsumerStatefulWidget {
 class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
   final _host = TextEditingController();
   final _port = TextEditingController(text: '443');
-  String? _dns, _tcp, _route;
+  String? _dns, _tcp, _route, _error;
   bool _running = false;
+  _Diagnostic _selected = _Diagnostic.all;
 
   bool get _zh => Localizations.localeOf(context).languageCode == 'zh';
   String t(String zh, String en) => _zh ? zh : en;
@@ -33,71 +36,86 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
   Future<void> _run() async {
     final host = _host.text.trim();
     final port = int.tryParse(_port.text.trim());
+    final needsPort = _selected != _Diagnostic.dns;
     if (!validDiagnosticHost(host) ||
-        port == null ||
-        port < 1 ||
-        port > 65535) {
+        (needsPort && (port == null || port < 1 || port > 65535))) {
       setState(
-        () => _route = t(
-          '请输入域名或 IP，以及 1–65535 的端口。',
-          'Enter a hostname or IP and a port from 1 to 65535.',
+        () => _error = t(
+          needsPort ? '请输入域名或 IP，以及 1–65535 的端口。' : '请输入域名或 IP。',
+          needsPort
+              ? 'Enter a hostname or IP and a port from 1 to 65535.'
+              : 'Enter a hostname or IP.',
         ),
       );
       return;
     }
     setState(() {
       _running = true;
-      _dns = _tcp = _route = null;
+      _dns = _tcp = _route = _error = null;
     });
     const timeout = Duration(seconds: 8);
     final isChinese = _zh;
     String label(String zh, String en) => isChinese ? zh : en;
-    final dns = () async {
-      try {
-        final addresses = await systemDnsLookup(host, timeout);
-        return addresses.join('\n');
-      } catch (e) {
-        return label('系统 DNS 查询失败：$e', 'System DNS lookup failed: $e');
-      }
-    }();
-    final tcp = () async {
-      try {
-        final elapsed = await tcpConnectLatency(host, port, timeout);
-        return label(
-          '连接成功：${elapsed.inMilliseconds} ms',
-          'Connected: ${elapsed.inMilliseconds} ms',
-        );
-      } catch (e) {
-        return label('连接失败：$e', 'Connection failed: $e');
-      }
-    }();
-    final route = () async {
-      // The core probe captures the rule of the final HTTP request, including
-      // redirects. It is an actual request, not a simulated rule-only match.
-      final target = Uri(scheme: 'https', host: host, port: port).toString();
-      try {
-        final result = await ref
-            .read(coreHandlerProvider)
-            .probe(ProbeParams(url: target, timeout: 8000));
-        if (result == null) return label('核心未返回结果。', 'No result from core.');
-        if (result.error != null) {
-          return label(
-            '探测失败：${result.message ?? result.error}',
-            'Probe failed: ${result.message ?? result.error}',
-          );
-        }
-        final rule = result.rule.isEmpty ? '—' : result.rule;
-        final payload = result.rulePayload.isEmpty
-            ? ''
-            : ' (${result.rulePayload})';
-        final chain = result.chains.isEmpty ? '—' : result.chains.join(' → ');
-        return '${result.url}\nHTTP ${result.statusCode} · ${result.delay} ms\n'
-            '${label('规则', 'Rule')}: $rule$payload\n${label('代理链', 'Proxy chain')}: $chain';
-      } catch (e) {
-        return label('核心探测失败：$e', 'Core probe failed: $e');
-      }
-    }();
-    final answers = await Future.wait([dns, tcp, route]);
+    final dns = _selected == _Diagnostic.all || _selected == _Diagnostic.dns
+        ? () async {
+            try {
+              final addresses = await systemDnsLookup(host, timeout);
+              return addresses.join('\n');
+            } catch (e) {
+              return label('系统 DNS 查询失败：$e', 'System DNS lookup failed: $e');
+            }
+          }()
+        : Future<String?>.value(null);
+    final tcp = _selected == _Diagnostic.all || _selected == _Diagnostic.tcp
+        ? () async {
+            try {
+              final elapsed = await tcpConnectLatency(host, port!, timeout);
+              return label(
+                '连接成功：${elapsed.inMilliseconds} ms',
+                'Connected: ${elapsed.inMilliseconds} ms',
+              );
+            } catch (e) {
+              return label('连接失败：$e', 'Connection failed: $e');
+            }
+          }()
+        : Future<String?>.value(null);
+    final route = _selected == _Diagnostic.all || _selected == _Diagnostic.https
+        ? () async {
+            // The core probe captures the rule of the final HTTP request, including
+            // redirects. It is an actual request, not a simulated rule-only match.
+            final target = Uri(
+              scheme: 'https',
+              host: host,
+              port: port!,
+            ).toString();
+            try {
+              final result = await ref
+                  .read(coreHandlerProvider)
+                  .probe(ProbeParams(url: target, timeout: 8000));
+              if (result == null) {
+                return label('核心未返回结果。', 'No result from core.');
+              }
+              if (result.error != null) {
+                return label(
+                  '探测失败：${result.message ?? result.error}',
+                  'Probe failed: ${result.message ?? result.error}',
+                );
+              }
+              final rule = result.rule.isEmpty ? '—' : result.rule;
+              final payload = result.rulePayload.isEmpty
+                  ? ''
+                  : ' (${result.rulePayload})';
+              final chain = result.chains.isEmpty
+                  ? '—'
+                  : result.chains.join(' → ');
+              return '${result.url}\nHTTP ${result.statusCode} · ${result.delay} ms\n'
+                  '${label('规则', 'Rule')}: $rule$payload\n${label('代理链', 'Proxy chain')}: $chain';
+            } catch (e) {
+              return label('核心探测失败：$e', 'Core probe failed: $e');
+            }
+          }()
+        : Future<String?>.value(null);
+    final answers = await Future.wait<String?>([dns, tcp, route]);
     if (!mounted) return;
     setState(() {
       _dns = answers[0];
@@ -126,6 +144,29 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             ),
           ),
           const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final choice in _Diagnostic.values)
+                ChoiceChip(
+                  label: Text(switch (choice) {
+                    _Diagnostic.all => t('全部检测', 'All checks'),
+                    _Diagnostic.dns => t('DNS 查询', 'DNS lookup'),
+                    _Diagnostic.tcp => t('TCP 延迟', 'TCP latency'),
+                    _Diagnostic.https => t('HTTPS 分流', 'HTTPS routing'),
+                  }),
+                  selected: _selected == choice,
+                  onSelected: _running
+                      ? null
+                      : (_) => setState(() {
+                          _selected = choice;
+                          _dns = _tcp = _route = _error = null;
+                        }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _host,
             decoration: InputDecoration(
@@ -133,11 +174,12 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _port,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: t('端口', 'Port')),
-          ),
+          if (_selected != _Diagnostic.dns)
+            TextField(
+              controller: _port,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: t('端口', 'Port')),
+            ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _running ? null : _run,
@@ -145,6 +187,13 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
               _running ? t('检测中…', 'Checking…') : t('开始检测', 'Run checks'),
             ),
           ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ],
           if (_dns != null) ...[
             const SizedBox(height: 20),
             Text(

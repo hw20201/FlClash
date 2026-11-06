@@ -10,6 +10,8 @@ import 'package:fl_clash/models/models.dart';
 import 'package:material_ui/material_ui.dart';
 
 const appName = 'FlClash';
+// UI branding is separate from legacy paths, protocol names and config defaults.
+String get displayAppName => Platform.isAndroid ? 'FlowCat' : appName;
 const appHelperService = 'FlClashHelperService';
 const coreManifestName = 'manifest.json';
 const browserUa =

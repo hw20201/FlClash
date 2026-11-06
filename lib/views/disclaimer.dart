@@ -130,7 +130,12 @@ class DisclaimerView extends StatelessWidget {
 
   List<Widget> _buildTerms(AppLocalizations appLocalizations) {
     return [
-      _DisclaimerIntro(text: appLocalizations.disclaimerDesc),
+      _DisclaimerIntro(
+        text: appLocalizations.disclaimerDesc.replaceAll(
+          'FlClash',
+          displayAppName,
+        ),
+      ),
       for (final (index, term) in _terms(appLocalizations).indexed)
         _DisclaimerTerm(
           index: index + 1,

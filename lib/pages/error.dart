@@ -34,7 +34,7 @@ class InitErrorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: appName,
+      title: displayAppName,
       theme: _theme(Brightness.light),
       darkTheme: _theme(Brightness.dark),
       localizationsDelegates: const [
@@ -198,7 +198,10 @@ class _InitErrorScreenState extends State<InitErrorScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          appLocalizations.initFailedTip,
+                          appLocalizations.initFailedTip.replaceAll(
+                            'FlClash',
+                            displayAppName,
+                          ),
                           style: AppTextStyle.subheadline
                               .of(context)
                               .copyWith(
