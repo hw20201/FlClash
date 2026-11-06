@@ -1,5 +1,8 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'dart:typed_data';
+
+import 'package:flutter/services.dart';
 
 import 'package:fl_clash/views/network_toolbox_home.dart';
 import 'package:fl_clash/views/network_toolbox.dart';
@@ -14,6 +17,19 @@ void main() {
   testWidgets(
     'toolbox cards render on phone and navigate without network traffic',
     (tester) async {
+      // Render a legible CI preview instead of square Ahem glyphs.
+      final previewFont = File(
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+      );
+      if (previewFont.existsSync()) {
+        await tester.runAsync(() async {
+          final loader = FontLoader('Ahem')
+            ..addFont(
+              Future.value(ByteData.sublistView(previewFont.readAsBytesSync())),
+            );
+          await loader.load();
+        });
+      }
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
