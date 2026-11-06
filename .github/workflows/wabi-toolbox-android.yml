@@ -10,6 +10,7 @@ permissions:
 jobs:
   android-draft:
     runs-on: ubuntu-latest
+    environment: flowcat-signing
     timeout-minutes: 60
     steps:
       - name: Checkout toolbox branch
@@ -81,11 +82,32 @@ jobs:
           bundle=core/Clash.Meta/component/ca/ca-certificates.crt
           curl -fsSL --retry 3 -o "$bundle" https://curl.se/ca/cacert-2026-09-25.pem
           echo "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505  $bundle" | sha256sum -c -
-      - name: Build unsigned release APK
+      - name: Configure Android release signing
         env:
-          FLOWCAT_UNSIGNED_RELEASE: 'true'
+          FLOWCAT_KEYSTORE_B64: ${{ secrets.KEYSTORE }}
+          FLOWCAT_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          FLOWCAT_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          FLOWCAT_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in FLOWCAT_KEYSTORE_B64 FLOWCAT_KEY_ALIAS FLOWCAT_STORE_PASSWORD FLOWCAT_KEY_PASSWORD; do
+            if [[ -z "${!name:-}" ]]; then echo "Missing signing secret: $name" >&2; exit 1; fi
+          done
+          install -d -m 700 "$RUNNER_TEMP/flowcat-signing"
+          printf '%s' "$FLOWCAT_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks"
+          test -s "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks"
+          install -m 600 "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks" android/app/keystore.jks
+          {
+            printf 'storePassword=%s\n' "$FLOWCAT_STORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$FLOWCAT_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$FLOWCAT_KEY_PASSWORD"
+          } >> android/local.properties
+      - name: Build signed release APK
         run: flutter build apk --release --target-platform android-arm64
-      - name: Encrypt draft APK for Oracle
+      - name: Verify APK signature
+        run: apksigner verify build/app/outputs/flutter-apk/app-release.apk
+      - name: Encrypt signed draft APK for private delivery
         shell: bash
         run: |
           set -euo pipefail
@@ -118,3 +140,11 @@ jobs:
             ${{ runner.temp }}/flowcat-private-draft/tag.bin
           if-no-files-found: error
           retention-days: 3
+      - name: Remove signing material
+        if: always()
+        shell: bash
+        run: |
+          rm -f android/app/keystore.jks "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks"
+          if [[ -f android/local.properties ]]; then
+            sed -i '/^storePassword=/d;/^keyAlias=/d;/^keyPassword=/d' android/local.properties
+          fi
