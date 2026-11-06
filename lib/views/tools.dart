@@ -9,6 +9,7 @@ import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/general.dart';
 import 'package:fl_clash/views/hotkey.dart';
+import 'package:fl_clash/views/network_toolbox.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,6 +76,19 @@ class _ToolViewState extends ConsumerState<ToolsView> {
       appSettingProvider.select((state) => state.developerMode),
     );
     final items = [
+      generateSection(
+        items: [
+          ListItem.open(
+            leading: const GlyphIcon(AppGlyphs.wrench),
+            title: Text(
+              Localizations.localeOf(context).languageCode == 'zh'
+                  ? '网络工具箱'
+                  : 'Network toolbox',
+            ),
+            widget: const NetworkToolboxView(),
+          ),
+        ],
+      ),
       Consumer(
         builder: (_, ref, _) {
           final state = ref.watch(moreToolsSelectorStateProvider);
