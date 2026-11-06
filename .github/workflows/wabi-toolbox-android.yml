@@ -1,4 +1,4 @@
-name: Toolbox Android debug
+name: FlowCat private signed draft
 on:
   push:
     branches: [wabi/network-toolbox]
@@ -8,7 +8,7 @@ on:
 permissions:
   contents: read
 jobs:
-  android-debug:
+  android-draft:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -70,12 +70,40 @@ jobs:
           bundle=core/Clash.Meta/component/ca/ca-certificates.crt
           curl -fsSL --retry 3 -o "$bundle" https://curl.se/ca/cacert-2026-09-25.pem
           echo "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505  $bundle" | sha256sum -c -
-      - name: Build Android debug APK
-        run: flutter build apk --debug --target-platform android-arm64
-      - name: Save debug APK
+      - name: Build unsigned release APK
+        env:
+          FLOWCAT_UNSIGNED_RELEASE: 'true'
+        run: flutter build apk --release --target-platform android-arm64
+      - name: Encrypt draft APK for Oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=build/app/outputs/flutter-apk/app-release-unsigned.apk
+          test -s "$apk"
+          out="$RUNNER_TEMP/flowcat-private-draft"
+          install -d -m 700 "$out"
+          session_key="$(openssl rand -hex 64)"
+          enc_key="${session_key:0:64}"
+          mac_key="${session_key:64:64}"
+          iv="$(openssl rand -hex 16)"
+          printf '%s' "$session_key" | xxd -r -p > "$out/session.key"
+          printf '%s' "$iv" | xxd -r -p > "$out/iv.bin"
+          openssl enc -aes-256-cbc -nosalt -K "$enc_key" -iv "$iv" -in "$apk" -out "$out/app.apk.enc"
+          openssl pkeyutl -encrypt -pubin -inkey .github/flowcat-artifact-public.pem \
+            -in "$out/session.key" -out "$out/wrapped.key" \
+            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256
+          cat "$out/iv.bin" "$out/app.apk.enc" > "$out/authenticated.bin"
+          openssl dgst -sha256 -mac HMAC -macopt "hexkey:$mac_key" -binary "$out/authenticated.bin" > "$out/tag.bin"
+          rm -f "$out/session.key" "$out/authenticated.bin"
+          ls -l "$out"/app.apk.enc "$out"/iv.bin "$out"/wrapped.key "$out"/tag.bin
+      - name: Upload encrypted draft (no plaintext APK)
         uses: actions/upload-artifact@v4
         with:
-          name: toolbox-android-arm64-debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: flowcat-arm64-private-draft-encrypted
+          path: |
+            ${{ runner.temp }}/flowcat-private-draft/app.apk.enc
+            ${{ runner.temp }}/flowcat-private-draft/iv.bin
+            ${{ runner.temp }}/flowcat-private-draft/wrapped.key
+            ${{ runner.temp }}/flowcat-private-draft/tag.bin
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 3

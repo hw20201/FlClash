@@ -68,6 +68,8 @@ android {
             isShrinkResources = true
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
+            } else if (System.getenv("FLOWCAT_UNSIGNED_RELEASE") == "true") {
+                signingConfig = null
             } else {
                 signingConfig = signingConfigs.getByName("debug")
                 applicationIdSuffix = ".dev"
