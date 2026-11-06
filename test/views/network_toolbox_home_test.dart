@@ -35,12 +35,15 @@ void main() {
       final boundary = tester.renderObject<RenderRepaintBoundary>(
         find.byKey(const ValueKey('preview')),
       );
-      final image = await boundary.toImage(pixelRatio: 2);
-      final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      Directory('build/toolbox-preview').createSync(recursive: true);
-      File('build/toolbox-preview/toolbox-phone.png')
-          .writeAsBytesSync(data!.buffer.asUint8List());
-      image.dispose();
+      // Engine image encoding needs real asynchronous time, not the test clock.
+      await tester.runAsync(() async {
+        final image = await boundary.toImage(pixelRatio: 2);
+        final data = await image.toByteData(format: ui.ImageByteFormat.png);
+        Directory("build/toolbox-preview").createSync(recursive: true);
+        File("build/toolbox-preview/toolbox-phone.png")
+            .writeAsBytesSync(data!.buffer.asUint8List());
+        image.dispose();
+      });
       await tester.tap(find.byKey(const ValueKey('toolbox-dns')));
       await tester.pumpAndSettle();
       expect(find.byType(NetworkToolboxView), findsOneWidget);
