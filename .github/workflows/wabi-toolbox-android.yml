@@ -43,6 +43,13 @@ jobs:
           link-to-sdk: true
       - name: Install Android platform
         run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
+      - name: Install host libclang for Rust bindgen
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libclang-dev
+          library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print | sort -V | tail -n 1)
+          test -n "$library" && test -f "$library"
+          echo "LIBCLANG_PATH=$(dirname "$library")" >> "$GITHUB_ENV"
       - name: Install dependencies
         run: flutter pub get
       - name: Fetch pinned CA certificates

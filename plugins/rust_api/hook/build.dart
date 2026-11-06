@@ -23,6 +23,16 @@ Map<String, String> _bindgenEnvironment(BuildInput input) {
       input.config.code.targetOS != OS.android) {
     return const {};
   }
+  // libclang runs on the build host; many current Android NDKs no longer
+  // ship the shared library. Allow CI or a developer to provide it explicitly.
+  final configured = Platform.environment['LIBCLANG_PATH'];
+  if (configured != null && configured.isNotEmpty) {
+    final directory = Directory(configured);
+    if (directory.existsSync() && directory.listSync().any(_isLibclang)) {
+      return {'LIBCLANG_PATH': directory.path};
+    }
+    throw StateError('LIBCLANG_PATH does not contain libclang: $configured');
+  }
   final compiler = input.config.code.cCompiler?.compiler;
   if (compiler == null) {
     return const {};
