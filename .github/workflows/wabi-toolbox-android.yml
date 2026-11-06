@@ -42,7 +42,7 @@ jobs:
           ndk-version: r28c
           link-to-sdk: true
       - name: Install Android platform
-        run: sdkmanager 'platforms;android-37' 'build-tools;37.0.0'
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
       - name: Install dependencies
         run: flutter pub get
       - name: Fetch pinned CA certificates
