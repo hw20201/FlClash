@@ -45,9 +45,20 @@ jobs:
         run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
       - name: Install host libclang for Rust bindgen
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libclang-dev fonts-noto-cjk
-          library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print | sort -V | tail -n 1)
+          set -euo pipefail
+          library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print 2>/dev/null | sort -V | tail -n 1 || true)
+          missing_fonts=true
+          if command -v fc-match >/dev/null && fc-match 'Noto Sans CJK SC' | grep -q 'Noto'; then
+            missing_fonts=false
+          fi
+          if [[ -z "$library" || "$missing_fonts" == true ]]; then
+            sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+            packages=()
+            [[ -n "$library" ]] || packages+=(libclang-dev)
+            [[ "$missing_fonts" == false ]] || packages+=(fonts-noto-cjk)
+            sudo apt-get install -y "${packages[@]}"
+            library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print | sort -V | tail -n 1)
+          fi
           test -n "$library" && test -f "$library"
           echo "LIBCLANG_PATH=$(dirname "$library")" >> "$GITHUB_ENV"
       - name: Install dependencies
