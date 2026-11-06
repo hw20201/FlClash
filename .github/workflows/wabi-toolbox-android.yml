@@ -1,0 +1,52 @@
+name: Toolbox Android debug
+on:
+  push:
+    branches: [wabi/network-toolbox]
+    paths:
+      - '.github/workflows/wabi-toolbox-android.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout toolbox branch
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.6'
+          cache: false
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r28c
+          link-to-sdk: true
+      - name: Install Android platform
+        run: sdkmanager 'platforms;android-37' 'build-tools;37.0.0'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build Android debug APK
+        run: flutter build apk --debug --target-platform android-arm64
+      - name: Save debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolbox-android-arm64-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
