@@ -89,7 +89,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          apk=build/app/outputs/flutter-apk/app-release-unsigned.apk
+          apk=build/app/outputs/flutter-apk/app-release.apk
           test -s "$apk"
           out="$RUNNER_TEMP/flowcat-private-draft"
           install -d -m 700 "$out"
