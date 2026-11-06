@@ -54,6 +54,7 @@ void main() {
     await tester.pumpWidget(
       const TestApp(
         locale: Locale('en'),
+        wrapInProviderScope: true,
         child: ToolboxUtilityView(tool: ToolboxUtility.subnet),
       ),
     );
@@ -74,6 +75,7 @@ void main() {
     await tester.pumpWidget(
       TestApp(
         locale: const Locale('en'),
+        wrapInProviderScope: true,
         child: Builder(
           builder: (context) => MediaQuery(
             data: MediaQuery.of(context)
