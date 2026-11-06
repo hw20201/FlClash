@@ -96,6 +96,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - LICENSE
     - assets/data/
     - assets/fonts/
     - assets/images/

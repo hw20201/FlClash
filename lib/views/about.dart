@@ -7,6 +7,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 @immutable
@@ -86,6 +87,19 @@ class AboutView extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           generateSection(
+            items: [
+              ListItem.open(
+                leading: const GlyphIcon(AppGlyphs.gavel),
+                title: Text(
+                  Localizations.localeOf(context).languageCode == 'zh'
+                      ? '版权与 GPL-3.0 许可'
+                      : 'Copyright and GPL-3.0 license',
+                ),
+                widget: const _LegalNoticeView(),
+              ),
+            ],
+          ),
+          generateSection(
             title: appLocalizations.more,
             items: [
               _buildLinkItem(
@@ -120,6 +134,50 @@ class AboutView extends ConsumerWidget {
                   subtitle: Text(appLocalizations.appIconDesign),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Legal notices remain available without blocking startup.
+class _LegalNoticeView extends StatelessWidget {
+  const _LegalNoticeView();
+
+  @override
+  Widget build(BuildContext context) {
+    final isChinese = Localizations.localeOf(context).languageCode == 'zh';
+    return CommonScaffold(
+      title: isChinese ? '版权与许可' : 'Copyright and license',
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 16).copyWith(
+          top: context.contentTopPadding,
+          bottom: 32 + context.bottomInset,
+        ),
+        children: [
+          const SelectableText(
+            'Copyright © 2023 com.follow. All rights reserved.\n'
+            'Copyright (C) 2025 com.follow. All rights reserved.',
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isChinese
+                ? '本软件按 GNU GPL-3.0 发布，不提供任何担保。你可以按照 GPL-3.0 的条款重新分发。许可全文见下方。'
+                : 'This software is released under GNU GPL-3.0, without any warranty. You may redistribute it under the terms of GPL-3.0. The full license follows.',
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<String>(
+            future: rootBundle.loadString('LICENSE'),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Text(
+                  isChinese ? '无法读取许可文件。' : 'Could not read the license file.',
+                );
+              }
+              if (!snapshot.hasData) return const CircularProgressIndicator();
+              return SelectableText(snapshot.data!);
+            },
           ),
         ],
       ),
