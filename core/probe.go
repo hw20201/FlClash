@@ -286,7 +286,7 @@ func handleToolboxProbe(params *ToolboxProbeParams) *ToolboxProbeResult {
 	if params == nil {
 		return nil
 	}
-	r := runProbe(context.Background(), probeRequest{method: http.MethodGet, url: params.Url, timeout: timeoutFromMillis(params.Timeout, defaultProbeTimeout)})
+	r := runProbe(context.Background(), probeRequest{method: http.MethodGet, url: params.Url, timeout: timeoutFromMillis(int64(params.Timeout), defaultProbeTimeout)})
 	if r == nil {
 		return nil
 	}
