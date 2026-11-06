@@ -106,7 +106,13 @@ jobs:
       - name: Build signed release APK
         run: flutter build apk --release --target-platform android-arm64
       - name: Verify APK signature
-        run: apksigner verify build/app/outputs/flutter-apk/app-release.apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          signer="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print -quit)"
+          test -x "$signer"
+          "$signer" verify --verbose "$apk"
       - name: Encrypt signed draft APK for private delivery
         shell: bash
         run: |
