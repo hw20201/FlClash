@@ -5,10 +5,10 @@ import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-enum _Diagnostic { all, dns, tcp, https }
+enum _Diagnostic { all, dns, tcp, https, tls }
 
 /// Independent diagnostics inspired by a network toolbox; DNS and TCP use the
-/// platform network, while the HTTP probe uses the application's core.
+/// platform network, as does the TLS inspection. The HTTP probe uses the core.
 class NetworkToolboxView extends ConsumerStatefulWidget {
   const NetworkToolboxView({super.key});
 
@@ -19,7 +19,7 @@ class NetworkToolboxView extends ConsumerStatefulWidget {
 class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
   final _host = TextEditingController();
   final _port = TextEditingController(text: '443');
-  String? _dns, _tcp, _route, _error;
+  String? _dns, _tcp, _route, _tls, _error;
   bool _running = false;
   _Diagnostic _selected = _Diagnostic.all;
 
@@ -51,7 +51,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
     }
     setState(() {
       _running = true;
-      _dns = _tcp = _route = _error = null;
+      _dns = _tcp = _route = _tls = _error = null;
     });
     const timeout = Duration(seconds: 8);
     final isChinese = _zh;
@@ -115,12 +115,29 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             }
           }()
         : Future<String?>.value(null);
-    final answers = await Future.wait<String?>([dns, tcp, route]);
+    final tls = _selected == _Diagnostic.all || _selected == _Diagnostic.tls
+        ? () async {
+            try {
+              final cert = await inspectTlsCertificate(host, port!, timeout);
+              return '${label('主体', 'Subject')}: ${cert.subject}\n'
+                  '${label('颁发者', 'Issuer')}: ${cert.issuer}\n'
+                  '${label('生效时间', 'Valid from')}: ${cert.startValidity.toUtc().toIso8601String()}\n'
+                  '${label('到期时间', 'Expires')}: ${cert.endValidity.toUtc().toIso8601String()}';
+            } catch (e) {
+              return label(
+                'TLS 连接或证书验证失败：$e',
+                'TLS connection or certificate validation failed: $e',
+              );
+            }
+          }()
+        : Future<String?>.value(null);
+    final answers = await Future.wait<String?>([dns, tcp, route, tls]);
     if (!mounted) return;
     setState(() {
       _dns = answers[0];
       _tcp = answers[1];
       _route = answers[2];
+      _tls = answers[3];
       _running = false;
     });
   }
@@ -139,8 +156,8 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
         children: [
           Text(
             t(
-              '系统 DNS 和 TCP 使用设备网络；HTTPS 探测经应用内核，显示最终请求的规则。',
-              'System DNS and TCP use the device network. HTTPS uses the app core and shows the final request’s rule.',
+              '系统 DNS、TCP 和 TLS 使用设备网络；HTTPS 探测经应用内核，显示最终请求的规则。',
+              'System DNS, TCP and TLS use the device network. HTTPS uses the app core and shows the final request’s rule.',
             ),
           ),
           const SizedBox(height: 16),
@@ -155,13 +172,14 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
                     _Diagnostic.dns => t('DNS 查询', 'DNS lookup'),
                     _Diagnostic.tcp => t('TCP 延迟', 'TCP latency'),
                     _Diagnostic.https => t('HTTPS 分流', 'HTTPS routing'),
+                    _Diagnostic.tls => t('TLS 证书', 'TLS certificate'),
                   }),
                   selected: _selected == choice,
                   onSelected: _running
                       ? null
                       : (_) => setState(() {
                           _selected = choice;
-                          _dns = _tcp = _route = _error = null;
+                          _dns = _tcp = _route = _tls = _error = null;
                         }),
                 ),
             ],
@@ -209,6 +227,17 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             SelectableText(_tcp!),
+          ],
+          if (_tls != null) ...[
+            const SizedBox(height: 20),
+            Text(
+              t(
+                'TLS 证书（设备网络，时间为 UTC）',
+                'TLS certificate (device network, times in UTC)',
+              ),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            SelectableText(_tls!),
           ],
           if (_route != null) ...[
             const SizedBox(height: 20),

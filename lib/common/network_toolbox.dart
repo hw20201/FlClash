@@ -34,3 +34,22 @@ Future<Duration> tcpConnectLatency(
   socket.destroy();
   return timer.elapsed;
 }
+
+/// Inspect a server's normally validated TLS certificate on the device network.
+/// Certificate validation remains enabled: invalid or untrusted peers fail.
+Future<X509Certificate> inspectTlsCertificate(
+  String host,
+  int port,
+  Duration timeout,
+) async {
+  final socket = await SecureSocket.connect(host, port, timeout: timeout);
+  try {
+    final certificate = socket.peerCertificate;
+    if (certificate == null) {
+      throw const HandshakeException('Server did not present a certificate');
+    }
+    return certificate;
+  } finally {
+    socket.destroy();
+  }
+}
