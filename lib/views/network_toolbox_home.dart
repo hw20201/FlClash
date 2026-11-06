@@ -194,26 +194,30 @@ class NetworkToolboxHome extends StatelessWidget {
                   final pair = cards.sublist(i, end);
                   if (pair.length == 2) {
                     rows.add(
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: pair[0]),
-                          const SizedBox(width: 12),
-                          Expanded(child: pair[1]),
-                        ],
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: pair[0]),
+                            const SizedBox(width: 12),
+                            Expanded(child: pair[1]),
+                          ],
+                        ),
                       ),
                     );
                   } else {
                     rows.add(
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: pair[0]),
-                          if (columns) ...[
-                            const SizedBox(width: 12),
-                            const Expanded(child: SizedBox.shrink()),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: pair[0]),
+                            if (columns) ...[
+                              const SizedBox(width: 12),
+                              const Expanded(child: SizedBox.shrink()),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     );
                   }
