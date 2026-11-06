@@ -48,6 +48,8 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byKey(const ValueKey('toolbox-all')), findsOneWidget);
       expect(find.byKey(const ValueKey('toolbox-route')), findsOneWidget);
+      expect(find.byKey(const ValueKey('toolbox-speed')), findsOneWidget);
+      expect(find.byKey(const ValueKey('toolbox-ip')), findsOneWidget);
       final boundary = tester.renderObject<RenderRepaintBoundary>(
         find.byKey(const ValueKey('preview')),
       );
