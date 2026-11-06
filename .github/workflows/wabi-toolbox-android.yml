@@ -52,6 +52,12 @@ jobs:
           echo "LIBCLANG_PATH=$(dirname "$library")" >> "$GITHUB_ENV"
       - name: Install dependencies
         run: flutter pub get
+      - name: Test toolbox and branded launcher
+        run: |
+          cp pubspec.yaml "$RUNNER_TEMP/pubspec-toolbox.yaml"
+          trap 'cp "$RUNNER_TEMP/pubspec-toolbox.yaml" pubspec.yaml' EXIT
+          yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml
+          flutter test test/common/network_toolbox_test.dart test/android_tv_launcher_icon_test.dart test/lint/circular_progress_test.dart test/lint/typography_test.dart
       - name: Fetch pinned CA certificates
         run: |
           bundle=core/Clash.Meta/component/ca/ca-certificates.crt

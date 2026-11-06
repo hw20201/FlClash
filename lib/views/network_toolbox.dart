@@ -1,9 +1,10 @@
 import 'package:fl_clash/common/network_toolbox.dart';
-import 'package:fl_clash/models/models.dart';
+import 'package:fl_clash/core/method.dart';
+import 'package:fl_clash/ui/ui.dart';
+import 'package:flutter/widgets.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
 enum _Diagnostic { all, dns, tcp, https, tls }
 
@@ -91,25 +92,27 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             try {
               final result = await ref
                   .read(coreHandlerProvider)
-                  .probe(ProbeParams(url: target, timeout: 8000));
-              if (result == null) {
+                  .invokeMethod(
+                    method: CoreMethod.probeToolbox,
+                    arguments: {'url': target, 'timeout': 8000},
+                    timeout: const Duration(seconds: 20),
+                  );
+              if (result is! Map) {
                 return label('核心未返回结果。', 'No result from core.');
               }
-              if (result.error != null) {
+              final error = result['error'] as String? ?? '';
+              if (error.isNotEmpty) {
                 return label(
-                  '探测失败：${result.message ?? result.error}',
-                  'Probe failed: ${result.message ?? result.error}',
+                  '探测失败：${result['message'] ?? error}',
+                  'Probe failed: ${result['message'] ?? error}',
                 );
               }
-              final rule = result.rule.isEmpty ? '—' : result.rule;
-              final payload = result.rulePayload.isEmpty
-                  ? ''
-                  : ' (${result.rulePayload})';
-              final chain = result.chains.isEmpty
-                  ? '—'
-                  : result.chains.join(' → ');
-              return '${result.url}\nHTTP ${result.statusCode} · ${result.delay} ms\n'
-                  '${label('规则', 'Rule')}: $rule$payload\n${label('代理链', 'Proxy chain')}: $chain';
+              final rule = result['rule'] as String? ?? '';
+              final payload = result['rule-payload'] as String? ?? '';
+              final chains = (result['chains'] as List?)?.join(' → ') ?? '';
+              return "${result['url']}\nHTTP ${result['status-code']} · ${result['delay']} ms\n"
+                  "${label('规则', 'Rule')}: ${rule.isEmpty ? '—' : rule}${payload.isEmpty ? '' : ' ($payload)'}\n"
+                  "${label('代理链', 'Proxy chain')}: ${chains.isEmpty ? '—' : chains}";
             } catch (e) {
               return label('核心探测失败：$e', 'Core probe failed: $e');
             }
@@ -144,7 +147,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
 
   @override
   Widget build(BuildContext context) {
-    return CommonScaffold(
+    return Scaffold(
       title: t('网络工具箱', 'Network toolbox'),
       body: ListView(
         padding: EdgeInsets.only(
@@ -166,18 +169,18 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             runSpacing: 8,
             children: [
               for (final choice in _Diagnostic.values)
-                ChoiceChip(
-                  label: Text(switch (choice) {
+                Chip(
+                  label: switch (choice) {
                     _Diagnostic.all => t('全部检测', 'All checks'),
                     _Diagnostic.dns => t('DNS 查询', 'DNS lookup'),
                     _Diagnostic.tcp => t('TCP 延迟', 'TCP latency'),
                     _Diagnostic.https => t('HTTPS 分流', 'HTTPS routing'),
                     _Diagnostic.tls => t('TLS 证书', 'TLS certificate'),
-                  }),
+                  },
                   selected: _selected == choice,
-                  onSelected: _running
+                  onPressed: _running
                       ? null
-                      : (_) => setState(() {
+                      : () => setState(() {
                           _selected = choice;
                           _dns = _tcp = _route = _tls = _error = null;
                         }),
@@ -188,7 +191,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
           TextField(
             controller: _host,
             decoration: InputDecoration(
-              labelText: t('域名或 IP', 'Hostname or IP'),
+              hintText: t('域名或 IP', 'Hostname or IP'),
             ),
           ),
           const SizedBox(height: 12),
@@ -196,27 +199,22 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             TextField(
               controller: _port,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: t('端口', 'Port')),
+              decoration: InputDecoration(hintText: t('端口', 'Port')),
             ),
           const SizedBox(height: 16),
-          FilledButton(
+          TonalButton(
             onPressed: _running ? null : _run,
-            child: Text(
-              _running ? t('检测中…', 'Checking…') : t('开始检测', 'Run checks'),
-            ),
+            label: _running ? t('检测中…', 'Checking…') : t('开始检测', 'Run checks'),
           ),
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
+            Text(_error!, style: TextStyle(color: context.colorScheme.error)),
           ],
           if (_dns != null) ...[
             const SizedBox(height: 20),
             Text(
               t('系统 DNS', 'System DNS'),
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTextStyle.headline.of(context),
             ),
             SelectableText(_dns!),
           ],
@@ -224,7 +222,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             const SizedBox(height: 20),
             Text(
               t('TCP 连接延迟（非 ICMP Ping）', 'TCP connect latency (not ICMP ping)'),
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTextStyle.headline.of(context),
             ),
             SelectableText(_tcp!),
           ],
@@ -235,7 +233,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
                 'TLS 证书（设备网络，时间为 UTC）',
                 'TLS certificate (device network, times in UTC)',
               ),
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTextStyle.headline.of(context),
             ),
             SelectableText(_tls!),
           ],
@@ -243,7 +241,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             const SizedBox(height: 20),
             Text(
               t('HTTPS 实际请求与分流', 'HTTPS request and routing'),
-              style: Theme.of(context).textTheme.titleMedium,
+              style: AppTextStyle.headline.of(context),
             ),
             SelectableText(_route!),
           ],

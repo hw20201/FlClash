@@ -3,21 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
 
-String _androidAttribute(String source, String element, String attribute) {
-  final elementTag = RegExp('<$element\\b[^>]*>').firstMatch(source)!.group(0)!;
-  return RegExp(
-    'android:$attribute="([^"]+)"',
-  ).firstMatch(elementTag)!.group(1)!;
-}
-
-double _androidDoubleAttribute(
-  String source,
-  String element,
-  String attribute,
-) {
-  return double.parse(_androidAttribute(source, element, attribute));
-}
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -49,54 +34,55 @@ void main() {
     }
   });
 
-  test('TV adaptive launcher icon stays centered in the safe zone', () {
-    final adaptiveIcon = File(
-      'android/app/src/main/res/'
-      'mipmap-television-anydpi-v26/ic_launcher.xml',
-    ).readAsStringSync();
-    expect(
-      _androidAttribute(adaptiveIcon, 'foreground', 'drawable'),
-      '@drawable/ic_launcher_foreground_tv',
-    );
-    expect(
-      _androidAttribute(adaptiveIcon, 'background', 'drawable'),
-      '@color/ic_launcher_background',
-    );
+  test(
+    'TV adaptive FlowCat launcher icon stays within the safe zone',
+    () async {
+      final adaptiveIcon = File(
+        'android/app/src/main/res/mipmap-television-anydpi-v26/ic_launcher.xml',
+      ).readAsStringSync();
+      expect(adaptiveIcon, contains('@drawable/ic_launcher_foreground'));
+      expect(adaptiveIcon, contains('@color/ic_launcher_background'));
 
-    final vector = File(
-      'android/app/src/main/res/drawable/'
-      'ic_launcher_foreground_tv.xml',
-    ).readAsStringSync();
-    final scaleX = _androidDoubleAttribute(vector, 'group', 'scaleX');
-    final scaleY = _androidDoubleAttribute(vector, 'group', 'scaleY');
-    final translateX = _androidDoubleAttribute(vector, 'group', 'translateX');
-    final translateY = _androidDoubleAttribute(vector, 'group', 'translateY');
-    final viewportWidth = _androidDoubleAttribute(
-      vector,
-      'vector',
-      'viewportWidth',
-    );
-    final viewportHeight = _androidDoubleAttribute(
-      vector,
-      'vector',
-      'viewportHeight',
-    );
-
-    // Conservative bounds of the current logo, including the curved caps.
-    const logoBounds = ui.Rect.fromLTRB(54, 33, 179, 206.5);
-    final transformedBounds = ui.Rect.fromLTRB(
-      (logoBounds.left * scaleX + translateX) / viewportWidth * 108,
-      (logoBounds.top * scaleY + translateY) / viewportHeight * 108,
-      (logoBounds.right * scaleX + translateX) / viewportWidth * 108,
-      (logoBounds.bottom * scaleY + translateY) / viewportHeight * 108,
-    );
-    const safeZone = ui.Rect.fromLTWH(18, 18, 72, 72);
-
-    expect(transformedBounds.left, greaterThanOrEqualTo(safeZone.left));
-    expect(transformedBounds.top, greaterThanOrEqualTo(safeZone.top));
-    expect(transformedBounds.right, lessThanOrEqualTo(safeZone.right));
-    expect(transformedBounds.bottom, lessThanOrEqualTo(safeZone.bottom));
-    expect(transformedBounds.center.dx, closeTo(safeZone.center.dx, 0.05));
-    expect(transformedBounds.center.dy, closeTo(safeZone.center.dy, 0.05));
-  });
+      final bytes = await File(
+        'android/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png',
+      ).readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final image = (await codec.getNextFrame()).image;
+      final pixels = (await image.toByteData(
+        format: ui.ImageByteFormat.rawRgba,
+      ))!;
+      final width = image.width;
+      final height = image.height;
+      expect(width, height);
+      final r = pixels.getUint8(0);
+      final g = pixels.getUint8(1);
+      final b = pixels.getUint8(2);
+      var left = width, top = height, right = -1, bottom = -1;
+      for (var y = 0; y < height; y++) {
+        for (var x = 0; x < width; x++) {
+          final offset = (y * width + x) * 4;
+          final contrast = [
+            (pixels.getUint8(offset) - r).abs(),
+            (pixels.getUint8(offset + 1) - g).abs(),
+            (pixels.getUint8(offset + 2) - b).abs(),
+          ].reduce((a, b) => a > b ? a : b);
+          if (contrast <= 35) continue;
+          if (x < left) left = x;
+          if (y < top) top = y;
+          if (x > right) right = x;
+          if (y > bottom) bottom = y;
+        }
+      }
+      expect(right, greaterThan(left));
+      expect(bottom, greaterThan(top));
+      expect(left / width, greaterThanOrEqualTo(1 / 6));
+      expect(top / height, greaterThanOrEqualTo(1 / 6));
+      expect((right + 1) / width, lessThanOrEqualTo(5 / 6));
+      expect((bottom + 1) / height, lessThanOrEqualTo(5 / 6));
+      expect((left + right) / 2 / width, closeTo(0.5, 0.05));
+      expect((top + bottom) / 2 / height, closeTo(0.5, 0.05));
+      image.dispose();
+      codec.dispose();
+    },
+  );
 }
