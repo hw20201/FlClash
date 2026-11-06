@@ -9,7 +9,7 @@ import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/general.dart';
 import 'package:fl_clash/views/hotkey.dart';
-import 'package:fl_clash/views/network_toolbox.dart';
+import 'package:fl_clash/views/network_toolbox_home.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,7 +77,7 @@ class _ToolViewState extends ConsumerState<ToolsView> {
                   ? '网络工具箱'
                   : 'Network toolbox',
             ),
-            widget: const NetworkToolboxView(),
+            widget: const NetworkToolboxHome(),
           ),
         ],
       ),

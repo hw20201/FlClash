@@ -6,12 +6,13 @@ import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum _Diagnostic { all, dns, tcp, https, tls }
+enum ToolboxDiagnostic { all, dns, tcp, https, tls }
 
 /// Independent diagnostics inspired by a network toolbox; DNS and TCP use the
 /// platform network, as does the TLS inspection. The HTTP probe uses the core.
 class NetworkToolboxView extends ConsumerStatefulWidget {
-  const NetworkToolboxView({super.key});
+  const NetworkToolboxView({super.key, this.initial = ToolboxDiagnostic.all});
+  final ToolboxDiagnostic initial;
 
   @override
   ConsumerState<NetworkToolboxView> createState() => _NetworkToolboxViewState();
@@ -22,7 +23,13 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
   final _port = TextEditingController(text: '443');
   String? _dns, _tcp, _route, _tls, _error;
   bool _running = false;
-  _Diagnostic _selected = _Diagnostic.all;
+  ToolboxDiagnostic _selected = ToolboxDiagnostic.all;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initial;
+  }
 
   bool get _zh => Localizations.localeOf(context).languageCode == 'zh';
   String t(String zh, String en) => _zh ? zh : en;
@@ -37,7 +44,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
   Future<void> _run() async {
     final host = _host.text.trim();
     final port = int.tryParse(_port.text.trim());
-    final needsPort = _selected != _Diagnostic.dns;
+    final needsPort = _selected != ToolboxDiagnostic.dns;
     if (!validDiagnosticHost(host) ||
         (needsPort && (port == null || port < 1 || port > 65535))) {
       setState(
@@ -57,7 +64,8 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
     const timeout = Duration(seconds: 8);
     final isChinese = _zh;
     String label(String zh, String en) => isChinese ? zh : en;
-    final dns = _selected == _Diagnostic.all || _selected == _Diagnostic.dns
+    final dns =
+        _selected == ToolboxDiagnostic.all || _selected == ToolboxDiagnostic.dns
         ? () async {
             try {
               final addresses = await systemDnsLookup(host, timeout);
@@ -67,7 +75,8 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             }
           }()
         : Future<String?>.value(null);
-    final tcp = _selected == _Diagnostic.all || _selected == _Diagnostic.tcp
+    final tcp =
+        _selected == ToolboxDiagnostic.all || _selected == ToolboxDiagnostic.tcp
         ? () async {
             try {
               final elapsed = await tcpConnectLatency(host, port!, timeout);
@@ -80,7 +89,9 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             }
           }()
         : Future<String?>.value(null);
-    final route = _selected == _Diagnostic.all || _selected == _Diagnostic.https
+    final route =
+        _selected == ToolboxDiagnostic.all ||
+            _selected == ToolboxDiagnostic.https
         ? () async {
             // The core probe captures the rule of the final HTTP request, including
             // redirects. It is an actual request, not a simulated rule-only match.
@@ -118,7 +129,8 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             }
           }()
         : Future<String?>.value(null);
-    final tls = _selected == _Diagnostic.all || _selected == _Diagnostic.tls
+    final tls =
+        _selected == ToolboxDiagnostic.all || _selected == ToolboxDiagnostic.tls
         ? () async {
             try {
               final cert = await inspectTlsCertificate(host, port!, timeout);
@@ -168,14 +180,14 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final choice in _Diagnostic.values)
+              for (final choice in ToolboxDiagnostic.values)
                 Chip(
                   label: switch (choice) {
-                    _Diagnostic.all => t('全部检测', 'All checks'),
-                    _Diagnostic.dns => t('DNS 查询', 'DNS lookup'),
-                    _Diagnostic.tcp => t('TCP 延迟', 'TCP latency'),
-                    _Diagnostic.https => t('HTTPS 分流', 'HTTPS routing'),
-                    _Diagnostic.tls => t('TLS 证书', 'TLS certificate'),
+                    ToolboxDiagnostic.all => t('全部检测', 'All checks'),
+                    ToolboxDiagnostic.dns => t('DNS 查询', 'DNS lookup'),
+                    ToolboxDiagnostic.tcp => t('TCP 延迟', 'TCP latency'),
+                    ToolboxDiagnostic.https => t('HTTPS 分流', 'HTTPS routing'),
+                    ToolboxDiagnostic.tls => t('TLS 证书', 'TLS certificate'),
                   },
                   selected: _selected == choice,
                   onPressed: _running
@@ -195,7 +207,7 @@ class _NetworkToolboxViewState extends ConsumerState<NetworkToolboxView> {
             ),
           ),
           const SizedBox(height: 12),
-          if (_selected != _Diagnostic.dns)
+          if (_selected != ToolboxDiagnostic.dns)
             TextField(
               controller: _port,
               keyboardType: TextInputType.number,
