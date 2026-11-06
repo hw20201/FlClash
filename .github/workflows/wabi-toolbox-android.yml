@@ -69,7 +69,7 @@ jobs:
           cp pubspec.yaml "$RUNNER_TEMP/pubspec-toolbox.yaml"
           trap 'cp "$RUNNER_TEMP/pubspec-toolbox.yaml" pubspec.yaml' EXIT
           yq -i '.hooks.user_defines.setup.build_assets = false' pubspec.yaml
-          flutter test test/common/toolbox_utilities_test.dart test/views/network_toolbox_home_test.dart test/common/network_toolbox_test.dart test/android_tv_launcher_icon_test.dart test/lint/circular_progress_test.dart test/lint/typography_test.dart
+          flutter test test/common/toolbox_utilities_test.dart test/views/network_toolbox_home_test.dart test/common/network_toolbox_test.dart test/common/speed_test_test.dart test/common/ip_lookup_test.dart test/android_tv_launcher_icon_test.dart test/lint/circular_progress_test.dart test/lint/typography_test.dart
       - name: Save toolbox UI preview
         if: always()
         uses: actions/upload-artifact@v4
