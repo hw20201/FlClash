@@ -440,7 +440,7 @@ func (c *trafficCollector) observeLocked(id string, info *statistic.TrackerInfo,
 }
 
 func (c *trafficCollector) connKey(info *statistic.TrackerInfo) trafficConnKey {
-	key := trafficConnKey{profile: c.profile, direct: info.IsDirect}
+	key := trafficConnKey{profile: c.profile, direct: trafficIsDirect(info)}
 	if len(info.Chain) > 0 {
 		key.node = info.Chain[0]
 	}
@@ -461,6 +461,16 @@ func (c *trafficCollector) connKey(info *statistic.TrackerInfo) trafficConnKey {
 	key.process = metadata.Process
 	key.path = metadata.ProcessPath
 	return key
+}
+
+// The pinned core predates TrackerInfo.IsDirect, so directness is read
+// off the chain the same way the newer core computes it: the final
+// outbound is DIRECT.
+func trafficIsDirect(info *statistic.TrackerInfo) bool {
+	if len(info.Chain) == 0 {
+		return false
+	}
+	return strings.ToUpper(info.Chain.Last()) == "DIRECT"
 }
 
 func trafficRuleName(rule, payload string) string {
