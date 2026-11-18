@@ -5,6 +5,7 @@ import 'package:fl_clash/common/speed_test.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/views/toolbox_utilities.dart';
 import 'package:fl_clash/views/traffic_stats.dart';
@@ -22,14 +23,13 @@ String _todayKey() {
   return '${now.year}-${two(now.month)}-${two(now.day)}';
 }
 
-void _open(BuildContext context, Widget page) =>
-    Navigator.of(context).push(
-      PageRouteBuilder<void>(
-        pageBuilder: (_, animation, secondaryAnimation) => page,
-        transitionsBuilder: (_, animation, secondaryAnimation, child) =>
-            FadeTransition(opacity: animation, child: child),
-      ),
-    );
+void _open(BuildContext context, Widget page) => Navigator.of(context).push(
+  PageRouteBuilder<void>(
+    pageBuilder: (_, animation, secondaryAnimation) => page,
+    transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+        FadeTransition(opacity: animation, child: child),
+  ),
+);
 
 class _DirectionRow extends StatelessWidget {
   const _DirectionRow({
@@ -47,11 +47,7 @@ class _DirectionRow extends StatelessWidget {
     return Row(
       spacing: 8,
       children: [
-        GlyphIcon(
-          glyph,
-          size: 16,
-          color: context.colorScheme.onSurfaceVariant,
-        ),
+        GlyphIcon(glyph, size: 16, color: context.colorScheme.onSurfaceVariant),
         Text(label, style: DashboardText.label(context)),
         Expanded(
           child: Text(
@@ -95,9 +91,9 @@ class _TrafficStatsCardState extends ConsumerState<TrafficStatsCard> {
     final today = _todayKey();
     TrafficStatsResult result;
     try {
-      result = await ref.read(coreHandlerProvider).getTrafficStats(
-        TrafficStatsQuery(start: today, end: today),
-      );
+      result = await ref
+          .read(coreHandlerProvider)
+          .getTrafficStats(TrafficStatsQuery(start: today, end: today));
     } catch (_) {
       return;
     }

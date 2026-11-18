@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:flutter/widgets.dart';
@@ -91,15 +92,17 @@ class _TrafficStatsPageState extends ConsumerState<TrafficStatsPage> {
   Future<void> _configure({required bool enable}) async {
     final profile = ref.read(currentProfileProvider)?.label ?? '';
     try {
-      await ref.read(coreHandlerProvider).configureTrafficStats(
-        TrafficStatsConfigure(
-          enable: enable,
-          detail: true,
-          retentionDays: 30,
-          tzOffset: DateTime.now().timeZoneOffset.inMinutes,
-          profile: profile,
-        ),
-      );
+      await ref
+          .read(coreHandlerProvider)
+          .configureTrafficStats(
+            TrafficStatsConfigure(
+              enable: enable,
+              detail: true,
+              retentionDays: 30,
+              tzOffset: DateTime.now().timeZoneOffset.inMinutes,
+              profile: profile,
+            ),
+          );
     } catch (_) {
       // The collector keeps its defaults when the Core is out of reach.
     }
@@ -110,12 +113,14 @@ class _TrafficStatsPageState extends ConsumerState<TrafficStatsPage> {
     final range = _range;
     TrafficStatsResult result;
     try {
-      result = await ref.read(coreHandlerProvider).getTrafficStats(
-        TrafficStatsQuery(
-          start: _dayKey(range.start),
-          end: _dayKey(range.end),
-        ),
-      );
+      result = await ref
+          .read(coreHandlerProvider)
+          .getTrafficStats(
+            TrafficStatsQuery(
+              start: _dayKey(range.start),
+              end: _dayKey(range.end),
+            ),
+          );
     } catch (_) {
       result = const TrafficStatsResult();
     }
@@ -205,7 +210,11 @@ class _TrafficStatsPageState extends ConsumerState<TrafficStatsPage> {
                 children: [
                   Expanded(
                     child: Text(
-                      _t(context, '流量记录已停用，重新打开后继续记录。', 'Traffic recording is off. Turn it back on to resume.'),
+                      _t(
+                        context,
+                        '流量记录已停用，重新打开后继续记录。',
+                        'Traffic recording is off. Turn it back on to resume.',
+                      ),
                       style: AppTextStyle.subheadline.of(context),
                     ),
                   ),
@@ -233,9 +242,7 @@ class _TrafficStatsPageState extends ConsumerState<TrafficStatsPage> {
             children: [
               IconButton(
                 tooltip: _t(context, '上一区间', 'Previous period'),
-                onPressed: canBack
-                    ? () => _select(_period, _offset + 1)
-                    : null,
+                onPressed: canBack ? () => _select(_period, _offset + 1) : null,
                 icon: const GlyphIcon(AppGlyphs.chevronBack, size: 18),
               ),
               Expanded(
@@ -308,7 +315,10 @@ class _TrafficStatsContent extends StatelessWidget {
       children: [
         _Surface(child: _Overview(result: result)),
         _SectionHeader(_t(context, '规则命中', 'Rule hits')),
-        _RuleHits(rules: result.rules.take(_rankLimit).toList(), total: result.ruleHits),
+        _RuleHits(
+          rules: result.rules.take(_rankLimit).toList(),
+          total: result.ruleHits,
+        ),
         _SectionHeader(_t(context, '流量排行', 'Traffic ranking')),
         if (ranks.length > 1) ...[
           SegmentedControl<_TrafficRank>(
@@ -378,9 +388,9 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(top: 20, bottom: 8),
       child: Text(
         label,
-        style: AppTextStyle.subheadline.of(context, emphasized: true).copyWith(
-          color: context.colorScheme.onSurfaceVariant,
-        ),
+        style: AppTextStyle.subheadline
+            .of(context, emphasized: true)
+            .copyWith(color: context.colorScheme.onSurfaceVariant),
       ),
     );
   }
@@ -424,7 +434,9 @@ class _Overview extends StatelessWidget {
       children: [
         Text(
           '${total.value} ${total.unit}',
-          style: AppTextStyle.largeTitle.of(context, emphasized: true).toTabular,
+          style: AppTextStyle.largeTitle
+              .of(context, emphasized: true)
+              .toTabular,
         ),
         const SizedBox(height: 12),
         _LegendRow(
@@ -443,9 +455,9 @@ class _Overview extends StatelessWidget {
           '${_t(context, '代理', 'Proxy')} ${dashboardTraffic(result.proxyTotal)}  ·  '
           '${_t(context, '直连', 'Direct')} ${dashboardTraffic(result.directTotal)}',
           maxLines: 2,
-          style: AppTextStyle.footnote.of(context).copyWith(
-            color: colors.onSurfaceVariant,
-          ),
+          style: AppTextStyle.footnote
+              .of(context)
+              .copyWith(color: colors.onSurfaceVariant),
         ),
       ],
     );
@@ -474,9 +486,9 @@ class _LegendRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           label,
-          style: AppTextStyle.footnote.of(context).copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyle.footnote
+              .of(context)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -485,7 +497,9 @@ class _LegendRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.end,
-            style: AppTextStyle.footnote.of(context, emphasized: true).toTabular,
+            style: AppTextStyle.footnote
+                .of(context, emphasized: true)
+                .toTabular,
           ),
         ),
       ],
@@ -503,9 +517,9 @@ class _NoData extends StatelessWidget {
       child: Center(
         child: Text(
           _t(context, '暂无数据', 'No data yet'),
-          style: AppTextStyle.footnote.of(context).copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyle.footnote
+              .of(context)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -570,7 +584,9 @@ class _RuleCard extends StatelessWidget {
           children: [
             Text(
               _percent(ratio),
-              style: AppTextStyle.title1.of(context, emphasized: true).toTabular,
+              style: AppTextStyle.title1
+                  .of(context, emphasized: true)
+                  .toTabular,
             ),
             const SizedBox(height: 8),
             Text(
@@ -582,18 +598,18 @@ class _RuleCard extends StatelessWidget {
             Text(
               payload.isEmpty ? ' ' : type,
               maxLines: 1,
-              style: AppTextStyle.caption1.of(context).copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.caption1
+                  .of(context)
+                  .copyWith(color: context.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 4),
             Text(
               '${rule.hits} ${_t(context, '次', 'hits')} · ${dashboardTraffic(rule.total)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1.of(context).copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyle.caption1
+                  .of(context)
+                  .copyWith(color: context.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -695,9 +711,10 @@ class _RankRow extends StatelessWidget {
                     const SizedBox(width: 12),
                     Text(
                       dashboardTraffic(total),
-                      style: AppTextStyle.footnote.of(context).toTabular.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                      style: AppTextStyle.footnote
+                          .of(context)
+                          .toTabular
+                          .copyWith(color: colors.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -765,13 +782,15 @@ class _HostDetailSheetState extends ConsumerState<_HostDetailSheet> {
   Future<void> _load() async {
     TrafficStatsResult result;
     try {
-      result = await ref.read(coreHandlerProvider).getTrafficStats(
-        TrafficStatsQuery(
-          start: _dayKey(widget.range.start),
-          end: _dayKey(widget.range.end),
-          host: widget.host,
-        ),
-      );
+      result = await ref
+          .read(coreHandlerProvider)
+          .getTrafficStats(
+            TrafficStatsQuery(
+              start: _dayKey(widget.range.start),
+              end: _dayKey(widget.range.end),
+              host: widget.host,
+            ),
+          );
     } catch (_) {
       result = const TrafficStatsResult();
     }
@@ -804,16 +823,17 @@ class _HostDetailSheetState extends ConsumerState<_HostDetailSheet> {
                   children: [
                     Text(
                       dashboardTraffic(result?.total ?? 0),
-                      style: AppTextStyle.title1.of(
-                        context,
-                        emphasized: true,
-                      ).toTabular,
+                      style: AppTextStyle.title1
+                          .of(context, emphasized: true)
+                          .toTabular,
                     ),
                     Text(
                       '↑ ${dashboardTraffic(result?.up ?? 0)}   ↓ ${dashboardTraffic(result?.down ?? 0)}',
-                      style: AppTextStyle.caption1.of(context).copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyle.caption1
+                          .of(context)
+                          .copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
                     ),
                   ],
                 ),
@@ -920,9 +940,9 @@ class _TrendChartState extends State<_TrendChart> {
                   '${_title(point)}   ↑ ${dashboardTraffic(point.up)}   ↓ ${dashboardTraffic(point.down)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1.of(context).copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
+                  style: AppTextStyle.caption1
+                      .of(context)
+                      .copyWith(color: colors.onSurfaceVariant),
                 ),
         ),
         const SizedBox(height: 6),
@@ -943,9 +963,9 @@ class _TrendChartState extends State<_TrendChart> {
                   upColor: colors.primary,
                   downColor: colors.tertiary,
                   trackColor: colors.onSurface.withValues(alpha: 0.05),
-                  labelStyle: AppTextStyle.caption1.of(context).copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
+                  labelStyle: AppTextStyle.caption1
+                      .of(context)
+                      .copyWith(color: colors.onSurfaceVariant),
                   labels: [
                     for (final (index, point) in series.indexed)
                       _showLabel(index) ? _axisLabel(point) : '',
@@ -1117,11 +1137,13 @@ class _TrafficStatsSettingsSheetState
               ListItem(
                 title: Text(
                   _t(context, '清除记录', 'Clear records'),
-                  style: AppTextStyle.subheadline.of(context).copyWith(
-                    color: _clearing
-                        ? context.colorScheme.onSurfaceVariant
-                        : context.colorScheme.error,
-                  ),
+                  style: AppTextStyle.subheadline
+                      .of(context)
+                      .copyWith(
+                        color: _clearing
+                            ? context.colorScheme.onSurfaceVariant
+                            : context.colorScheme.error,
+                      ),
                 ),
                 onTap: _clearing ? null : _clear,
               ),

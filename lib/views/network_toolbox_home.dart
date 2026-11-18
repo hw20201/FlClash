@@ -61,9 +61,9 @@ class NetworkToolboxHome extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
+                    decoration: ShapeDecoration(
                       color: colors.primary.withValues(alpha: 0.09),
-                      borderRadius: BorderRadius.circular(18),
+                      shape: AppShape.all(AppCorner.md),
                     ),
                     child: IconTheme(
                       data: IconThemeData(color: colors.primary, size: 26),

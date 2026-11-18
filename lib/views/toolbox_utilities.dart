@@ -7,6 +7,7 @@ import 'package:fl_clash/common/speed_test.dart';
 import 'package:fl_clash/common/toolbox_utilities.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -35,8 +36,7 @@ class ToolboxUtilityView extends ConsumerStatefulWidget {
   const ToolboxUtilityView({super.key, required this.tool});
   final ToolboxUtility tool;
   @override
-  ConsumerState<ToolboxUtilityView> createState() =>
-      _ToolboxUtilityViewState();
+  ConsumerState<ToolboxUtilityView> createState() => _ToolboxUtilityViewState();
 }
 
 class _ToolboxUtilityViewState extends ConsumerState<ToolboxUtilityView> {
@@ -195,8 +195,7 @@ class _ToolboxUtilityViewState extends ConsumerState<ToolboxUtilityView> {
 
   double get _gaugeValue {
     final result = _testResult;
-    if (_phase == SpeedTestPhase.download ||
-        _phase == SpeedTestPhase.upload) {
+    if (_phase == SpeedTestPhase.download || _phase == SpeedTestPhase.upload) {
       return _liveMbps;
     }
     return result?.downloadMbps ?? 0;
@@ -275,7 +274,9 @@ class _ToolboxUtilityViewState extends ConsumerState<ToolboxUtilityView> {
             TextField(
               controller: _port,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(hintText: t('HTTPS 端口', 'HTTPS port')),
+              decoration: InputDecoration(
+                hintText: t('HTTPS 端口', 'HTTPS port'),
+              ),
             ),
           ],
           const SizedBox(height: 16),
@@ -352,10 +353,7 @@ class _ToolboxUtilityViewState extends ConsumerState<ToolboxUtilityView> {
               children: [
                 _InfoRow(label: t('出站节点', 'Outbound'), value: node),
                 _InfoRow(label: t('路由', 'Routing'), value: modeText),
-                _InfoRow(
-                  label: t('测速服务器', 'Test server'),
-                  value: serverText,
-                ),
+                _InfoRow(label: t('测速服务器', 'Test server'), value: serverText),
               ],
             ),
           ),
@@ -451,9 +449,9 @@ class _ToolboxUtilityViewState extends ConsumerState<ToolboxUtilityView> {
             const SizedBox(height: 16),
             Text(
               '${t('未完成', 'Could not complete')}: $_testError',
-              style: AppTextStyle.footnote.of(context).copyWith(
-                color: colors.error,
-              ),
+              style: AppTextStyle.footnote
+                  .of(context)
+                  .copyWith(color: colors.error),
             ),
           ],
           const SizedBox(height: 16),
@@ -462,9 +460,9 @@ class _ToolboxUtilityViewState extends ConsumerState<ToolboxUtilityView> {
               '测速走设备网络，不经过代理；出站节点与路由显示的是当前应用状态。',
               'The test runs on the device network, not through the proxy. The outbound node and routing rows show the current app state.',
             ),
-            style: AppTextStyle.footnote.of(context).copyWith(
-              color: colors.onSurfaceVariant,
-            ),
+            style: AppTextStyle.footnote
+                .of(context)
+                .copyWith(color: colors.onSurfaceVariant),
           ),
         ],
       ),
@@ -506,9 +504,9 @@ class _InfoRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: AppTextStyle.footnote.of(context).copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyle.footnote
+                .of(context)
+                .copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -562,9 +560,9 @@ class _SpeedGauge extends StatelessWidget {
               startColor: startColor,
               trackColor: colors.onSurface.withValues(alpha: 0.08),
               needleColor: colors.onSurface,
-              labelStyle: AppTextStyle.caption1.of(context).copyWith(
-                color: colors.onSurfaceVariant,
-              ),
+              labelStyle: AppTextStyle.caption1
+                  .of(context)
+                  .copyWith(color: colors.onSurfaceVariant),
               passedLabelColor: colors.onSurface,
               showNeedle: showValue,
             ),
@@ -575,9 +573,9 @@ class _SpeedGauge extends StatelessWidget {
                   if (!showValue)
                     Text(
                       label,
-                      style: AppTextStyle.footnote.of(context).copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                      style: AppTextStyle.footnote
+                          .of(context)
+                          .copyWith(color: colors.onSurfaceVariant),
                     ),
                   Text(
                     showValue ? _formatValue(value) : '—',
@@ -587,17 +585,13 @@ class _SpeedGauge extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      GlyphIcon(
-                        AppGlyphs.arrowDown,
-                        size: 16,
-                        color: color,
-                      ),
+                      GlyphIcon(AppGlyphs.arrowDown, size: 16, color: color),
                       const SizedBox(width: 4),
                       Text(
                         'Mbps',
-                        style: AppTextStyle.subheadline.of(context).copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
+                        style: AppTextStyle.subheadline
+                            .of(context)
+                            .copyWith(color: colors.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -709,11 +703,16 @@ class _GaugePainter extends CustomPainter {
     canvas.drawPath(
       needle,
       Paint()
-        ..shader = ui.Gradient.linear(base, tip, [
-          needleColor.withValues(alpha: 0),
-          needleColor.withValues(alpha: 0.35),
-          needleColor.withValues(alpha: 0.9),
-        ], const [0, 0.4, 1]),
+        ..shader = ui.Gradient.linear(
+          base,
+          tip,
+          [
+            needleColor.withValues(alpha: 0),
+            needleColor.withValues(alpha: 0.35),
+            needleColor.withValues(alpha: 0.9),
+          ],
+          const [0, 0.4, 1],
+        ),
     );
   }
 
@@ -744,11 +743,12 @@ class _PhaseSteps extends StatelessWidget {
       SpeedTestPhase.upload,
     ];
     final colors = context.colorScheme;
+    final currentPhase = phase;
     final currentIndex = finished
         ? phases.length
-        : phase == null
+        : currentPhase == null
         ? -1
-        : phases.indexOf(phase);
+        : phases.indexOf(currentPhase);
     final zh = Localizations.localeOf(context).languageCode == 'zh';
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -807,11 +807,11 @@ class _PhaseDot extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: AppTextStyle.caption1.of(context).copyWith(
-            color: active
-                ? colors.primary
-                : colors.onSurfaceVariant,
-          ),
+          style: AppTextStyle.caption1
+              .of(context)
+              .copyWith(
+                color: active ? colors.primary : colors.onSurfaceVariant,
+              ),
         ),
       ],
     );
@@ -838,9 +838,7 @@ class _SpeedTile extends StatelessWidget {
     final colors = context.colorScheme;
     return Container(
       decoration: ShapeDecoration(
-        color: active
-            ? colors.primary.withValues(alpha: 0.08)
-            : colors.surface,
+        color: active ? colors.primary.withValues(alpha: 0.08) : colors.surface,
         shape: AppShape.all(16).copyWith(
           side: BorderSide(
             color: active
@@ -863,10 +861,9 @@ class _SpeedTile extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.footnote.of(context, emphasized: true)
-                        .copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
+                    style: AppTextStyle.footnote
+                        .of(context, emphasized: true)
+                        .copyWith(color: colors.onSurfaceVariant),
                   ),
                 ),
               ],
@@ -876,7 +873,9 @@ class _SpeedTile extends StatelessWidget {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.title1.of(context, emphasized: true).toTabular,
+              style: AppTextStyle.title1
+                  .of(context, emphasized: true)
+                  .toTabular,
             ),
           ],
         ),
