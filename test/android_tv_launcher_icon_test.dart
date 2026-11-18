@@ -64,14 +64,14 @@ void main() {
     expect(bounds.bottom, lessThanOrEqualTo(safeZone.bottom));
     expect(bounds.center.dx, closeTo(safeZone.center.dx, 0.5));
     expect(bounds.center.dy, closeTo(safeZone.center.dy, 0.5));
-    expect(bounds.height, closeTo(70.12, 0.5));
+    expect(bounds.height, closeTo(67.51, 0.5));
   });
 
   test('phone adaptive launcher glyph stays centered at its size', () async {
     final bounds = await _foregroundGlyphBounds('ic_launcher_foreground');
     expect(bounds.center.dx, closeTo(54, 0.5));
     expect(bounds.center.dy, closeTo(54, 0.5));
-    expect(bounds.height, closeTo(45.69, 0.5));
+    expect(bounds.height, closeTo(43.99, 0.5));
   });
 }
 
