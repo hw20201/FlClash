@@ -1,6 +1,8 @@
 package core
 
 import (
+	"core/toolbox"
+
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/tunnel/statistic"
@@ -18,6 +20,19 @@ func handleGetTotalTraffic(params TrafficParams) Traffic {
 
 func handleResetTraffic() {
 	statistic.DefaultManager.ResetStatistic()
+}
+
+func handleGetTrafficStats(params toolbox.TrafficStatsQuery) toolbox.TrafficStatsResult {
+	return toolbox.QueryTrafficStats(params)
+}
+
+func handleClearTrafficStats() {
+	toolbox.ClearTrafficStats()
+}
+
+func handleConfigureTrafficStats(params toolbox.TrafficStatsConfigureParams) error {
+	toolbox.ApplyTrafficStatsConfig(params)
+	return nil
 }
 
 func handleGetConnections() *statistic.Snapshot {

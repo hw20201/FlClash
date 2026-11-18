@@ -4,6 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"core/toolbox"
+
 	"github.com/metacubex/mihomo/adapter"
 	mihomoHttp "github.com/metacubex/mihomo/component/http"
 	"github.com/metacubex/mihomo/component/proxydialer"
@@ -19,6 +21,7 @@ func init() {
 		sendMessage(DelayMessage, &Delay{Url: url, Name: name, Value: delayValue(delay, timedOut)})
 	}
 	statistic.DefaultRequestNotify = func(c statistic.Tracker) {
+		toolbox.ObserveTrafficTracker(c.Info())
 		notifyProbeRoute(c)
 		if hasEventListener() {
 			sendMessage(RequestMessage, c)

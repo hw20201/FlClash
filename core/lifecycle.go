@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"core/toolbox"
+
 	"github.com/metacubex/mihomo/adapter/inbound"
 	"github.com/metacubex/mihomo/component/resolver"
 	"github.com/metacubex/mihomo/component/updater"
@@ -30,6 +32,7 @@ func handleInit(params *InitParams) error {
 	defer configMu.Unlock()
 	sdkVersion.Store(int32(params.Version))
 	constant.SetHomeDir(params.HomeDir)
+	toolbox.InitTrafficStats(params.HomeDir)
 	initOwnership(params.HomeDir)
 	clearSpilledResponses()
 	isInit.Store(true)
