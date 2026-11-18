@@ -57,7 +57,7 @@ end;
 
 // FlClash and FlClash RS ship Core and Helper processes of the same names, so a
 // name alone would also end the other installation's. FlClash is also what this
-// installation's executable was called before it became FlClash-RS.
+// installation's executable was called before it became FlowCat-RS.
 procedure KillProcesses;
 var
   AppDir: String;
@@ -66,7 +66,7 @@ begin
   AppDir := AddBackslash(ExpandConstant('{app}'));
   StringChangeEx(AppDir, '''', '''''', True);
   Exec('powershell.exe',
-    '-NoProfile -NonInteractive -Command "Get-Process -Name FlClash,FlClash-RS,FlClashCore,FlClashHelperService -ErrorAction SilentlyContinue | ' +
+    '-NoProfile -NonInteractive -Command "Get-Process -Name FlClash,FlClash-RS,FlowCat-RS,FlClashCore,FlClashHelperService -ErrorAction SilentlyContinue | ' +
     'Where-Object { $_.Path -and $_.Path.StartsWith(''' + AppDir + ''', [StringComparison]::OrdinalIgnoreCase) } | Stop-Process -Force"',
     '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
@@ -184,7 +184,9 @@ end;
 procedure RemoveUserData;
 begin
   DelTree(ExpandConstant('{userappdata}\com.follow\clash.rs'), True, True, True);
+  DelTree(ExpandConstant('{userappdata}\com.follow\flowcat.rs'), True, True, True);
   DelTree(ExpandConstant('{localappdata}\com.follow\clash.rs'), True, True, True);
+  DelTree(ExpandConstant('{localappdata}\com.follow\flowcat.rs'), True, True, True);
   RemoveDir(ExpandConstant('{userappdata}\com.follow'));
   RemoveDir(ExpandConstant('{localappdata}\com.follow'));
 end;
@@ -211,8 +213,9 @@ english.RemoveUserData=Also delete your profiles and settings?
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 [InstallDelete]
-; The executable before the rename to FlClash-RS.exe.
+; The executables before the renames to FlClash-RS.exe and FlowCat-RS.exe.
 Type: files; Name: "{app}\\FlClash.exe"
+Type: files; Name: "{app}\\FlClash-RS.exe"
 
 [Files]
 Source: "{{SOURCE_DIR}}\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

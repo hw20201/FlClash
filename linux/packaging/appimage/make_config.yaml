@@ -1,4 +1,4 @@
-display_name: FlClash RS
+display_name: FlowCat RS
 
 icon: ./assets/images/icon.png
 
@@ -13,7 +13,7 @@ keywords:
   - Concord
   - Proxy
 
-generic_name: FlClash RS
+generic_name: FlowCat RS
 
 categories:
   - Network

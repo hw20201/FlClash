@@ -1,9 +1,9 @@
 script_template: inno_setup.iss
-app_id: F353B6F4-AA56-4EC4-86F0-AEA464099350
-app_name: FlClash RS
+app_id: 3B9F95C0-4FCF-4A09-A292-5E5F6296317B
+app_name: FlowCat RS
 publisher: chen08209
 publisher_url: https://github.com/chen08209/FlClash
-display_name: FlClash RS
-install_dir_name: '{autopf64}\FlClash rs'
-executable_name: FlClash-RS.exe
+display_name: FlowCat RS
+install_dir_name: '{autopf64}\FlowCat rs'
+executable_name: FlowCat-RS.exe
 setup_icon_file: windows\runner\resources\app_icon.ico

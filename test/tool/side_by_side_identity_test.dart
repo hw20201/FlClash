@@ -6,7 +6,7 @@ import 'package:yaml/yaml.dart';
 
 T _pick<T>(T rs, T flClash) => rsSideBySide ? rs : flClash;
 
-final _packageName = _pick('FlClash RS', 'FlClash');
+final _packageName = _pick('FlowCat RS', 'FlClash');
 
 String _read(String path) => File(path).readAsStringSync();
 
@@ -22,7 +22,7 @@ void main() {
   test('the app, the package and side-by-side entries keep their names', () {
     expect(appName, 'FlClash');
     expect(packageDisplayName, _packageName);
-    expect(sideBySideName, _pick('FlClash rs', 'FlClash'));
+    expect(sideBySideName, _pick('FlowCat rs', 'FlClash'));
     final installer = _yaml('windows/packaging/exe/make_config.yaml');
     expect(
       (installer['display_name'] as String).toLowerCase(),
@@ -52,8 +52,8 @@ void main() {
   });
 
   test('Windows keeps its own installer, folders and data directory', () {
-    final productDirectory = _pick('clash.rs', 'clash');
-    final binary = _pick('FlClash-RS', 'FlClash');
+    final productDirectory = _pick('flowcat.rs', 'clash');
+    final binary = _pick('FlowCat-RS', 'FlClash');
     expect(
       _read('windows/CMakeLists.txt'),
       contains('set(BINARY_NAME "$binary")'),
@@ -64,7 +64,7 @@ void main() {
     expect(runner, contains('"OriginalFilename", "$binary.exe"'));
     expect(
       runner,
-      contains('"InternalName", "${_pick('FlClash-RS', 'clash')}"'),
+      contains('"InternalName", "${_pick('FlowCat-RS', 'clash')}"'),
     );
     expect(
       _read('windows/runner/main.cpp'),
@@ -78,13 +78,13 @@ void main() {
     expect(
       installer['app_id'],
       _pick(
-        'F353B6F4-AA56-4EC4-86F0-AEA464099350',
+        '3B9F95C0-4FCF-4A09-A292-5E5F6296317B',
         '728B3532-C74B-4870-9068-BE70FE12A3E6',
       ),
     );
     expect(
       installer['install_dir_name'],
-      _pick(r'{autopf64}\FlClash rs', null),
+      _pick(r'{autopf64}\FlowCat rs', null),
     );
     expect(
       _read('windows/packaging/exe/inno_setup.iss'),
@@ -113,7 +113,7 @@ void main() {
   test('Linux installs under its own binary and package names', () {
     expect(
       _read('linux/CMakeLists.txt'),
-      contains('set(BINARY_NAME "${_pick('FlClash-rs', 'FlClash')}")'),
+      contains('set(BINARY_NAME "${_pick('FlowCat-rs', 'FlClash')}")'),
     );
     expect(
       '"$_packageName"'
@@ -128,11 +128,11 @@ void main() {
     }
     expect(
       _yaml('linux/packaging/deb/make_config.yaml')['package_name'],
-      _pick('flclash-rs', 'FlClash'),
+      _pick('flowcat-rs', 'FlClash'),
     );
     expect(
       _yaml('linux/packaging/rpm/make_config.yaml')['package_name'],
-      _pick('flclash-rs', null),
+      _pick('flowcat-rs', null),
     );
   });
 

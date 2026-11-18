@@ -1,5 +1,5 @@
-display_name: FlClash RS
-package_name: flclash-rs
+display_name: FlowCat RS
+package_name: flowcat-rs
 maintainer:
   name: chen08209
   email: chen08209@gmail.com
@@ -17,8 +17,8 @@ dependencies:
 # its teardown belongs here; the binary is already gone when postrm runs.
 postuninstall_scripts:
   - 'case "${1:-}" in remove|purge) ;; *) exit 0 ;; esac'
-  - 'systemctl disable --now flclash-rs-helper.service >/dev/null 2>&1 || true'
-  - 'rm -f /etc/systemd/system/flclash-rs-helper.service'
+  - 'systemctl disable --now flowcat-rs-helper.service >/dev/null 2>&1 || true'
+  - 'rm -f /etc/systemd/system/flowcat-rs-helper.service'
   - 'systemctl daemon-reload >/dev/null 2>&1 || true'
 
 supported_mime_type:
@@ -32,7 +32,7 @@ keywords:
   - Concord
   - Proxy
 
-generic_name: FlClash RS
+generic_name: FlowCat RS
 
 categories:
   - Network
