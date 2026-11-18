@@ -17,7 +17,6 @@ import (
 	"sync/atomic"
 	"time"
 
-
 	"github.com/metacubex/mihomo/tunnel/statistic"
 	"golang.org/x/net/publicsuffix"
 )
@@ -86,7 +85,6 @@ type trafficConn struct {
 	closed bool
 	key    trafficConnKey
 }
-
 
 // TrafficStatsOptions controls the traffic history collector.
 type TrafficStatsOptions struct {
@@ -207,7 +205,6 @@ func SetTrafficScreenOn(on bool) {
 func SuspendTrafficStats(suspended bool) {
 	trafficStats.setSuspended(suspended)
 }
-
 
 // TrafficStatsConfigureParams carries the collector settings plus the
 // current profile name, as one method argument from the host.
