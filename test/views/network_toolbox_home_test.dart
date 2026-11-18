@@ -58,8 +58,9 @@ void main() {
         final image = await boundary.toImage(pixelRatio: 2);
         final data = await image.toByteData(format: ui.ImageByteFormat.png);
         Directory("build/toolbox-preview").createSync(recursive: true);
-        File("build/toolbox-preview/toolbox-phone.png")
-            .writeAsBytesSync(data!.buffer.asUint8List());
+        File(
+          "build/toolbox-preview/toolbox-phone.png",
+        ).writeAsBytesSync(data!.buffer.asUint8List());
         image.dispose();
       });
       await tester.tap(find.byKey(const ValueKey('toolbox-dns')));
@@ -96,8 +97,9 @@ void main() {
         wrapInProviderScope: true,
         child: Builder(
           builder: (context) => MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: TextScaler.linear(1.8)),
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(1.8)),
             child: const NetworkToolboxHome(),
           ),
         ),
