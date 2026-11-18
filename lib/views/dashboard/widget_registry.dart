@@ -15,6 +15,8 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.profiles => const ProfilesCard(),
     DashboardWidget.proxyGroups => const ProxyGroupsCard(),
     DashboardWidget.connectionStats => const ConnectionStatsCard(),
+    DashboardWidget.trafficStats => const TrafficStatsCard(),
+    DashboardWidget.speedTest => const SpeedTestCard(),
     DashboardWidget.intranetIp => const IntranetIpCard(),
     DashboardWidget.memoryInfo => const MemoryInfo(),
   };
@@ -29,6 +31,8 @@ extension DashboardWidgetView on DashboardWidget {
     DashboardWidget.profiles => AppGlyphs.profiles,
     DashboardWidget.proxyGroups => AppGlyphs.layers,
     DashboardWidget.connectionStats => AppGlyphs.connections,
+    DashboardWidget.trafficStats => AppGlyphs.dataUsage,
+    DashboardWidget.speedTest => AppGlyphs.speed,
     DashboardWidget.intranetIp => AppGlyphs.devices,
     DashboardWidget.memoryInfo => AppGlyphs.memory,
   };
@@ -45,6 +49,8 @@ extension DashboardWidgetView on DashboardWidget {
       DashboardWidget.profiles => appLocalizations.profile,
       DashboardWidget.proxyGroups => appLocalizations.proxyGroup,
       DashboardWidget.connectionStats => appLocalizations.connectionStats,
+      DashboardWidget.trafficStats => _t(context, '流量统计', 'Traffic stats'),
+      DashboardWidget.speedTest => _t(context, '速度测试', 'Speed test'),
       DashboardWidget.intranetIp => appLocalizations.intranetIP,
       DashboardWidget.memoryInfo => appLocalizations.memoryInfo,
     };
@@ -63,3 +69,6 @@ extension DashboardWidgetView on DashboardWidget {
   /// It holds the start button, which has nowhere else to go.
   bool get removable => this != DashboardWidget.currentOutbound;
 }
+
+String _t(BuildContext context, String zh, String en) =>
+    Localizations.localeOf(context).languageCode == 'zh' ? zh : en;

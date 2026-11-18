@@ -9,4 +9,5 @@ export 'profiles.dart';
 export 'proxy_groups.dart';
 export 'service_status.dart';
 export 'traffic.dart';
+export 'traffic_stats_cards.dart';
 export 'update_status.dart';

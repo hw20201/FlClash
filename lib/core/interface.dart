@@ -300,6 +300,23 @@ abstract class CoreHandlerInterface {
 
   Future<void> resetTraffic() => _commandUnobserved(CoreMethod.trafficReset);
 
+  Future<TrafficStatsResult> getTrafficStats(TrafficStatsQuery query) {
+    return _query(
+      CoreMethod.trafficStats,
+      _model(TrafficStatsResult.fromJson),
+      arguments: query.toJson(),
+    );
+  }
+
+  Future<void> clearTrafficStats() => _command(CoreMethod.trafficStatsClear);
+
+  Future<void> configureTrafficStats(TrafficStatsConfigure configure) {
+    return _command(
+      CoreMethod.trafficStatsConfigure,
+      arguments: configure.toJson(),
+    );
+  }
+
   Future<List<TrackerInfo>> getConnections() {
     return _query(
       CoreMethod.connectionList,

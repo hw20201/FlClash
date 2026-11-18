@@ -457,6 +457,8 @@ enum DashboardWidget {
   profiles,
   proxyGroups,
   connectionStats,
+  trafficStats,
+  speedTest,
   intranetIp,
   memoryInfo;
 

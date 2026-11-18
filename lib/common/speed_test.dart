@@ -2,6 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
+
+/// The last finished speed test, shared with the dashboard card.
+final ValueNotifier<SpeedtestResult?> lastSpeedtestResult =
+    ValueNotifier<SpeedtestResult?>(null);
+
+enum SpeedTestPhase { latency, download, upload }
+
+/// Live progress of a running test: latency samples in milliseconds, transfer
+/// speeds in Mbps.
+typedef SpeedTestProgress = void Function(SpeedTestPhase phase, double value);
+
 /// A Speedtest.net server from the public server list.
 class SpeedtestServer {
   const SpeedtestServer({
@@ -92,8 +104,9 @@ Future<List<SpeedtestServer>> _nearbyServers(
 Future<Duration> speedtestLatency(
   HttpClient client,
   SpeedtestServer server,
-  Duration timeout,
-) async {
+  Duration timeout, {
+  SpeedTestProgress? onProgress,
+}) async {
   final uri = Uri.parse(
     '${server.base}/latency.txt?x=${Random().nextInt(1 << 30)}',
   );
@@ -107,6 +120,10 @@ Future<Duration> speedtestLatency(
     }
     await response.drain<void>().timeout(timeout);
     timer.stop();
+    onProgress?.call(
+      SpeedTestPhase.latency,
+      timer.elapsed.inMilliseconds.toDouble(),
+    );
     if (best == Duration.zero || timer.elapsed < best) {
       best = timer.elapsed;
     }
@@ -118,8 +135,9 @@ Future<Duration> speedtestLatency(
 Future<double> speedtestDownload(
   HttpClient client,
   SpeedtestServer server,
-  Duration timeout,
-) async {
+  Duration timeout, {
+  SpeedTestProgress? onProgress,
+}) async {
   var totalBytes = 0;
   final timer = Stopwatch()..start();
   for (final size in [2000, 4000]) {
@@ -133,6 +151,13 @@ Future<double> speedtestDownload(
     }
     await for (final chunk in response.timeout(timeout)) {
       totalBytes += chunk.length;
+      final elapsed = timer.elapsedMicroseconds / 1e6;
+      if (elapsed > 0) {
+        onProgress?.call(
+          SpeedTestPhase.download,
+          totalBytes * 8 / elapsed / 1e6,
+        );
+      }
     }
   }
   timer.stop();
@@ -143,8 +168,9 @@ Future<double> speedtestDownload(
 Future<double> speedtestUpload(
   HttpClient client,
   SpeedtestServer server,
-  Duration timeout,
-) async {
+  Duration timeout, {
+  SpeedTestProgress? onProgress,
+}) async {
   final payload = List<int>.generate(1024 * 1024, (i) => 48 + (i % 74));
   final timer = Stopwatch()..start();
   final request = await client.postUrl(Uri.parse(server.url));
@@ -154,13 +180,19 @@ Future<double> speedtestUpload(
   final response = await request.close().timeout(timeout);
   await response.drain<void>().timeout(timeout);
   timer.stop();
-  return payload.length * 8 / (timer.elapsedMicroseconds / 1e6) / 1e6;
+  final mbps = payload.length * 8 / (timer.elapsedMicroseconds / 1e6) / 1e6;
+  // HttpClient buffers the POST until close(), so no live sampling is
+  // possible; the gauge jumps to the final value instead.
+  onProgress?.call(SpeedTestPhase.upload, mbps);
+  return mbps;
 }
 
 /// Measure latency, download and upload against the best nearby
 /// Speedtest.net server. Throws when no server answers.
 Future<SpeedtestResult> runSpeedtest({
   Duration timeout = const Duration(seconds: 90),
+  SpeedTestProgress? onProgress,
+  ValueChanged<SpeedtestServer>? onServerSelected,
 }) async {
   final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
   try {
@@ -185,6 +217,7 @@ Future<SpeedtestResult> runSpeedtest({
           client,
           server,
           const Duration(seconds: 8),
+          onProgress: onProgress,
         ).timeout(timeout);
         if (bestLatency == null || latency < bestLatency) {
           best = server;
@@ -197,15 +230,18 @@ Future<SpeedtestResult> runSpeedtest({
     if (best == null || bestLatency == null) {
       throw const FormatException('No speedtest.net server answered');
     }
+    onServerSelected?.call(best);
     final download = await speedtestDownload(
       client,
       best,
       const Duration(seconds: 30),
+      onProgress: onProgress,
     ).timeout(timeout);
     final upload = await speedtestUpload(
       client,
       best,
       const Duration(seconds: 30),
+      onProgress: onProgress,
     ).timeout(timeout);
     return SpeedtestResult(
       server: best,
