@@ -36,6 +36,7 @@ jobs:
 
       - name: Set up Android NDK
         uses: nttld/setup-ndk@v1
+        id: ndk
         with:
           ndk-version: r28c
           link-to-sdk: true
@@ -43,13 +44,26 @@ jobs:
       - name: Install Android platform
         run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
 
-      - name: Install host libclang for Rust bindgen
+      - name: Point Flutter at the r28c NDK
+        env:
+          NDK_PATH: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          {
+            echo "flutter.sdk=$FLUTTER_ROOT"
+            echo "sdk.dir=$ANDROID_HOME"
+            echo "ndk.dir=$NDK_PATH"
+          } > android/local.properties
+
+      - name: Install host clang and libclang for Rust bindgen
         run: |
           set -euo pipefail
           library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print 2>/dev/null | sort -V | tail -n 1 || true)
-          if [[ -z "$library" ]]; then
+          packages=()
+          [[ -n "$library" ]] || packages+=(libclang-dev)
+          [[ -x /usr/bin/clang ]] || packages+=(clang)
+          if [[ ${#packages[@]} -gt 0 ]]; then
             sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
-            sudo apt-get install -y libclang-dev
+            sudo apt-get install -y "${packages[@]}"
             library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print | sort -V | tail -n 1)
           fi
           test -n "$library" && test -f "$library"
@@ -62,9 +76,13 @@ jobs:
           echo "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505  $bundle" | sha256sum -c -
 
       - name: Install dependencies
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: flutter pub get
 
       - name: Build debug APK
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: flutter build apk --debug --target-platform android-arm64
 
       - name: Upload debug APK
