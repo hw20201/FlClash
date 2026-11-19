@@ -45,6 +45,67 @@ class AppLocalizationsKo extends AppLocalizations {
   String get trafficUsage => '트래픽 사용량';
 
   @override
+  String get trafficHistoryDay => '일';
+
+  @override
+  String get trafficHistoryWeek => '주';
+
+  @override
+  String get trafficHistoryMonth => '월';
+
+  @override
+  String get trafficHistoryRuntime => '기록된 실행 시간';
+
+  @override
+  String get trafficHistoryProxy => '프록시';
+
+  @override
+  String get trafficHistoryRuleHits => '규칙 일치';
+
+  @override
+  String get trafficHistoryRankings => '트래픽 순위';
+
+  @override
+  String get trafficHistoryTrend => '트래픽 추이';
+
+  @override
+  String get trafficHistoryPrevious => '이전 기간';
+
+  @override
+  String get trafficHistoryNext => '다음 기간';
+
+  @override
+  String get trafficHistoryClear => '기록 지우기';
+
+  @override
+  String get trafficHistoryClearConfirm => '이 기기에 저장된 트래픽, 순위, 실행 시간을 모두 지울까요?';
+
+  @override
+  String get trafficHistoryEmpty => '이 기간에 기록된 트래픽이 없습니다';
+
+  @override
+  String get trafficHistoryDetailsEmpty => '이 기간에 기록된 연결 세부 정보가 없습니다';
+
+  @override
+  String get trafficHistoryRecording => '트래픽 기록 저장';
+
+  @override
+  String get trafficHistoryRecordingNote =>
+      'FlowCat이 화면에 표시되고 실행 중일 때 기록합니다. 연결 세부 정보는 표본으로 집계합니다. 기록은 이 기기에 90일간 저장됩니다.';
+
+  @override
+  String get trafficHistoryStorageError => '트래픽 기록에 접근할 수 없습니다.';
+
+  @override
+  String get trafficHistoryOverview => '트래픽 개요';
+
+  @override
+  String get trafficHistoryRefresh => '새로 고침';
+
+  @override
+  String get trafficHistoryNode => '노드';
+
+  @override
   String get networkSpeed => '네트워크 속도';
 
   @override

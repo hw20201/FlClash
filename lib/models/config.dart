@@ -130,6 +130,7 @@ final List<HotKeyAction> defaultHotKeyActions = system.isWindows
 const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.currentOutbound,
   DashboardWidget.networkSpeed,
+  DashboardWidget.trafficHistory,
   DashboardWidget.outboundMode,
   DashboardWidget.vpnButton,
   DashboardWidget.networkTakeover,
@@ -146,6 +147,7 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
     ? const [
         DashboardWidget.currentOutbound,
         DashboardWidget.networkSpeed,
+        DashboardWidget.trafficHistory,
         DashboardWidget.outboundMode,
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,

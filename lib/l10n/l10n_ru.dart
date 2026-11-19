@@ -45,6 +45,70 @@ class AppLocalizationsRu extends AppLocalizations {
   String get trafficUsage => 'Статистика трафика';
 
   @override
+  String get trafficHistoryDay => 'День';
+
+  @override
+  String get trafficHistoryWeek => 'Неделя';
+
+  @override
+  String get trafficHistoryMonth => 'Месяц';
+
+  @override
+  String get trafficHistoryRuntime => 'Учтённое время работы';
+
+  @override
+  String get trafficHistoryProxy => 'Прокси';
+
+  @override
+  String get trafficHistoryRuleHits => 'Срабатывания правил';
+
+  @override
+  String get trafficHistoryRankings => 'Рейтинг по трафику';
+
+  @override
+  String get trafficHistoryTrend => 'Динамика трафика';
+
+  @override
+  String get trafficHistoryPrevious => 'Предыдущий период';
+
+  @override
+  String get trafficHistoryNext => 'Следующий период';
+
+  @override
+  String get trafficHistoryClear => 'Очистить историю';
+
+  @override
+  String get trafficHistoryClearConfirm =>
+      'Удалить с этого устройства весь записанный трафик, рейтинг и время работы?';
+
+  @override
+  String get trafficHistoryEmpty => 'За этот период трафик не записан';
+
+  @override
+  String get trafficHistoryDetailsEmpty =>
+      'За этот период нет сведений о соединениях';
+
+  @override
+  String get trafficHistoryRecording => 'Записывать историю трафика';
+
+  @override
+  String get trafficHistoryRecordingNote =>
+      'Трафик записывается, пока FlowCat открыт и работает. Сведения о соединениях собираются выборочно. История хранится 90 дней на этом устройстве.';
+
+  @override
+  String get trafficHistoryStorageError =>
+      'Не удалось получить доступ к истории трафика.';
+
+  @override
+  String get trafficHistoryOverview => 'Обзор трафика';
+
+  @override
+  String get trafficHistoryRefresh => 'Обновить';
+
+  @override
+  String get trafficHistoryNode => 'Узел';
+
+  @override
   String get networkSpeed => 'Скорость сети';
 
   @override

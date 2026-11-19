@@ -45,6 +45,70 @@ class AppLocalizationsEs extends AppLocalizations {
   String get trafficUsage => 'Uso de tráfico';
 
   @override
+  String get trafficHistoryDay => 'Día';
+
+  @override
+  String get trafficHistoryWeek => 'Semana';
+
+  @override
+  String get trafficHistoryMonth => 'Mes';
+
+  @override
+  String get trafficHistoryRuntime => 'Tiempo registrado';
+
+  @override
+  String get trafficHistoryProxy => 'Proxy';
+
+  @override
+  String get trafficHistoryRuleHits => 'Coincidencias de reglas';
+
+  @override
+  String get trafficHistoryRankings => 'Clasificación de tráfico';
+
+  @override
+  String get trafficHistoryTrend => 'Tendencia de tráfico';
+
+  @override
+  String get trafficHistoryPrevious => 'Período anterior';
+
+  @override
+  String get trafficHistoryNext => 'Período siguiente';
+
+  @override
+  String get trafficHistoryClear => 'Borrar historial';
+
+  @override
+  String get trafficHistoryClearConfirm =>
+      '¿Borrar de este dispositivo todo el tráfico, las clasificaciones y el tiempo registrados?';
+
+  @override
+  String get trafficHistoryEmpty => 'No hay tráfico registrado en este período';
+
+  @override
+  String get trafficHistoryDetailsEmpty =>
+      'No hay datos de conexión en este período';
+
+  @override
+  String get trafficHistoryRecording => 'Registrar historial de tráfico';
+
+  @override
+  String get trafficHistoryRecordingNote =>
+      'Registra tráfico mientras FlowCat está visible y en ejecución. Los datos de conexión se muestrean. El historial se guarda 90 días en este dispositivo.';
+
+  @override
+  String get trafficHistoryStorageError =>
+      'No se pudo acceder al historial de tráfico.';
+
+  @override
+  String get trafficHistoryOverview => 'Resumen de tráfico';
+
+  @override
+  String get trafficHistoryRefresh => 'Actualizar';
+
+  @override
+  String get trafficHistoryNode => 'Nodo';
+
+  @override
   String get networkSpeed => 'Velocidad de red';
 
   @override

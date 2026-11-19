@@ -180,6 +180,126 @@ abstract class AppLocalizations {
   /// **'Traffic usage'**
   String get trafficUsage;
 
+  /// No description provided for @trafficHistoryDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get trafficHistoryDay;
+
+  /// No description provided for @trafficHistoryWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get trafficHistoryWeek;
+
+  /// No description provided for @trafficHistoryMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get trafficHistoryMonth;
+
+  /// No description provided for @trafficHistoryRuntime.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded runtime'**
+  String get trafficHistoryRuntime;
+
+  /// No description provided for @trafficHistoryProxy.
+  ///
+  /// In en, this message translates to:
+  /// **'Proxy'**
+  String get trafficHistoryProxy;
+
+  /// No description provided for @trafficHistoryRuleHits.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule hits'**
+  String get trafficHistoryRuleHits;
+
+  /// No description provided for @trafficHistoryRankings.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic ranking'**
+  String get trafficHistoryRankings;
+
+  /// No description provided for @trafficHistoryTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic trend'**
+  String get trafficHistoryTrend;
+
+  /// No description provided for @trafficHistoryPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous period'**
+  String get trafficHistoryPrevious;
+
+  /// No description provided for @trafficHistoryNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next period'**
+  String get trafficHistoryNext;
+
+  /// No description provided for @trafficHistoryClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear history'**
+  String get trafficHistoryClear;
+
+  /// No description provided for @trafficHistoryClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all recorded traffic, rankings, and runtime from this device?'**
+  String get trafficHistoryClearConfirm;
+
+  /// No description provided for @trafficHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recorded traffic for this period'**
+  String get trafficHistoryEmpty;
+
+  /// No description provided for @trafficHistoryDetailsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection details for this period'**
+  String get trafficHistoryDetailsEmpty;
+
+  /// No description provided for @trafficHistoryRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Record traffic history'**
+  String get trafficHistoryRecording;
+
+  /// No description provided for @trafficHistoryRecordingNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Records traffic while FlowCat is visible and running. Connection details are sampled. History stays on this device for 90 days.'**
+  String get trafficHistoryRecordingNote;
+
+  /// No description provided for @trafficHistoryStorageError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not access traffic history.'**
+  String get trafficHistoryStorageError;
+
+  /// No description provided for @trafficHistoryOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic overview'**
+  String get trafficHistoryOverview;
+
+  /// No description provided for @trafficHistoryRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get trafficHistoryRefresh;
+
+  /// No description provided for @trafficHistoryNode.
+  ///
+  /// In en, this message translates to:
+  /// **'Node'**
+  String get trafficHistoryNode;
+
   /// No description provided for @networkSpeed.
   ///
   /// In en, this message translates to:

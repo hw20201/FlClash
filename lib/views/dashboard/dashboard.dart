@@ -4,6 +4,7 @@ import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/views/traffic_history.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
@@ -66,6 +67,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       _editing = false;
     }
     final editing = _editing;
+    final hasTrafficCard = ref.watch(
+      appSettingProvider.select(
+        (state) =>
+            state.dashboardWidgets.contains(DashboardWidget.trafficHistory),
+      ),
+    );
     final gap = cardSpacingOf(context, ref.watch(viewModeProvider));
     final appLocalizations = context.appLocalizations;
     // The bar folds its icon actions by the number of status actions, shown or not.
@@ -87,6 +94,12 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             )
           : null,
       iconActions: [
+        if (!editing && (!editable || !hasTrafficCard))
+          IconButtonData(
+            glyph: AppGlyphs.dataUsage,
+            tooltip: appLocalizations.trafficUsage,
+            onPressed: () => openTrafficHistory(context),
+          ),
         if (editable && !editing)
           IconButtonData(
             glyph: AppGlyphs.edit,

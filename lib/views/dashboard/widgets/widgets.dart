@@ -10,4 +10,5 @@ export 'proxy_groups.dart';
 export 'service_faults.dart';
 export 'service_status.dart';
 export 'traffic.dart';
+export 'traffic_history.dart';
 export 'live_status.dart';

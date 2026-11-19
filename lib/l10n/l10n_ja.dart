@@ -45,6 +45,68 @@ class AppLocalizationsJa extends AppLocalizations {
   String get trafficUsage => 'トラフィック統計';
 
   @override
+  String get trafficHistoryDay => '日';
+
+  @override
+  String get trafficHistoryWeek => '週';
+
+  @override
+  String get trafficHistoryMonth => '月';
+
+  @override
+  String get trafficHistoryRuntime => '記録した稼働時間';
+
+  @override
+  String get trafficHistoryProxy => 'プロキシ';
+
+  @override
+  String get trafficHistoryRuleHits => 'ルールの一致';
+
+  @override
+  String get trafficHistoryRankings => 'トラフィック順位';
+
+  @override
+  String get trafficHistoryTrend => 'トラフィックの推移';
+
+  @override
+  String get trafficHistoryPrevious => '前の期間';
+
+  @override
+  String get trafficHistoryNext => '次の期間';
+
+  @override
+  String get trafficHistoryClear => '履歴を消去';
+
+  @override
+  String get trafficHistoryClearConfirm =>
+      'この端末に記録されたトラフィック、順位、稼働時間をすべて消去しますか？';
+
+  @override
+  String get trafficHistoryEmpty => 'この期間のトラフィック記録はありません';
+
+  @override
+  String get trafficHistoryDetailsEmpty => 'この期間の接続データはありません';
+
+  @override
+  String get trafficHistoryRecording => 'トラフィック履歴を記録';
+
+  @override
+  String get trafficHistoryRecordingNote =>
+      'FlowCat が前面で動作している間に記録します。接続データはサンプリングされます。履歴はこの端末に90日間保存されます。';
+
+  @override
+  String get trafficHistoryStorageError => 'トラフィック履歴にアクセスできませんでした。';
+
+  @override
+  String get trafficHistoryOverview => 'トラフィックの概要';
+
+  @override
+  String get trafficHistoryRefresh => '更新';
+
+  @override
+  String get trafficHistoryNode => 'ノード';
+
+  @override
   String get networkSpeed => 'ネットワーク速度';
 
   @override

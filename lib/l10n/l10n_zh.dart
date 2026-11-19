@@ -45,6 +45,67 @@ class AppLocalizationsZh extends AppLocalizations {
   String get trafficUsage => '流量统计';
 
   @override
+  String get trafficHistoryDay => '日';
+
+  @override
+  String get trafficHistoryWeek => '周';
+
+  @override
+  String get trafficHistoryMonth => '月';
+
+  @override
+  String get trafficHistoryRuntime => '累计运行';
+
+  @override
+  String get trafficHistoryProxy => '代理';
+
+  @override
+  String get trafficHistoryRuleHits => '规则命中';
+
+  @override
+  String get trafficHistoryRankings => '流量排行';
+
+  @override
+  String get trafficHistoryTrend => '流量趋势';
+
+  @override
+  String get trafficHistoryPrevious => '上一区间';
+
+  @override
+  String get trafficHistoryNext => '下一区间';
+
+  @override
+  String get trafficHistoryClear => '清空记录';
+
+  @override
+  String get trafficHistoryClearConfirm => '要清空此设备上保存的流量、排行和运行时长吗？';
+
+  @override
+  String get trafficHistoryEmpty => '此区间暂无流量记录';
+
+  @override
+  String get trafficHistoryDetailsEmpty => '此区间暂无连接明细';
+
+  @override
+  String get trafficHistoryRecording => '记录流量历史';
+
+  @override
+  String get trafficHistoryRecordingNote =>
+      'FlowCat 在前台运行时记录流量，连接明细按采样统计。数据仅保留在此设备上，保存 90 天。';
+
+  @override
+  String get trafficHistoryStorageError => '无法读写流量记录。';
+
+  @override
+  String get trafficHistoryOverview => '流量概括';
+
+  @override
+  String get trafficHistoryRefresh => '刷新';
+
+  @override
+  String get trafficHistoryNode => '节点';
+
+  @override
   String get networkSpeed => '网络速度';
 
   @override
