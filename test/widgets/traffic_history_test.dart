@@ -7,6 +7,7 @@ import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart' show Card;
 import 'package:fl_clash/views/traffic_history.dart';
 import 'package:fl_clash/widgets/traffic_share_gauge.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
