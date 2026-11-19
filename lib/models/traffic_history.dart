@@ -141,6 +141,15 @@ class TrafficHistorySnapshot {
   int get proxyTotal => proxyUpload + proxyDownload;
   int get directTotal => total - proxyTotal;
   int get ruleHits => days.fold(0, (sum, day) => sum + day.ruleHits);
+  int get aggregatedRuleHits {
+    var total = 0;
+    for (final day in days) {
+      for (final rule in day.rules.values) {
+        total += rule.hits;
+      }
+    }
+    return total;
+  }
   Duration get runtime =>
       Duration(milliseconds: days.fold(0, (sum, day) => sum + day.runtimeMs));
 

@@ -201,6 +201,12 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
                               _run(() => store.setRecording(value)),
                         )
                       else ...[
+                        _RecordingControl(
+                          recording: store.recording,
+                          onChanged: (value) =>
+                              _run(() => store.setRecording(value)),
+                        ),
+                        const SizedBox(height: 12),
                         _OverviewCard(snapshot: snapshot),
                         const SizedBox(height: 12),
                         _TrafficChart(snapshot: snapshot, period: _period),
@@ -208,12 +214,6 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
                         _RuleHitSection(snapshot: snapshot),
                         const SizedBox(height: 20),
                         _RankingsSection(snapshot: snapshot),
-                        const SizedBox(height: 20),
-                        _RecordingControl(
-                          recording: store.recording,
-                          onChanged: (value) =>
-                              _run(() => store.setRecording(value)),
-                        ),
                       ],
                     ],
                   ],
@@ -524,17 +524,15 @@ class _SplitValue extends StatelessWidget {
           decoration: ShapeDecoration(color: color, shape: AppShape.full),
           child: const SizedBox.square(dimension: 7),
         ),
-        Expanded(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.footnote
-                .of(context)
-                .copyWith(color: context.colorScheme.onSurfaceVariant),
-          ),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyle.footnote
+              .of(context)
+              .copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
-        Flexible(
+        Expanded(
           child: Text(
             value,
             maxLines: 1,
@@ -558,6 +556,10 @@ class _TrafficChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.appLocalizations;
     final points = snapshot.points(hourly: period == TrafficHistoryPeriod.day);
+    final maxValue = points.fold<int>(
+      0,
+      (value, point) => math.max(value, point.upload + point.download),
+    );
     return Card(
       shape: AppShape.xl,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -569,11 +571,24 @@ class _TrafficChart extends StatelessWidget {
             padding: EdgeInsets.zero,
           ),
           const SizedBox(height: 8),
+          if (maxValue > 0) ...[
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: Text(
+                maxValue.traffic.show,
+                style: AppTextStyle.caption2
+                    .of(context)
+                    .copyWith(color: context.colorScheme.onSurfaceVariant),
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
           SizedBox(
             height: 142,
             child: _TrafficBars(
               points: points,
               hourly: period == TrafficHistoryPeriod.day,
+              maxValue: maxValue,
             ),
           ),
           const SizedBox(height: 6),
@@ -598,28 +613,29 @@ class _TrafficChart extends StatelessWidget {
 }
 
 class _TrafficBars extends StatelessWidget {
-  const _TrafficBars({required this.points, required this.hourly});
+  const _TrafficBars({
+    required this.points,
+    required this.hourly,
+    required this.maxValue,
+  });
 
   final List<TrafficPoint> points;
   final bool hourly;
+  final int maxValue;
 
   @override
   Widget build(BuildContext context) {
-    final maxValue = points.fold<int>(
-      0,
-      (value, point) => math.max(value, point.upload + point.download),
-    );
     final labelIndexes = hourly
-        ? const [0, 6, 12, 18]
+        ? const {0, 6, 12, 18}
         : points.length <= 7
-        ? List.generate(points.length, (index) => index)
+        ? {for (var index = 0; index < points.length; index++) index}
         : {
             0,
             points.length ~/ 4,
             points.length ~/ 2,
             points.length * 3 ~/ 4,
             points.length - 1,
-          }.toList();
+          };
     return Column(
       children: [
         Expanded(
@@ -639,17 +655,19 @@ class _TrafficBars extends StatelessWidget {
         const SizedBox(height: 6),
         Row(
           children: [
-            for (final index in labelIndexes)
+            for (var index = 0; index < points.length; index++)
               Expanded(
-                child: Text(
-                  points[index].label,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.clip,
-                  style: AppTextStyle.caption2
-                      .of(context)
-                      .copyWith(color: context.colorScheme.onSurfaceVariant),
-                ),
+                child: labelIndexes.contains(index)
+                    ? Text(
+                        points[index].label,
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        style: AppTextStyle.caption2.of(context).copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
           ],
         ),
@@ -670,32 +688,40 @@ class _TrafficBar extends StatelessWidget {
     final height = maxValue == 0 ? 0.0 : 122 * total / maxValue;
     final downloadHeight = total == 0 ? 0.0 : height * point.download / total;
     final uploadHeight = height - downloadHeight;
-    return Tooltip(
-      message:
-          '${point.label}: ${point.download.traffic.show} ↓ · ${point.upload.traffic.show} ↑',
-      child: Semantics(
-        label:
-            '${point.label}, ${context.appLocalizations.download} ${point.download.traffic.show}, ${context.appLocalizations.upload} ${point.upload.traffic.show}',
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            if (uploadHeight > 0)
-              Container(
-                height: uploadHeight.clamp(2.0, 122.0),
-                decoration: ShapeDecoration(
-                  color: context.colorScheme.primary.withValues(alpha: 0.45),
-                  shape: AppShape.full,
-                ),
-              ),
-            if (downloadHeight > 0)
-              Container(
-                height: downloadHeight.clamp(2.0, 122.0),
-                decoration: ShapeDecoration(
-                  color: context.colorScheme.primary,
-                  shape: AppShape.full,
-                ),
-              ),
-          ],
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 28),
+        child: Tooltip(
+          message:
+              '${point.label}: ${point.download.traffic.show} ↓ · ${point.upload.traffic.show} ↑',
+          child: Semantics(
+            label:
+                '${point.label}, ${context.appLocalizations.download} ${point.download.traffic.show}, ${context.appLocalizations.upload} ${point.upload.traffic.show}',
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (uploadHeight > 0)
+                  Container(
+                    height: uploadHeight.clamp(4.0, 122.0),
+                    decoration: ShapeDecoration(
+                      color: context.colorScheme.primary.withValues(
+                        alpha: 0.45,
+                      ),
+                      shape: AppShape.full,
+                    ),
+                  ),
+                if (downloadHeight > 0)
+                  Container(
+                    height: downloadHeight.clamp(2.0, 122.0),
+                    decoration: ShapeDecoration(
+                      color: context.colorScheme.primary,
+                      shape: AppShape.full,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -768,7 +794,7 @@ class _RuleHitSection extends StatelessWidget {
                         Expanded(
                           child: _RuleHitCard(
                             rank: rule,
-                            totalHits: snapshot.ruleHits,
+                            totalHits: snapshot.aggregatedRuleHits,
                             maxHits: maxHits,
                           ),
                         ),

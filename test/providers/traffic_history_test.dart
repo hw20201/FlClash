@@ -87,8 +87,105 @@ void main() {
     expect(day().runtime, const Duration(seconds: 15));
     now = now.add(const Duration(minutes: 2));
     sample(20000, 60000);
-    expect(day().total, 740);
+    expect(day().total, 20740);
     expect(day().runtime, const Duration(seconds: 15));
+  });
+
+  test('a paused capture attributes the gap delta without its runtime',
+      () async {
+    await store.setRecording(true);
+    sample(100, 200);
+    now = now.add(const Duration(seconds: 5));
+    sample(150, 300);
+    expect(day().total, 150);
+    expect(day().runtime, const Duration(seconds: 5));
+
+    store.pauseCapture();
+    now = now.add(const Duration(minutes: 10));
+    sample(1000, 2000);
+    expect(day().total, 2700);
+    expect(day().runtime, const Duration(seconds: 5));
+    expect(day().points(hourly: true)[10].download, 1800);
+
+    now = now.add(const Duration(seconds: 5));
+    sample(1100, 2200);
+    expect(day().total, 3000);
+    expect(day().runtime, const Duration(seconds: 10));
+  });
+
+  test('disabling recording resets the baseline', () async {
+    await store.setRecording(true);
+    sample(100, 200);
+    now = now.add(const Duration(seconds: 5));
+    sample(150, 300);
+    expect(day().total, 150);
+
+    await store.setRecording(false);
+    now = now.add(const Duration(minutes: 10));
+    sample(1000, 2000);
+    expect(day().total, 150);
+
+    await store.setRecording(true);
+    sample(1000, 2000);
+    expect(day().total, 150);
+    now = now.add(const Duration(seconds: 5));
+    sample(1100, 2200);
+    expect(day().total, 450);
+    expect(day().runtime, const Duration(seconds: 10));
+  });
+
+  test('rule hit percentages sum to one hundred for a multi-day snapshot', () {
+    final first = TrafficDay('2026-11-19')
+      ..ruleHits = 8
+      ..rules['RuleSet(cn_ip)'] = const TrafficRank(
+        name: 'RuleSet(cn_ip)',
+        upload: 0,
+        download: 20000,
+        hits: 5,
+      )
+      ..rules['Match'] = const TrafficRank(
+        name: 'Match',
+        upload: 0,
+        download: 1000,
+        hits: 2,
+      )
+      ..rules['RuleSet(telegram_ip)'] = const TrafficRank(
+        name: 'RuleSet(telegram_ip)',
+        upload: 0,
+        download: 2700,
+        hits: 1,
+      );
+    final second = TrafficDay('2026-11-20')
+      ..ruleHits = 4
+      ..rules['RuleSet(cn_ip)'] = const TrafficRank(
+        name: 'RuleSet(cn_ip)',
+        upload: 0,
+        download: 9100,
+        hits: 4,
+      )
+      ..rules['Match'] = const TrafficRank(
+        name: 'Match',
+        upload: 0,
+        download: 800,
+        hits: 2,
+      );
+    final snapshot = TrafficHistorySnapshot(
+      start: DateTime.utc(2026, 11, 16),
+      end: DateTime.utc(2026, 11, 20),
+      days: [first, second],
+    );
+    final ranks = snapshot.ranks('rule', byHits: true);
+    expect(snapshot.aggregatedRuleHits, 14);
+    expect(snapshot.ruleHits, 12);
+    expect(
+      ranks.fold<int>(0, (sum, rank) => sum + rank.hits),
+      snapshot.aggregatedRuleHits,
+    );
+    final percentage = ranks.fold<double>(
+      0,
+      (sum, rank) => sum + rank.hits * 100 / snapshot.aggregatedRuleHits,
+    );
+    expect(percentage, closeTo(100, 0.001));
   });
 
   test(

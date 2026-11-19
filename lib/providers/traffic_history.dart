@@ -190,9 +190,13 @@ class TrafficHistoryStore extends ChangeNotifier {
     }
   }
 
-  void endCapture() {
-    _samples.clear();
+  void pauseCapture() {
     _connections.clear();
+  }
+
+  void endCapture() {
+    pauseCapture();
+    _samples.clear();
   }
 
   void recordSample(TrafficSample sample, {required bool onlyProxy}) {
@@ -203,18 +207,23 @@ class TrafficHistoryStore extends ChangeNotifier {
     if (previous == null) return;
     final (before, at) = previous;
     final elapsed = now.difference(at);
-    if (elapsed <= Duration.zero || elapsed > _maxSampleGap) return;
+    if (elapsed <= Duration.zero) return;
     final up = sample.totalUp - before.totalUp;
     final down = sample.totalDown - before.totalDown;
-    if (onlyProxy && (up < 0 || down < 0 || (up == 0 && down == 0))) return;
-    final day = _day(now);
     if (onlyProxy) {
+      if (up < 0 || down < 0 || (up == 0 && down == 0)) return;
+      final day = _day(now);
       day.proxyUpload += up;
       day.proxyDownload += down;
-    } else {
-      if (up >= 0 && down >= 0 && up + down > 0) {
-        day.addTotals(now.hour, up, down);
-      }
+      _changed(day);
+      return;
+    }
+    final gap = elapsed > _maxSampleGap;
+    final day = _day(now);
+    if (up >= 0 && down >= 0 && up + down > 0) {
+      day.addTotals(now.hour, up, down);
+    }
+    if (!gap) {
       final dayStart = DateTime(now.year, now.month, now.day);
       if (at.isBefore(dayStart)) {
         final previousDay = _day(at);

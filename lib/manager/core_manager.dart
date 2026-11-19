@@ -211,7 +211,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void _stopHistory() {
     if (!_recordingHistory) return;
     _recordingHistory = false;
-    _history.endCapture();
+    _history.pauseCapture();
     unawaited(_feeds.remove('history-total')?.cancel());
     unawaited(_feeds.remove('history-proxy')?.cancel());
     _demand.release();
