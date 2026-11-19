@@ -22,6 +22,11 @@ val hasReleaseSigning = releaseStoreFile.exists() &&
     releaseKeyAlias != null &&
     releaseKeyPassword != null
 
+// CI writes a fixed debug keystore here so every debug build shares one
+// signature; the passwords are the public standard Android debug ones.
+val debugStoreFile = file("debug.keystore")
+val hasDebugSigning = debugStoreFile.exists()
+
 android {
     namespace = "com.follow.clash"
     compileSdk = libs.versions.compileSdk.get().toInt()
@@ -47,6 +52,14 @@ android {
                 storePassword = releaseStorePassword
                 keyAlias = releaseKeyAlias
                 keyPassword = releaseKeyPassword
+            }
+        }
+        if (hasDebugSigning) {
+            getByName("debug") {
+                storeFile = debugStoreFile
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
             }
         }
     }

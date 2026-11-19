@@ -90,15 +90,29 @@ jobs:
             echo "DEBUG_KEYSTORE secret is not set; refusing to build with a throwaway debug key" >&2
             exit 1
           fi
-          install -d -m 700 ~/.android
-          printf '%s' "$FLOWCAT_DEBUG_KEYSTORE_B64" | base64 --decode > ~/.android/debug.keystore
-          test -s ~/.android/debug.keystore
-          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep -i 'SHA256'
+          printf '%s' "$FLOWCAT_DEBUG_KEYSTORE_B64" | base64 --decode > android/app/debug.keystore
+          test -s android/app/debug.keystore
+          keytool -list -v -keystore android/app/debug.keystore -storepass android -alias androiddebugkey | grep -i 'SHA256'
 
       - name: Build debug APK
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: flutter build apk --debug --target-platform android-arm64
+
+      - name: Verify debug APK signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=build/app/outputs/flutter-apk/app-debug.apk
+          signer="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print -quit)"
+          test -x "$signer"
+          certs="$("$signer" verify --print-certs "$apk")"
+          echo "$certs"
+          fingerprint="$(echo "$certs" | tr -d ':' | tr '[:upper:]' '[:lower:]' | grep -o 'f920dad082df454664344137e8d134c4659f4dce1468c2ee896cf867a66b60e0' || true)"
+          if [[ -z "$fingerprint" ]]; then
+            echo "Debug APK is not signed with the stable debug key" >&2
+            exit 1
+          fi
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -107,6 +121,11 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Remove debug signing material
+        if: always()
+        shell: bash
+        run: rm -f android/app/debug.keystore
 
   android-release:
     runs-on: ubuntu-latest
