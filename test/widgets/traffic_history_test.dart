@@ -249,6 +249,87 @@ void main() {
     await tester.runAsync(() => dir.delete(recursive: true));
   });
 
+  testWidgets('trend bars share one width and a single solid segment', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final dir = Directory.systemTemp.createTempSync('traffic-history-widget-');
+    var now = DateTime(2026, 11, 19, 17);
+    final store = (await tester.runAsync(() async {
+      final store = TrafficHistoryStore(
+        directory: () async => dir,
+        now: () => now,
+      );
+      await store.setRecording(true);
+      return store;
+    }))!;
+    store.recordSample(
+      const TrafficSample(up: 0, down: 0, totalUp: 0, totalDown: 0),
+      onlyProxy: false,
+    );
+    now = now.add(const Duration(seconds: 5));
+    store.recordSample(
+      const TrafficSample(up: 0, down: 0, totalUp: 1000, totalDown: 306700000),
+      onlyProxy: false,
+    );
+    await tester.runAsync(store.flush);
+    final container = ProviderContainer(
+      overrides: [trafficHistoryProvider.overrideWithValue(store)],
+    );
+    globalState.container = container;
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: TrafficHistorySheet()),
+      ),
+    );
+    await tester.pump();
+    Finder barTooltip() => find.byWidgetPredicate(
+      (widget) =>
+          widget is Tooltip &&
+          widget.message != null &&
+          widget.message!.contains('↓'),
+    );
+    final widths = <double>[];
+    for (final period in ['Day', 'Week', 'Month']) {
+      if (period != 'Day') {
+        await tester.tap(find.text(period));
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      final tooltips = barTooltip();
+      expect(tooltips, findsWidgets);
+      for (var index = 0; index < tooltips.evaluate().length; index++) {
+        final bar = tooltips.at(index);
+        widths.add(tester.getSize(bar).width);
+        expect(
+          find.descendant(of: bar, matching: find.byType(Container)),
+          findsOneWidget,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    }
+    expect(widths.toSet(), {12.0});
+    final chartCard = find
+        .ancestor(of: find.text('Traffic trend'), matching: find.byType(Card))
+        .first;
+    final baseline = find.descendant(
+      of: chartCard,
+      matching: find.byWidgetPredicate(
+        (widget) => widget is SizedBox && widget.height == 1,
+      ),
+    );
+    expect(baseline, findsOneWidget);
+    expect(tester.getSize(baseline).width, greaterThan(100));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(store.flush);
+    container.dispose();
+    store.dispose();
+    await tester.runAsync(() => dir.delete(recursive: true));
+  });
+
   testWidgets('ranking shares use the attributed category total', (
     tester,
   ) async {

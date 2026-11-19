@@ -591,26 +591,14 @@ class _TrafficChart extends StatelessWidget {
               maxValue: maxValue,
             ),
           ),
-          const SizedBox(height: 6),
-          Row(
-            spacing: 16,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _LegendDot(
-                color: context.colorScheme.primary,
-                label: l10n.download,
-              ),
-              _LegendDot(
-                color: context.colorScheme.primary.withValues(alpha: 0.45),
-                label: l10n.upload,
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 }
+
+const _trafficBarWidth = 12.0;
+const _trafficBarZeroHeight = 2.0;
 
 class _TrafficBars extends StatelessWidget {
   const _TrafficBars({
@@ -647,18 +635,21 @@ class _TrafficBars extends StatelessWidget {
                 children: [
                   for (final point in points)
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 1),
-                        child: _TrafficBar(
-                          point: point,
-                          maxValue: maxValue,
-                          maxHeight: barHeight,
-                        ),
+                      child: _TrafficBar(
+                        point: point,
+                        maxValue: maxValue,
+                        maxHeight: barHeight,
                       ),
                     ),
                 ],
               );
             },
+          ),
+        ),
+        SizedBox(
+          height: 1,
+          child: ColoredBox(
+            color: context.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         ),
         const SizedBox(height: 6),
@@ -703,77 +694,31 @@ class _TrafficBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = point.upload + point.download;
     final height = maxValue == 0 || maxHeight <= 0
-        ? 0.0
-        : maxHeight * total / maxValue;
-    var uploadHeight = total == 0 ? 0.0 : height * point.upload / total;
-    if (uploadHeight > 0 && height >= 4.0 && uploadHeight < 4.0) {
-      uploadHeight = 4.0;
-    }
-    uploadHeight = uploadHeight.clamp(0.0, height);
-    final downloadHeight = height - uploadHeight;
+        ? _trafficBarZeroHeight
+        : (maxHeight * total / maxValue).clamp(
+            _trafficBarZeroHeight,
+            maxHeight,
+          );
+    final color = total == 0
+        ? context.colorScheme.primary.withValues(alpha: 0.45)
+        : context.colorScheme.primary;
     return Align(
       alignment: Alignment.bottomCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 28),
+      child: SizedBox(
+        width: _trafficBarWidth,
         child: Tooltip(
           message:
               '${point.label}: ${point.download.traffic.show} ↓ · ${point.upload.traffic.show} ↑',
           child: Semantics(
             label:
                 '${point.label}, ${context.appLocalizations.download} ${point.download.traffic.show}, ${context.appLocalizations.upload} ${point.upload.traffic.show}',
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                if (uploadHeight > 0)
-                  Container(
-                    height: uploadHeight,
-                    decoration: ShapeDecoration(
-                      color: context.colorScheme.primary.withValues(
-                        alpha: 0.45,
-                      ),
-                      shape: AppShape.full,
-                    ),
-                  ),
-                if (downloadHeight > 0)
-                  Container(
-                    height: downloadHeight,
-                    decoration: ShapeDecoration(
-                      color: context.colorScheme.primary,
-                      shape: AppShape.full,
-                    ),
-                  ),
-              ],
+            child: Container(
+              height: height,
+              decoration: ShapeDecoration(color: color, shape: AppShape.full),
             ),
           ),
         ),
       ),
-    );
-  }
-}
-
-class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 6,
-      children: [
-        DecoratedBox(
-          decoration: ShapeDecoration(color: color, shape: AppShape.full),
-          child: const SizedBox.square(dimension: 8),
-        ),
-        Text(
-          label,
-          style: AppTextStyle.caption1
-              .of(context)
-              .copyWith(color: context.colorScheme.onSurfaceVariant),
-        ),
-      ],
     );
   }
 }
