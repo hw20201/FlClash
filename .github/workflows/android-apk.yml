@@ -93,6 +93,7 @@ jobs:
           install -d -m 700 ~/.android
           printf '%s' "$FLOWCAT_DEBUG_KEYSTORE_B64" | base64 --decode > ~/.android/debug.keystore
           test -s ~/.android/debug.keystore
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey | grep -i 'SHA256'
 
       - name: Build debug APK
         env:
