@@ -648,6 +648,7 @@ class _TrafficBars extends StatelessWidget {
         ),
         SizedBox(
           height: 1,
+          width: double.infinity,
           child: ColoredBox(
             color: context.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
