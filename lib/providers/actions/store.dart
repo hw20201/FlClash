@@ -64,6 +64,9 @@ class StoreAction extends _$StoreAction {
         }
       }),
     );
+    final trafficHistory = ref.read(trafficHistoryProvider);
+    await trafficHistory.setRecording(false);
+    await trafficHistory.clear();
     await clearAppData();
     unawaited(ref.read(systemActionProvider.notifier).handleExit(false));
   }

@@ -10,6 +10,7 @@ import 'package:fl_clash/providers/config.dart';
 import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/database.dart';
 import 'package:fl_clash/providers/state.dart';
+import 'package:fl_clash/providers/traffic_history.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:prism_ui/banner.dart';
@@ -36,11 +37,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   CoreController get _core => ref.read(coreHandlerProvider);
 
   late final CounterDemand _demand = ref.read(connectionBookProvider).demand;
+  late final TrafficHistoryStore _history = ref.read(trafficHistoryProvider);
 
   final _feeds = <String, StreamSubscription<Object?>>{};
   StreamSubscription<String>? _crashes;
   bool _countersOpen = true;
   bool _away = false;
+  bool _recordingHistory = false;
 
   bool get _pausesInBackground => widget.pausesInBackground ?? system.isAndroid;
 
@@ -49,6 +52,12 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _demand.addListener(_syncConnectionCounters);
+    _history.addListener(_syncHistory);
+    ref.listenManual(appVisibleProvider, (_, _) => _syncHistory());
+    ref.listenManual(
+      runTimeProvider.select((value) => value != null),
+      (_, _) => _syncHistory(),
+    );
     _crashes = _core.crashes.listen(_onCrash);
     ref.read(updatingActionProvider.notifier);
     // A rejected profile stays selected on purpose: silently reverting to
@@ -107,6 +116,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       } else if (next != CoreStatus.connected) {
         _closeFeeds();
       }
+      _syncHistory();
     }, fireImmediately: true);
   }
 
@@ -170,6 +180,44 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }
   }
 
+  void _syncHistory() {
+    final capture =
+        _history.canCapture &&
+        !_away &&
+        ref.read(appVisibleProvider) &&
+        ref.read(runTimeProvider) != null &&
+        ref.read(coreStatusProvider) == CoreStatus.connected;
+    if (capture == _recordingHistory) return;
+    if (!capture) {
+      _stopHistory();
+      return;
+    }
+    _recordingHistory = true;
+    final countersAlreadyOpen = _demand.wanted;
+    _demand.acquire();
+    if (countersAlreadyOpen) _openConnections();
+    for (final onlyProxy in [false, true]) {
+      _feed(
+        onlyProxy ? 'history-proxy' : 'history-total',
+        _core.api.watchTraffic(
+          intervalMs: TrafficHistoryStore.sampleInterval.inMilliseconds,
+          onlyProxy: onlyProxy,
+        ),
+        (sample) => _history.recordSample(sample, onlyProxy: onlyProxy),
+      );
+    }
+  }
+
+  void _stopHistory() {
+    if (!_recordingHistory) return;
+    _recordingHistory = false;
+    _history.endCapture();
+    unawaited(_feeds.remove('history-total')?.cancel());
+    unawaited(_feeds.remove('history-proxy')?.cancel());
+    _demand.release();
+    _history.flushQuietly();
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final away =
@@ -185,6 +233,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     } else {
       _feeds['connections']?.resume();
     }
+    _syncHistory();
   }
 
   void _closeFeeds() {
@@ -211,6 +260,8 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _demand.removeListener(_syncConnectionCounters);
+    _history.removeListener(_syncHistory);
+    _stopHistory();
     unawaited(_crashes?.cancel());
     _closeFeeds();
     super.dispose();
@@ -298,6 +349,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
 
   void _onConnections(ConnectionUpdate update) {
     final change = ref.read(connectionBookProvider).apply(update);
+    if (_recordingHistory) {
+      final id = _sync.profileId;
+      _history.recordConnections(
+        update,
+        profile: _sync.applying || id == null
+            ? null
+            : ref.read(profilesProvider).getProfile(id)?.realLabel,
+      );
+    }
     final requests = ref.read(requestsProvider.notifier);
     if (change.opened.isNotEmpty) {
       requests.addRequests(change.opened);
