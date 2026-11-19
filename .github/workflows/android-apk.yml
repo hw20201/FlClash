@@ -80,6 +80,20 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
         run: flutter pub get
 
+      - name: Install stable debug keystore
+        env:
+          FLOWCAT_DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${FLOWCAT_DEBUG_KEYSTORE_B64:-}" ]]; then
+            echo "DEBUG_KEYSTORE secret is not set; refusing to build with a throwaway debug key" >&2
+            exit 1
+          fi
+          install -d -m 700 ~/.android
+          printf '%s' "$FLOWCAT_DEBUG_KEYSTORE_B64" | base64 --decode > ~/.android/debug.keystore
+          test -s ~/.android/debug.keystore
+
       - name: Build debug APK
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
