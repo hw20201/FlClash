@@ -30,7 +30,6 @@ class TrafficHistoryStore extends ChangeNotifier {
   }
 
   static const sampleInterval = Duration(seconds: 5);
-  static const _maxSampleGap = Duration(seconds: 15);
   static const _flushInterval = Duration(seconds: 30);
   static const _visibleInterval = Duration(seconds: 2);
   static final _dayFile = RegExp(r'^(\d{4}-\d{2}-\d{2})\.json$');
@@ -218,12 +217,11 @@ class TrafficHistoryStore extends ChangeNotifier {
       _changed(day);
       return;
     }
-    final gap = elapsed > _maxSampleGap;
     final day = _day(now);
     if (up >= 0 && down >= 0 && up + down > 0) {
       day.addTotals(now.hour, up, down);
     }
-    if (!gap) {
+    if (up >= 0 && down >= 0) {
       final dayStart = DateTime(now.year, now.month, now.day);
       if (at.isBefore(dayStart)) {
         final previousDay = _day(at);

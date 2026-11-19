@@ -639,17 +639,26 @@ class _TrafficBars extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (final point in points)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 1),
-                    child: _TrafficBar(point: point, maxValue: maxValue),
-                  ),
-                ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final barHeight = constraints.maxHeight;
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (final point in points)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 1),
+                        child: _TrafficBar(
+                          point: point,
+                          maxValue: maxValue,
+                          maxHeight: barHeight,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: 6),
@@ -662,7 +671,8 @@ class _TrafficBars extends StatelessWidget {
                         points[index].label,
                         textAlign: TextAlign.center,
                         maxLines: 1,
-                        overflow: TextOverflow.clip,
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
                         style: AppTextStyle.caption2
                             .of(context)
                             .copyWith(
@@ -679,17 +689,28 @@ class _TrafficBars extends StatelessWidget {
 }
 
 class _TrafficBar extends StatelessWidget {
-  const _TrafficBar({required this.point, required this.maxValue});
+  const _TrafficBar({
+    required this.point,
+    required this.maxValue,
+    required this.maxHeight,
+  });
 
   final TrafficPoint point;
   final int maxValue;
+  final double maxHeight;
 
   @override
   Widget build(BuildContext context) {
     final total = point.upload + point.download;
-    final height = maxValue == 0 ? 0.0 : 122 * total / maxValue;
-    final downloadHeight = total == 0 ? 0.0 : height * point.download / total;
-    final uploadHeight = height - downloadHeight;
+    final height = maxValue == 0 || maxHeight <= 0
+        ? 0.0
+        : maxHeight * total / maxValue;
+    var uploadHeight = total == 0 ? 0.0 : height * point.upload / total;
+    if (uploadHeight > 0 && height >= 4.0 && uploadHeight < 4.0) {
+      uploadHeight = 4.0;
+    }
+    uploadHeight = uploadHeight.clamp(0.0, height);
+    final downloadHeight = height - uploadHeight;
     return Align(
       alignment: Alignment.bottomCenter,
       child: ConstrainedBox(
@@ -705,7 +726,7 @@ class _TrafficBar extends StatelessWidget {
               children: [
                 if (uploadHeight > 0)
                   Container(
-                    height: uploadHeight.clamp(4.0, 122.0),
+                    height: uploadHeight,
                     decoration: ShapeDecoration(
                       color: context.colorScheme.primary.withValues(
                         alpha: 0.45,
@@ -715,7 +736,7 @@ class _TrafficBar extends StatelessWidget {
                   ),
                 if (downloadHeight > 0)
                   Container(
-                    height: downloadHeight.clamp(2.0, 122.0),
+                    height: downloadHeight,
                     decoration: ShapeDecoration(
                       color: context.colorScheme.primary,
                       shape: AppShape.full,
@@ -938,6 +959,7 @@ class _RankingsSectionState extends State<_RankingsSection> {
       'profile': l10n.profiles,
     };
     final ranks = widget.snapshot.ranks(_category, limit: 10);
+    final attributedTotal = widget.snapshot.attributedTotal(_category);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -969,7 +991,7 @@ class _RankingsSectionState extends State<_RankingsSection> {
                 for (final (index, rank) in ranks.indexed)
                   _RankRow(
                     rank: rank,
-                    total: widget.snapshot.total,
+                    total: attributedTotal,
                     showDivider: index + 1 < ranks.length,
                   ),
               ],

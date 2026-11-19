@@ -193,4 +193,147 @@ void main() {
     store.dispose();
     await tester.runAsync(() => dir.delete(recursive: true));
   });
+
+  testWidgets('dominant chart point never overflows in any period', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final dir = Directory.systemTemp.createTempSync('traffic-history-widget-');
+    var now = DateTime(2026, 11, 19, 17);
+    final store = (await tester.runAsync(() async {
+      final store = TrafficHistoryStore(
+        directory: () async => dir,
+        now: () => now,
+      );
+      await store.setRecording(true);
+      return store;
+    }))!;
+    store.recordSample(
+      const TrafficSample(up: 0, down: 0, totalUp: 0, totalDown: 0),
+      onlyProxy: false,
+    );
+    now = now.add(const Duration(seconds: 5));
+    store.recordSample(
+      const TrafficSample(up: 0, down: 0, totalUp: 1000, totalDown: 306700000),
+      onlyProxy: false,
+    );
+    await tester.runAsync(store.flush);
+    final container = ProviderContainer(
+      overrides: [trafficHistoryProvider.overrideWithValue(store)],
+    );
+    globalState.container = container;
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: TrafficHistorySheet()),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Traffic overview'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Week'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Month'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('11/1'), findsOneWidget);
+    expect(find.text('11/19'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(store.flush);
+    container.dispose();
+    store.dispose();
+    await tester.runAsync(() => dir.delete(recursive: true));
+  });
+
+  testWidgets('ranking shares use the attributed category total', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final dir = Directory.systemTemp.createTempSync('traffic-history-widget-');
+    var now = DateTime(2026, 11, 19, 17);
+    final store = (await tester.runAsync(() async {
+      final store = TrafficHistoryStore(
+        directory: () async => dir,
+        now: () => now,
+      );
+      await store.setRecording(true);
+      return store;
+    }))!;
+    store.recordSample(
+      const TrafficSample(up: 0, down: 0, totalUp: 0, totalDown: 0),
+      onlyProxy: false,
+    );
+    now = now.add(const Duration(seconds: 5));
+    store.recordSample(
+      const TrafficSample(up: 0, down: 0, totalUp: 1000, totalDown: 306700000),
+      onlyProxy: false,
+    );
+    store.recordConnections(
+      ConnectionsChanged(
+        ConnectionDelta(
+          opened: [
+            ConnectionInfo(
+              id: 1,
+              start: 1,
+              network: 'tcp',
+              sourceIp: '127.0.0.1',
+              sourcePort: 1001,
+              destinationPort: 443,
+              host: 'a.example',
+              inboundType: 'mixed',
+              chains: const [],
+              rule: 'RuleSet',
+              rulePayload: 'video',
+              upload: 0,
+              download: 20000,
+            ),
+            ConnectionInfo(
+              id: 2,
+              start: 1,
+              network: 'tcp',
+              sourceIp: '127.0.0.1',
+              sourcePort: 1002,
+              destinationPort: 443,
+              host: 'b.example',
+              inboundType: 'mixed',
+              chains: const [],
+              rule: 'GeoIP',
+              rulePayload: 'CN',
+              upload: 0,
+              download: 10000,
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.runAsync(store.flush);
+    final container = ProviderContainer(
+      overrides: [trafficHistoryProvider.overrideWithValue(store)],
+    );
+    globalState.container = container;
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const TestApp(child: TrafficHistorySheet()),
+      ),
+    );
+    await tester.pump();
+    final scroll = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(find.text('67%'), 200, scrollable: scroll);
+    expect(find.text('67%'), findsOneWidget);
+    expect(find.text('33%'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(store.flush);
+    container.dispose();
+    store.dispose();
+    await tester.runAsync(() => dir.delete(recursive: true));
+  });
 }

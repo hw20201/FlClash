@@ -151,6 +151,22 @@ class TrafficHistorySnapshot {
     return total;
   }
 
+  int attributedTotal(String category) {
+    var total = 0;
+    for (final day in days) {
+      final items = switch (category) {
+        'node' => day.nodes,
+        'rule' => day.rules,
+        'profile' => day.profiles,
+        _ => day.domains,
+      };
+      for (final item in items.values) {
+        total += item.total;
+      }
+    }
+    return total;
+  }
+
   Duration get runtime =>
       Duration(milliseconds: days.fold(0, (sum, day) => sum + day.runtimeMs));
 

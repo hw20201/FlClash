@@ -84,36 +84,33 @@ void main() {
     now = now.add(const Duration(hours: 2));
     sample(10000, 50000);
     expect(day().total, 740);
-    expect(day().runtime, const Duration(seconds: 15));
+    expect(day().runtime, const Duration(seconds: 10));
     now = now.add(const Duration(minutes: 2));
     sample(20000, 60000);
     expect(day().total, 20740);
-    expect(day().runtime, const Duration(seconds: 15));
+    expect(day().runtime, const Duration(minutes: 2, seconds: 10));
   });
 
-  test(
-    'a paused capture attributes the gap delta without its runtime',
-    () async {
-      await store.setRecording(true);
-      sample(100, 200);
-      now = now.add(const Duration(seconds: 5));
-      sample(150, 300);
-      expect(day().total, 150);
-      expect(day().runtime, const Duration(seconds: 5));
+  test('a paused capture attributes the gap delta and its runtime', () async {
+    await store.setRecording(true);
+    sample(100, 200);
+    now = now.add(const Duration(seconds: 5));
+    sample(150, 300);
+    expect(day().total, 150);
+    expect(day().runtime, const Duration(seconds: 5));
 
-      store.pauseCapture();
-      now = now.add(const Duration(minutes: 10));
-      sample(1000, 2000);
-      expect(day().total, 2700);
-      expect(day().runtime, const Duration(seconds: 5));
-      expect(day().points(hourly: true)[10].download, 1800);
+    store.pauseCapture();
+    now = now.add(const Duration(minutes: 10));
+    sample(1000, 2000);
+    expect(day().total, 2700);
+    expect(day().runtime, const Duration(minutes: 10, seconds: 5));
+    expect(day().points(hourly: true)[10].download, 1800);
 
-      now = now.add(const Duration(seconds: 5));
-      sample(1100, 2200);
-      expect(day().total, 3000);
-      expect(day().runtime, const Duration(seconds: 10));
-    },
-  );
+    now = now.add(const Duration(seconds: 5));
+    sample(1100, 2200);
+    expect(day().total, 3000);
+    expect(day().runtime, const Duration(minutes: 10, seconds: 10));
+  });
 
   test('disabling recording resets the baseline', () async {
     await store.setRecording(true);
@@ -188,6 +185,47 @@ void main() {
       (sum, rank) => sum + rank.hits * 100 / snapshot.aggregatedRuleHits,
     );
     expect(percentage, closeTo(100, 0.001));
+  });
+
+  test('rank shares use the attributed category total, not the day total', () {
+    final day = TrafficDay('2026-11-19')
+      ..upload = 1000
+      ..download = 306700000
+      ..domains['a.example'] = const TrafficRank(
+        name: 'a.example',
+        upload: 0,
+        download: 20000,
+        hits: 1,
+      )
+      ..domains['b.example'] = const TrafficRank(
+        name: 'b.example',
+        upload: 0,
+        download: 10000,
+        hits: 1,
+      );
+    final snapshot = TrafficHistorySnapshot(
+      start: DateTime.utc(2026, 11, 19),
+      end: DateTime.utc(2026, 11, 19),
+      days: [day],
+    );
+    expect(snapshot.total, 306701000);
+    expect(snapshot.attributedTotal('domain'), 30000);
+    final ranks = snapshot.ranks('domain');
+    expect(ranks.map((rank) => rank.name), ['a.example', 'b.example']);
+    final shares = ranks
+        .map((rank) => rank.total / snapshot.attributedTotal('domain'))
+        .toList();
+    expect(shares, [closeTo(2 / 3, 0.001), closeTo(1 / 3, 0.001)]);
+    expect(
+      shares.fold<double>(0, (sum, share) => sum + share),
+      closeTo(1, 0.001),
+    );
+    expect(
+      ranks
+          .map((rank) => rank.total / snapshot.total)
+          .every((share) => share < 0.001),
+      isTrue,
+    );
   });
 
   test(
