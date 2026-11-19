@@ -4,10 +4,9 @@ import 'package:fl_clash/core/api/core_api.dart';
 import 'package:fl_clash/core/api/dto.dart';
 import 'package:fl_clash/providers/traffic_history.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/ui/ui.dart' show Card;
+import 'package:fl_clash/ui/ui.dart' show Card, Tooltip;
 import 'package:fl_clash/views/traffic_history.dart';
 import 'package:fl_clash/widgets/traffic_share_gauge.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -289,10 +288,7 @@ void main() {
     );
     await tester.pump();
     Finder barTooltip() => find.byWidgetPredicate(
-      (widget) =>
-          widget is Tooltip &&
-          widget.message != null &&
-          widget.message!.contains('↓'),
+      (widget) => widget is Tooltip && widget.message.contains('↓'),
     );
     final widths = <double>[];
     for (final period in ['Day', 'Week', 'Month']) {
