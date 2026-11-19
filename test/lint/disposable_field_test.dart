@@ -26,7 +26,6 @@ const _allowed = {
   // whole run.
   'lib/plugins/app.dart#floatingKeyboard',
   'lib/plugins/app.dart#_networkChanges',
-  'lib/plugins/app.dart#ownPackageIconsLoaded',
 };
 
 final _declaration = RegExp(
