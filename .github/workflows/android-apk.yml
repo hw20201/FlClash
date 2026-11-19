@@ -92,3 +92,130 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
           retention-days: 7
+
+  android-release:
+    runs-on: ubuntu-latest
+    environment: flowcat-signing
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.50.0'
+          cache: false
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r28c
+          link-to-sdk: true
+
+      - name: Install Android platform
+        run: sdkmanager 'platforms;android-37.0' 'build-tools;37.0.0'
+
+      - name: Point Flutter at the r28c NDK
+        env:
+          NDK_PATH: ${{ steps.ndk.outputs.ndk-path }}
+        run: |
+          {
+            echo "flutter.sdk=$FLUTTER_ROOT"
+            echo "sdk.dir=$ANDROID_HOME"
+            echo "ndk.dir=$NDK_PATH"
+          } > android/local.properties
+
+      - name: Install host clang and libclang for Rust bindgen
+        run: |
+          set -euo pipefail
+          library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print 2>/dev/null | sort -V | tail -n 1 || true)
+          packages=()
+          [[ -n "$library" ]] || packages+=(libclang-dev)
+          [[ -x /usr/bin/clang ]] || packages+=(clang)
+          if [[ ${#packages[@]} -gt 0 ]]; then
+            sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
+            sudo apt-get install -y "${packages[@]}"
+            library=$(find /usr/lib/llvm-*/lib -maxdepth 1 -name 'libclang.so*' -print | sort -V | tail -n 1)
+          fi
+          test -n "$library" && test -f "$library"
+          echo "LIBCLANG_PATH=$(dirname "$library")" >> "$GITHUB_ENV"
+
+      - name: Fetch pinned CA certificates
+        run: |
+          bundle=concord/assets/ca-certificates.crt
+          curl -fsSL --retry 3 -o "$bundle" "https://curl.se/ca/cacert-2026-09-25.pem"
+          echo "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505  $bundle" | sha256sum -c -
+
+      - name: Install dependencies
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: flutter pub get
+
+      - name: Configure Android release signing
+        env:
+          FLOWCAT_KEYSTORE_B64: ${{ secrets.KEYSTORE }}
+          FLOWCAT_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          FLOWCAT_STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          FLOWCAT_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in FLOWCAT_KEYSTORE_B64 FLOWCAT_KEY_ALIAS FLOWCAT_STORE_PASSWORD FLOWCAT_KEY_PASSWORD; do
+            if [[ -z "${!name:-}" ]]; then echo "Missing signing secret: $name" >&2; exit 1; fi
+          done
+          install -d -m 700 "$RUNNER_TEMP/flowcat-signing"
+          printf '%s' "$FLOWCAT_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks"
+          test -s "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks"
+          install -m 600 "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks" android/app/keystore.jks
+          {
+            printf 'storePassword=%s\n' "$FLOWCAT_STORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$FLOWCAT_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$FLOWCAT_KEY_PASSWORD"
+          } >> android/local.properties
+
+      - name: Build signed release APK
+        env:
+          ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
+        run: flutter build apk --release --target-platform android-arm64
+
+      - name: Verify APK signature
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          signer="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner -print -quit)"
+          test -x "$signer"
+          "$signer" verify --verbose "$apk"
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowcat-baseline-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove signing material
+        if: always()
+        shell: bash
+        run: |
+          rm -f android/app/keystore.jks "$RUNNER_TEMP/flowcat-signing/flowcat-release.jks"
+          if [[ -f android/local.properties ]]; then
+            sed -i '/^storePassword=/d;/^keyAlias=/d;/^keyPassword=/d' android/local.properties
+          fi
