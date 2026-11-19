@@ -91,27 +91,29 @@ void main() {
     expect(day().runtime, const Duration(seconds: 15));
   });
 
-  test('a paused capture attributes the gap delta without its runtime',
-      () async {
-    await store.setRecording(true);
-    sample(100, 200);
-    now = now.add(const Duration(seconds: 5));
-    sample(150, 300);
-    expect(day().total, 150);
-    expect(day().runtime, const Duration(seconds: 5));
+  test(
+    'a paused capture attributes the gap delta without its runtime',
+    () async {
+      await store.setRecording(true);
+      sample(100, 200);
+      now = now.add(const Duration(seconds: 5));
+      sample(150, 300);
+      expect(day().total, 150);
+      expect(day().runtime, const Duration(seconds: 5));
 
-    store.pauseCapture();
-    now = now.add(const Duration(minutes: 10));
-    sample(1000, 2000);
-    expect(day().total, 2700);
-    expect(day().runtime, const Duration(seconds: 5));
-    expect(day().points(hourly: true)[10].download, 1800);
+      store.pauseCapture();
+      now = now.add(const Duration(minutes: 10));
+      sample(1000, 2000);
+      expect(day().total, 2700);
+      expect(day().runtime, const Duration(seconds: 5));
+      expect(day().points(hourly: true)[10].download, 1800);
 
-    now = now.add(const Duration(seconds: 5));
-    sample(1100, 2200);
-    expect(day().total, 3000);
-    expect(day().runtime, const Duration(seconds: 10));
-  });
+      now = now.add(const Duration(seconds: 5));
+      sample(1100, 2200);
+      expect(day().total, 3000);
+      expect(day().runtime, const Duration(seconds: 10));
+    },
+  );
 
   test('disabling recording resets the baseline', () async {
     await store.setRecording(true);

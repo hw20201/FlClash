@@ -150,6 +150,7 @@ class TrafficHistorySnapshot {
     }
     return total;
   }
+
   Duration get runtime =>
       Duration(milliseconds: days.fold(0, (sum, day) => sum + day.runtimeMs));
 

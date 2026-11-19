@@ -663,9 +663,11 @@ class _TrafficBars extends StatelessWidget {
                         textAlign: TextAlign.center,
                         maxLines: 1,
                         overflow: TextOverflow.clip,
-                        style: AppTextStyle.caption2.of(context).copyWith(
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
+                        style: AppTextStyle.caption2
+                            .of(context)
+                            .copyWith(
+                              color: context.colorScheme.onSurfaceVariant,
+                            ),
                       )
                     : const SizedBox.shrink(),
               ),
