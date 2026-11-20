@@ -24,6 +24,30 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dashboard => 'Tableau de bord';
 
   @override
+  String get exitMap => 'Carte des sorties';
+
+  @override
+  String get exitMapYou => 'Vous';
+
+  @override
+  String get exitMapLocating => 'Localisation de votre connexion directe…';
+
+  @override
+  String get exitMapNoOrigin => 'Position indisponible · Asie de l’Est';
+
+  @override
+  String get exitMapNoTraffic => 'Aucune sortie de proxy active à afficher';
+
+  @override
+  String get exitMapTrafficHint =>
+      'L’épaisseur indique la part du trafic proxy actif';
+
+  @override
+  String exitMapUnlocated(int count) {
+    return 'Sorties non localisées : $count';
+  }
+
+  @override
   String get proxies => 'Proxys';
 
   @override

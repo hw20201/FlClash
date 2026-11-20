@@ -438,6 +438,7 @@ enum DashboardWidget {
   currentOutbound,
   networkSpeed,
   trafficHistory,
+  exitMap,
   outboundMode,
   vpnButton(platforms: [SupportPlatform.Android]),
   networkTakeover(platforms: desktopPlatforms),

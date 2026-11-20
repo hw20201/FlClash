@@ -138,6 +138,48 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get dashboard;
 
+  /// No description provided for @exitMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit map'**
+  String get exitMap;
+
+  /// No description provided for @exitMapYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get exitMapYou;
+
+  /// No description provided for @exitMapLocating.
+  ///
+  /// In en, this message translates to:
+  /// **'Locating your direct connection…'**
+  String get exitMapLocating;
+
+  /// No description provided for @exitMapNoOrigin.
+  ///
+  /// In en, this message translates to:
+  /// **'Location unavailable · East Asia view'**
+  String get exitMapNoOrigin;
+
+  /// No description provided for @exitMapNoTraffic.
+  ///
+  /// In en, this message translates to:
+  /// **'No active proxy exits to show'**
+  String get exitMapNoTraffic;
+
+  /// No description provided for @exitMapTrafficHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Line width shows the share of active proxy traffic'**
+  String get exitMapTrafficHint;
+
+  /// No description provided for @exitMapUnlocated.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocated exits: {count}'**
+  String exitMapUnlocated(int count);
+
   /// No description provided for @proxies.
   ///
   /// In en, this message translates to:

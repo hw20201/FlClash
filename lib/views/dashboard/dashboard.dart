@@ -166,6 +166,7 @@ class _DesktopDashboard extends StatelessWidget {
     final middleHeight = (compact ? 152 : 176) * scale;
     final tablesHeight = connectionsTableMinHeight(density, scale);
     final summaryHeight = (compact ? 112 : 120) * scale;
+    final mapHeight = (compact ? 288 : 320) * scale;
     return LayoutBuilder(
       builder: (context, constraints) {
         final room =
@@ -197,6 +198,10 @@ class _DesktopDashboard extends StatelessWidget {
                 (1, NetworkTakeoverTile(TakeoverSwitch.tun)),
               ]
             : const [(2, VpnTile())];
+        final map = sized(
+          mapHeight,
+          const RepaintBoundary(child: ExitMapCard()),
+        );
         final half = columns ~/ 2;
         final summaries = row([
           (half, const ConnectionStatsCard()),
@@ -234,6 +239,7 @@ class _DesktopDashboard extends StatelessWidget {
                   row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
                 ),
                 sized(summaryHeight, summaries),
+                map,
               ],
             ),
           );
@@ -276,40 +282,44 @@ class _DesktopDashboard extends StatelessWidget {
         final fills = constraints.maxHeight >= rowsHeight + summaryHeight;
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: fills ? constraints.maxHeight : null,
-            child: Padding(
-              padding: padding,
-              child: Column(
-                spacing: gap,
-                children: [
-                  ...rows,
-                  if (tablesFit)
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        spacing: gap,
-                        children: const [
-                          Expanded(
-                            flex: 3,
-                            child: RepaintBoundary(
-                              child: ConnectionsTableCard(),
+          padding: padding,
+          child: Column(
+            spacing: gap,
+            children: [
+              SizedBox(
+                height: fills ? constraints.maxHeight - padding.vertical : null,
+                child: Column(
+                  spacing: gap,
+                  children: [
+                    ...rows,
+                    if (tablesFit)
+                      Expanded(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          spacing: gap,
+                          children: const [
+                            Expanded(
+                              flex: 3,
+                              child: RepaintBoundary(
+                                child: ConnectionsTableCard(),
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: RepaintBoundary(child: ProxyGroupsCard()),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (fills)
-                    Expanded(child: summaries)
-                  else
-                    sized(summaryHeight, summaries),
-                ],
+                            Expanded(
+                              flex: 2,
+                              child: RepaintBoundary(child: ProxyGroupsCard()),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (fills)
+                      Expanded(child: summaries)
+                    else
+                      sized(summaryHeight, summaries),
+                  ],
+                ),
               ),
-            ),
+              map,
+            ],
           ),
         );
       },

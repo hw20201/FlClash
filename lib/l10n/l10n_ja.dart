@@ -24,6 +24,29 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dashboard => 'ダッシュボード';
 
   @override
+  String get exitMap => '出口マップ';
+
+  @override
+  String get exitMapYou => '自分';
+
+  @override
+  String get exitMapLocating => '直接接続の位置を取得中…';
+
+  @override
+  String get exitMapNoOrigin => '位置を取得できません · 東アジア表示';
+
+  @override
+  String get exitMapNoTraffic => '表示できる使用中のプロキシ出口がありません';
+
+  @override
+  String get exitMapTrafficHint => '線の太さは使用中のプロキシ通信量の割合を示します';
+
+  @override
+  String exitMapUnlocated(int count) {
+    return '位置不明の出口：$count';
+  }
+
+  @override
   String get proxies => 'プロキシ';
 
   @override

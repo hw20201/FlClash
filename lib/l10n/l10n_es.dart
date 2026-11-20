@@ -24,6 +24,30 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dashboard => 'Panel';
 
   @override
+  String get exitMap => 'Mapa de salidas';
+
+  @override
+  String get exitMapYou => 'Tú';
+
+  @override
+  String get exitMapLocating => 'Localizando tu conexión directa…';
+
+  @override
+  String get exitMapNoOrigin => 'Ubicación no disponible · Asia Oriental';
+
+  @override
+  String get exitMapNoTraffic => 'No hay salidas de proxy activas para mostrar';
+
+  @override
+  String get exitMapTrafficHint =>
+      'El grosor indica la proporción del tráfico activo por proxy';
+
+  @override
+  String exitMapUnlocated(int count) {
+    return 'Salidas sin ubicar: $count';
+  }
+
+  @override
   String get proxies => 'Proxies';
 
   @override

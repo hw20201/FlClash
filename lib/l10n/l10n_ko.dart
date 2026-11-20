@@ -24,6 +24,29 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dashboard => '대시보드';
 
   @override
+  String get exitMap => '출구 지도';
+
+  @override
+  String get exitMapYou => '내 위치';
+
+  @override
+  String get exitMapLocating => '직접 연결의 위치를 찾는 중…';
+
+  @override
+  String get exitMapNoOrigin => '위치를 확인할 수 없음 · 동아시아 보기';
+
+  @override
+  String get exitMapNoTraffic => '표시할 활성 프록시 출구가 없습니다';
+
+  @override
+  String get exitMapTrafficHint => '선의 굵기는 활성 프록시 트래픽 비중을 나타냅니다';
+
+  @override
+  String exitMapUnlocated(int count) {
+    return '위치 미확인 출구: $count';
+  }
+
+  @override
   String get proxies => '프록시';
 
   @override

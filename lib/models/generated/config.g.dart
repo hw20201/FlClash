@@ -160,6 +160,7 @@ const _$DashboardWidgetEnumMap = {
   DashboardWidget.currentOutbound: 'currentOutbound',
   DashboardWidget.networkSpeed: 'networkSpeed',
   DashboardWidget.trafficHistory: 'trafficHistory',
+  DashboardWidget.exitMap: 'exitMap',
   DashboardWidget.outboundMode: 'outboundMode',
   DashboardWidget.vpnButton: 'vpnButton',
   DashboardWidget.networkTakeover: 'networkTakeover',

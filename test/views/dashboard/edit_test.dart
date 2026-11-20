@@ -224,7 +224,11 @@ void main() {
     ]);
     await pumpEditor(tester, size: const Size(412, 700));
     final position = positionOf(tester);
-    position.jumpTo(position.maxScrollExtent - 330);
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pump();
+    position.jumpTo(
+      position.pixels + top(tester, find.text('Available to add')) - 580,
+    );
     await tester.pump();
     final before = position.pixels;
     final speed = find.byType(NetworkSpeedCard);

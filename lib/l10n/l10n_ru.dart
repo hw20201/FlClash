@@ -24,6 +24,31 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dashboard => 'Панель';
 
   @override
+  String get exitMap => 'Карта выходов';
+
+  @override
+  String get exitMapYou => 'Вы';
+
+  @override
+  String get exitMapLocating =>
+      'Определяется местоположение прямого подключения…';
+
+  @override
+  String get exitMapNoOrigin => 'Местоположение недоступно · Восточная Азия';
+
+  @override
+  String get exitMapNoTraffic => 'Нет активных прокси-выходов для отображения';
+
+  @override
+  String get exitMapTrafficHint =>
+      'Толщина линии показывает долю активного прокси-трафика';
+
+  @override
+  String exitMapUnlocated(int count) {
+    return 'Выходы без местоположения: $count';
+  }
+
+  @override
   String get proxies => 'Прокси';
 
   @override

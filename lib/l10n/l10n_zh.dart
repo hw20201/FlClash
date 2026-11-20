@@ -24,6 +24,29 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboard => '仪表盘';
 
   @override
+  String get exitMap => '出口地图';
+
+  @override
+  String get exitMapYou => '你';
+
+  @override
+  String get exitMapLocating => '正在定位直连出口…';
+
+  @override
+  String get exitMapNoOrigin => '暂未定位 · 东亚视图';
+
+  @override
+  String get exitMapNoTraffic => '暂无可显示的活跃代理出口';
+
+  @override
+  String get exitMapTrafficHint => '线宽表示活跃代理流量占比';
+
+  @override
+  String exitMapUnlocated(int count) {
+    return '未定位出口：$count';
+  }
+
+  @override
   String get proxies => '代理';
 
   @override
