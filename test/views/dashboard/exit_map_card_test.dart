@@ -184,6 +184,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final delta in [const Offset(0, -3), const Offset(1.5, -1)]) {
+    testWidgets('small-step map pan $delta keeps the dashboard still', (
+      tester,
+    ) async {
+      final scroll = ScrollController();
+      addTearDown(scroll.dispose);
+      await pumpCard(tester, scroll: scroll);
+      final viewer = find.byType(InteractiveViewer);
+      final transform = tester
+          .widget<InteractiveViewer>(viewer)
+          .transformationController!;
+      final cardBounds = tester.getRect(find.byType(ExitMapCard));
+      final pan = await tester.startGesture(tester.getCenter(viewer));
+      for (var i = 0; i < 24; i++) {
+        await pan.moveBy(delta);
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      await pan.up();
+      await tester.pump();
+      expect(transform.value.getMaxScaleOnAxis(), 1);
+      expect(transform.value.getTranslation().y, lessThan(0));
+      if (delta.dx != 0) {
+        expect(transform.value.getTranslation().x, greaterThan(0));
+      }
+      expect(scroll.position.pixels, 0);
+      expect(tester.getRect(find.byType(ExitMapCard)), cardBounds);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 2));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('the dashboard scrolls from outside the map', (tester) async {
     final scroll = ScrollController();
     addTearDown(scroll.dispose);
