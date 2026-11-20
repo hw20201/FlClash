@@ -5,6 +5,7 @@ import 'package:fl_clash/providers/app.dart';
 import 'package:fl_clash/providers/exit_map.dart';
 import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/dashboard/exit_map/canvas.dart';
 import 'package:fl_clash/views/dashboard/widgets/exit_map.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
@@ -103,62 +104,103 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('zoom controls stay inside the card and reset the viewport', (
+  testWidgets('Chinese origins show only the country on the card and map', (
     tester,
   ) async {
     await pumpCard(tester);
-    final viewer = find.byType(InteractiveViewer);
-    final transform = tester
-        .widget<InteractiveViewer>(viewer)
-        .transformationController!;
-    final size = tester.getSize(find.byType(ExitMapCard));
-    Finder button(String tooltip) => find.byWidgetPredicate(
-      (widget) => widget is IconButton && widget.tooltip == tooltip,
+    origin.show(
+      ProbeEntry(
+        phase: ProbePhase.fresh,
+        value: parseExitMapOrigin(
+          '{"country_code":"CN","city":"Shanghai","latitude":31.23,"longitude":121.47}',
+        ),
+      ),
     );
-    await tester.tap(button('Zoom in'));
     await tester.pump();
-    expect(transform.value.getMaxScaleOnAxis(), 2);
-    final before = transform.value.getTranslation();
-    final pan = await tester.startGesture(tester.getCenter(viewer));
-    await pan.moveBy(const Offset(25, 0));
+    expect(find.text('You · ≈ 🇨🇳 China'), findsOneWidget);
+    expect(find.textContaining('Shanghai'), findsNothing);
+    final place = tester
+        .widget<ExitMapCanvas>(find.byType(ExitMapCanvas))
+        .origin!;
+    expect(place.city, isEmpty);
+    expect(place.latitude, 35);
+    expect(place.longitude, 105);
+    origin.show(
+      ProbeEntry(
+        phase: ProbePhase.fresh,
+        value: parseExitMapOrigin(
+          '{"country":"JP","city":"Tokyo","loc":"35.7,139.7"}',
+        ),
+      ),
+    );
     await tester.pump();
-    await pan.moveBy(const Offset(25, 0));
-    await tester.pump();
-    await pan.moveBy(const Offset(25, 0));
-    await tester.pump();
-    await pan.up();
-    expect(transform.value.getTranslation().x, greaterThan(before.x));
-    await tester.tap(button('Zoom in'));
-    await tester.pump();
-    expect(transform.value.getMaxScaleOnAxis(), 4);
-    expect(tester.widget<IconButton>(button('Zoom in')).onPressed, isNull);
-    await tester.tap(button('Zoom out'));
-    await tester.pump();
-    expect(transform.value.getMaxScaleOnAxis(), 2);
-    await tester.tap(button('Reset'));
-    await tester.pump();
-    expect(transform.value, Matrix4.identity());
-    expect(tester.getSize(find.byType(ExitMapCard)), size);
-    expect(tester.widget<IconButton>(button('Zoom out')).onPressed, isNull);
+    expect(find.text('You · 🇯🇵 Tokyo'), findsOneWidget);
+    expect(
+      tester
+          .widget<ExitMapCanvas>(find.byType(ExitMapCanvas))
+          .origin
+          ?.longitude,
+      139.7,
+    );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
-    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the unzoomed map allows the dashboard to scroll', (
+  testWidgets('one finger pans at normal scale and reset restores the map', (
     tester,
   ) async {
     final scroll = ScrollController();
     addTearDown(scroll.dispose);
     await pumpCard(tester, scroll: scroll);
-    await tester.drag(find.byType(InteractiveViewer), const Offset(0, -80));
+    final viewer = find.byType(InteractiveViewer);
+    final transform = tester
+        .widget<InteractiveViewer>(viewer)
+        .transformationController!;
+    final size = tester.getSize(find.byType(ExitMapCard));
+    final reset = find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == 'Reset',
+    );
+    expect(find.byType(IconButton), findsOneWidget);
+    expect(tester.widget<IconButton>(reset).onPressed, isNull);
+    final pan = await tester.startGesture(tester.getCenter(viewer));
+    for (var i = 0; i < 3; i++) {
+      await pan.moveBy(const Offset(25, -10));
+      await tester.pump();
+    }
+    await pan.up();
+    await tester.pump();
+    expect(transform.value.getMaxScaleOnAxis(), 1);
+    expect(transform.value.getTranslation().x, greaterThan(0));
+    expect(transform.value.getTranslation().y, lessThan(0));
+    expect(scroll.position.pixels, 0);
+    expect(tester.widget<IconButton>(reset).onPressed, isNotNull);
+    await tester.tap(reset);
+    await tester.pump();
+    expect(transform.value, Matrix4.identity());
+    expect(tester.getSize(find.byType(ExitMapCard)), size);
+    expect(tester.widget<IconButton>(reset).onPressed, isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the dashboard scrolls from outside the map', (tester) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpCard(tester, scroll: scroll);
+    await tester.dragFrom(
+      tester.getBottomLeft(find.byType(ExitMapCard)) + const Offset(50, 80),
+      const Offset(0, -100),
+    );
     await tester.pump();
     expect(scroll.position.pixels, greaterThan(0));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets('two fingers zoom the map within its limits', (tester) async {
+  testWidgets('two fingers zoom, one finger pans, and reset restores both', (
+    tester,
+  ) async {
     await pumpCard(tester);
     final viewer = find.byType(InteractiveViewer);
     final transform = tester
@@ -177,15 +219,33 @@ void main() {
     await first.moveTo(center - const Offset(60, 0));
     await second.moveTo(center + const Offset(60, 0));
     await tester.pump();
-    await first.moveTo(center - const Offset(80, 0));
-    await second.moveTo(center + const Offset(80, 0));
+    await first.moveTo(center - const Offset(200, 0));
+    await second.moveTo(center + const Offset(200, 0));
     await tester.pump();
     expect(transform.value.getMaxScaleOnAxis(), greaterThan(1));
     expect(transform.value.getMaxScaleOnAxis(), lessThanOrEqualTo(4));
     await first.up();
     await second.up();
+    await tester.pump();
+    final zoom = transform.value.getMaxScaleOnAxis();
+    final before = transform.value.getTranslation();
+    final pan = await tester.startGesture(center);
+    for (var i = 0; i < 3; i++) {
+      await pan.moveBy(const Offset(25, 0));
+      await tester.pump();
+    }
+    await pan.up();
+    expect(transform.value.getTranslation().x, greaterThan(before.x));
+    expect(transform.value.getMaxScaleOnAxis(), zoom);
+    final reset = find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == 'Reset',
+    );
+    await tester.tap(reset);
+    await tester.pump();
+    expect(transform.value, Matrix4.identity());
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(

@@ -63,7 +63,7 @@ ExitMapPlace? parseExitMapOrigin(String body) {
         }
       }
       // The Cloudflare edge city can differ from the user's location.
-      return exitMapCountry(values['loc'] ?? '');
+      return _originCountry(values['loc'] ?? '');
     }
     final decoded = jsonDecode(body);
     if (decoded is! Map<String, dynamic> || decoded['success'] == false) {
@@ -76,9 +76,11 @@ ExitMapPlace? parseExitMapOrigin(String body) {
         data['countryCode'] ??
         data['cc'] ??
         data['country'];
-    final country = rawCountry is String && rawCountry.length == 2
-        ? rawCountry.toUpperCase()
-        : '';
+    final rawCountryText = rawCountry is String ? rawCountry.trim() : '';
+    final country = RegExp(r'^[A-Za-z]{2}$').hasMatch(rawCountryText)
+        ? rawCountryText.toUpperCase()
+        : locateExit(rawCountryText)?.country ?? '';
+    if (country == 'CN') return _originCountry(country);
     double? number(Object? value) =>
         value is num ? value.toDouble() : double.tryParse('$value');
     var lat = number(data['latitude'] ?? data['lat']);
@@ -107,8 +109,19 @@ ExitMapPlace? parseExitMapOrigin(String body) {
         longitude: lon,
       );
     }
-    return exitMapCountry(country);
+    return _originCountry(country);
   } on FormatException {
     return null;
   }
 }
+
+ExitMapPlace? _originCountry(String country) =>
+    country.trim().toUpperCase() == 'CN'
+    ? const ExitMapPlace(
+        country: 'CN',
+        city: '',
+        latitude: 35,
+        longitude: 105,
+        approximate: true,
+      )
+    : exitMapCountry(country);

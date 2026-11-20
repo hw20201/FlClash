@@ -30,10 +30,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exitMapYou => 'Вы';
 
   @override
-  String get exitMapZoomIn => 'Увеличить';
-
-  @override
-  String get exitMapZoomOut => 'Уменьшить';
+  String get exitMapChina => 'Китай';
 
   @override
   String get exitMapLocating =>

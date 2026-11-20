@@ -37,6 +37,25 @@ void main() {
     }
   });
 
+  test('Chinese origins discard cities and precise coordinates', () {
+    for (final body in [
+      '{"country_code":"CN","city":"Shanghai","latitude":31.23,"longitude":121.47}',
+      '{"country":" cn ","city":"Shenzhen","loc":"22.54,114.06"}',
+      '{"location":{"countryCode":"CN","city":"Beijing","lat":39.9,"lon":116.4}}',
+      '{"country":"China","city":"Guangzhou","latitude":23.13,"longitude":113.26}',
+      '{"country":"中国","city":"Shanghai","latitude":31.23,"longitude":121.47}',
+      '{"country_code":"CN"}',
+      'ip=1.2.3.4\nloc=CN\ncolo=SHA\n',
+    ]) {
+      final place = parseExitMapOrigin(body);
+      expect(place?.country, 'CN', reason: body);
+      expect(place?.city, isEmpty, reason: body);
+      expect(place?.latitude, 35, reason: body);
+      expect(place?.longitude, 105, reason: body);
+      expect(place?.approximate, isTrue, reason: body);
+    }
+  });
+
   test('falls back to a country without using the Cloudflare edge city', () {
     final place = parseExitMapOrigin('ip=1.2.3.4\nloc=JP\ncolo=LAX\n');
     expect(place?.country, 'JP');
