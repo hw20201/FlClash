@@ -150,6 +150,18 @@ abstract class AppLocalizations {
   /// **'You'**
   String get exitMapYou;
 
+  /// No description provided for @exitMapZoomIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get exitMapZoomIn;
+
+  /// No description provided for @exitMapZoomOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get exitMapZoomOut;
+
   /// No description provided for @exitMapLocating.
   ///
   /// In en, this message translates to:

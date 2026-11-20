@@ -30,6 +30,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exitMapYou => 'You';
 
   @override
+  String get exitMapZoomIn => 'Zoom in';
+
+  @override
+  String get exitMapZoomOut => 'Zoom out';
+
+  @override
   String get exitMapLocating => 'Locating your direct connection…';
 
   @override

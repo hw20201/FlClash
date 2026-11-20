@@ -6,6 +6,8 @@
   "dashboard": "Tableau de bord",
   "exitMap": "Carte des sorties",
   "exitMapYou": "Vous",
+  "exitMapZoomIn": "Agrandir",
+  "exitMapZoomOut": "Réduire",
   "exitMapLocating": "Localisation de votre connexion directe…",
   "exitMapNoOrigin": "Position indisponible · Asie de l’Est",
   "exitMapNoTraffic": "Aucune sortie de proxy active à afficher",

@@ -31,6 +31,8 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
         RouteMotionHoldMixin<ExitMapCard>,
         ConnectionCountersMixin<ExitMapCard> {
   final _traffic = ExitMapTraffic();
+  final _transform = TransformationController();
+  var _mapSize = Size.zero;
   var _snapshot = const ExitMapSnapshot();
   ExitMapOrigin? _originProbe;
   ScrollPosition? _scroll;
@@ -116,8 +118,25 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
     _scheduleMeasure();
   }
 
+  void _changeZoom(double factor) {
+    final center = _mapSize.center(Offset.zero);
+    final point = _transform.toScene(center);
+    final zoom = (_transform.value.getMaxScaleOnAxis() * factor).clamp(
+      1.0,
+      4.0,
+    );
+    final matrix = Matrix4.diagonal3Values(zoom, zoom, 1);
+    matrix.setTranslationRaw(
+      (center.dx - point.dx * zoom).clamp(_mapSize.width * (1 - zoom), 0.0),
+      (center.dy - point.dy * zoom).clamp(_mapSize.height * (1 - zoom), 0.0),
+      0,
+    );
+    _transform.value = matrix;
+  }
+
   @override
   void dispose() {
+    _transform.dispose();
     _scroll?.removeListener(_scheduleMeasure);
     _originProbe?.unwatch(directOutbound);
     super.dispose();
@@ -186,6 +205,38 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
                 DashboardCardHeader(
                   glyph: AppGlyphs.proxies,
                   title: strings.exitMap,
+                  trailing: [
+                    ListenableBuilder(
+                      listenable: _transform,
+                      builder: (context, _) {
+                        final zoom = _transform.value.getMaxScaleOnAxis();
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: strings.exitMapZoomOut,
+                              onPressed: zoom > 1
+                                  ? () => _changeZoom(0.5)
+                                  : null,
+                              icon: const GlyphIcon(AppGlyphs.remove),
+                            ),
+                            IconButton(
+                              tooltip: strings.reset,
+                              onPressed: zoom > 1
+                                  ? () => _transform.value = Matrix4.identity()
+                                  : null,
+                              icon: const GlyphIcon(AppGlyphs.reset),
+                            ),
+                            IconButton(
+                              tooltip: strings.exitMapZoomIn,
+                              onPressed: zoom < 4 ? () => _changeZoom(2) : null,
+                              icon: const GlyphIcon(AppGlyphs.add),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                 ),
                 Text(
                   you,
@@ -194,17 +245,33 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
                   style: DashboardText.label(context),
                 ),
                 Expanded(
-                  child: ExcludeSemantics(
-                    child: ExitMapCanvas(
-                      origin: origin,
-                      routes: _snapshot.routes,
-                      landColor: colors.onSurfaceVariant.withValues(
-                        alpha: 0.28,
-                      ),
-                      routeColor: colors.primary,
-                      originColor: colors.tertiary,
-                      animate: canPoll,
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      _mapSize = constraints.biggest;
+                      return ListenableBuilder(
+                        listenable: _transform,
+                        builder: (context, child) => InteractiveViewer(
+                          transformationController: _transform,
+                          minScale: 1,
+                          maxScale: 4,
+                          panEnabled: _transform.value.getMaxScaleOnAxis() > 1,
+                          trackpadScrollCausesScale: true,
+                          child: child!,
+                        ),
+                        child: ExcludeSemantics(
+                          child: ExitMapCanvas(
+                            origin: origin,
+                            routes: _snapshot.routes,
+                            landColor: colors.onSurfaceVariant.withValues(
+                              alpha: 0.28,
+                            ),
+                            routeColor: colors.primary,
+                            originColor: colors.tertiary,
+                            animate: canPoll,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 Text(

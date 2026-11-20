@@ -30,6 +30,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exitMapYou => '自分';
 
   @override
+  String get exitMapZoomIn => '拡大';
+
+  @override
+  String get exitMapZoomOut => '縮小';
+
+  @override
   String get exitMapLocating => '直接接続の位置を取得中…';
 
   @override

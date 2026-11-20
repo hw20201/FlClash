@@ -6,6 +6,8 @@
   "dashboard": "Dashboard",
   "exitMap": "Exit map",
   "exitMapYou": "You",
+  "exitMapZoomIn": "Zoom in",
+  "exitMapZoomOut": "Zoom out",
   "exitMapLocating": "Locating your direct connection…",
   "exitMapNoOrigin": "Location unavailable · East Asia view",
   "exitMapNoTraffic": "No active proxy exits to show",

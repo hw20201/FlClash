@@ -103,6 +103,91 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('zoom controls stay inside the card and reset the viewport', (
+    tester,
+  ) async {
+    await pumpCard(tester);
+    final viewer = find.byType(InteractiveViewer);
+    final transform = tester
+        .widget<InteractiveViewer>(viewer)
+        .transformationController!;
+    final size = tester.getSize(find.byType(ExitMapCard));
+    Finder button(String tooltip) => find.byWidgetPredicate(
+      (widget) => widget is IconButton && widget.tooltip == tooltip,
+    );
+    await tester.tap(button('Zoom in'));
+    await tester.pump();
+    expect(transform.value.getMaxScaleOnAxis(), 2);
+    final before = transform.value.getTranslation();
+    final pan = await tester.startGesture(tester.getCenter(viewer));
+    await pan.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await pan.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await pan.moveBy(const Offset(25, 0));
+    await tester.pump();
+    await pan.up();
+    expect(transform.value.getTranslation().x, greaterThan(before.x));
+    await tester.tap(button('Zoom in'));
+    await tester.pump();
+    expect(transform.value.getMaxScaleOnAxis(), 4);
+    expect(tester.widget<IconButton>(button('Zoom in')).onPressed, isNull);
+    await tester.tap(button('Zoom out'));
+    await tester.pump();
+    expect(transform.value.getMaxScaleOnAxis(), 2);
+    await tester.tap(button('Reset'));
+    await tester.pump();
+    expect(transform.value, Matrix4.identity());
+    expect(tester.getSize(find.byType(ExitMapCard)), size);
+    expect(tester.widget<IconButton>(button('Zoom out')).onPressed, isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the unzoomed map allows the dashboard to scroll', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    await pumpCard(tester, scroll: scroll);
+    await tester.drag(find.byType(InteractiveViewer), const Offset(0, -80));
+    await tester.pump();
+    expect(scroll.position.pixels, greaterThan(0));
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('two fingers zoom the map within its limits', (tester) async {
+    await pumpCard(tester);
+    final viewer = find.byType(InteractiveViewer);
+    final transform = tester
+        .widget<InteractiveViewer>(viewer)
+        .transformationController!;
+    final center = tester.getCenter(viewer);
+    final first = await tester.startGesture(
+      center - const Offset(20, 0),
+      pointer: 1,
+    );
+    final second = await tester.startGesture(
+      center + const Offset(20, 0),
+      pointer: 2,
+    );
+    await tester.pump();
+    await first.moveTo(center - const Offset(60, 0));
+    await second.moveTo(center + const Offset(60, 0));
+    await tester.pump();
+    await first.moveTo(center - const Offset(80, 0));
+    await second.moveTo(center + const Offset(80, 0));
+    await tester.pump();
+    expect(transform.value.getMaxScaleOnAxis(), greaterThan(1));
+    expect(transform.value.getMaxScaleOnAxis(), lessThanOrEqualTo(4));
+    await first.up();
+    await second.up();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+  });
+
   testWidgets(
     'scrolling offscreen or leaving a page releases the origin probe',
     (tester) async {

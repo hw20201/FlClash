@@ -6,6 +6,8 @@
   "dashboard": "Panel",
   "exitMap": "Mapa de salidas",
   "exitMapYou": "Tú",
+  "exitMapZoomIn": "Acercar",
+  "exitMapZoomOut": "Alejar",
   "exitMapLocating": "Localizando tu conexión directa…",
   "exitMapNoOrigin": "Ubicación no disponible · Asia Oriental",
   "exitMapNoTraffic": "No hay salidas de proxy activas para mostrar",

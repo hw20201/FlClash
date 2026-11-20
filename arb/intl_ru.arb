@@ -6,6 +6,8 @@
   "dashboard": "Панель",
   "exitMap": "Карта выходов",
   "exitMapYou": "Вы",
+  "exitMapZoomIn": "Увеличить",
+  "exitMapZoomOut": "Уменьшить",
   "exitMapLocating": "Определяется местоположение прямого подключения…",
   "exitMapNoOrigin": "Местоположение недоступно · Восточная Азия",
   "exitMapNoTraffic": "Нет активных прокси-выходов для отображения",

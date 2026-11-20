@@ -30,6 +30,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exitMapYou => '내 위치';
 
   @override
+  String get exitMapZoomIn => '확대';
+
+  @override
+  String get exitMapZoomOut => '축소';
+
+  @override
   String get exitMapLocating => '직접 연결의 위치를 찾는 중…';
 
   @override

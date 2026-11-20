@@ -30,6 +30,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exitMapYou => '你';
 
   @override
+  String get exitMapZoomIn => '放大';
+
+  @override
+  String get exitMapZoomOut => '缩小';
+
+  @override
   String get exitMapLocating => '正在定位直连出口…';
 
   @override
