@@ -124,8 +124,6 @@ jobs:
             os: ubuntu-latest
           - platform: windows
             os: windows-2022
-          - platform: macos
-            os: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
