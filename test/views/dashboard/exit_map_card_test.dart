@@ -1,13 +1,19 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:fl_clash/common/exit_map_geo.dart';
 import 'package:fl_clash/common/service_probe.dart';
+import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/app.dart';
+import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/exit_map.dart';
 import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/exit_map/canvas.dart';
 import 'package:fl_clash/views/dashboard/widgets/exit_map.dart';
 import 'package:fl_clash/widgets/widgets.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,6 +60,48 @@ void main() {
   });
 
   tearDown(() => container.dispose());
+
+  var connectionId = 0;
+
+  void connect(String node) {
+    container
+        .read(connectionBookProvider)
+        .apply(
+          ConnectionsReset(
+            ConnectionSnapshot([
+              ConnectionInfo(
+                id: ++connectionId,
+                start: 1,
+                network: 'tcp',
+                sourceIp: '127.0.0.1',
+                sourcePort: 50000,
+                destinationPort: 443,
+                inboundType: 'mixed',
+                chains: [node, 'Proxy'],
+                rule: 'MATCH',
+                upload: 0,
+                download: 100,
+              ),
+            ]),
+          ),
+        );
+  }
+
+  Future<Uint8List> landPixels(WidgetTester tester) async =>
+      (await tester.runAsync(() async {
+        final layer = tester.renderObject<RenderRepaintBoundary>(
+          find.byKey(const ValueKey('exit-map-land')),
+        );
+        final image = await layer.toImage(pixelRatio: 1);
+        try {
+          final data = await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+          return Uint8List.fromList(data!.buffer.asUint8List());
+        } finally {
+          image.dispose();
+        }
+      }))!;
 
   Future<void> pumpCard(
     WidgetTester tester, {
@@ -216,6 +264,102 @@ void main() {
     });
   }
 
+  testWidgets('panning an idle map paints the newly visible land', (
+    tester,
+  ) async {
+    await pumpCard(tester);
+    origin.show(
+      ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
+    );
+    await tester.pump();
+    final viewer = find.byType(InteractiveViewer);
+    final transform = tester
+        .widget<InteractiveViewer>(viewer)
+        .transformationController!;
+    final size = tester.getSize(viewer);
+    final before = await landPixels(tester);
+    transform.value = Matrix4.identity()
+      ..translateByDouble(0, -size.height * 0.4, 0, 1);
+    await tester.pump();
+    final after = await landPixels(tester);
+    expect(after, isNot(orderedEquals(before)));
+    final width = size.width.ceil();
+    final firstPixel = width * (size.height * 0.7).ceil();
+    expect([
+      for (var i = firstPixel * 4 + 3; i < after.length; i += 4)
+        if (after[i] > 0) after[i],
+    ], isNotEmpty);
+    transform.value = Matrix4.identity();
+    await tester.pump();
+    expect(await landPixels(tester), orderedEquals(before));
+    expect(find.byKey(const ValueKey('exit-map-flow')), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  for (final atEdge in [false, true]) {
+    testWidgets(
+      'a live refit ${atEdge ? 'recovers an out-of-bounds camera' : 'preserves a valid pan'}',
+      (tester) async {
+        await pumpCard(tester);
+        origin.show(
+          ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
+        );
+        await tester.pump();
+        final viewer = find.byType(InteractiveViewer);
+        final transform = tester
+            .widget<InteractiveViewer>(viewer)
+            .transformationController!;
+        final size = tester.getSize(viewer);
+        final before = tester.widget<ExitMapCanvas>(find.byType(ExitMapCanvas));
+        final world = before.viewport!
+            .worldRect(size)
+            .expandToInclude(Offset.zero & size);
+        transform.value = atEdge
+            ? (Matrix4.identity()..translateByDouble(-world.left - 1, 0, 0, 1))
+            : (Matrix4.identity()
+                ..translateByDouble(-20, -10, 0, 1)
+                ..scaleByDouble(2, 2, 2, 1));
+        await tester.pump();
+        final panned = Matrix4.copy(transform.value);
+        final oldView = MatrixUtils.transformRect(
+          Matrix4.inverted(panned),
+          Offset.zero & size,
+        );
+        expect(world.inflate(1e-6).contains(oldView.topLeft), isTrue);
+        expect(world.inflate(1e-6).contains(oldView.bottomRight), isTrue);
+        connect('London');
+        await tester.pump(const Duration(seconds: 1));
+        await tester.pump();
+        await tester.pump();
+        final canvas = tester.widget<ExitMapCanvas>(find.byType(ExitMapCanvas));
+        expect(canvas.routes.single.node, 'London');
+        expect(canvas.viewport, isNot(before.viewport));
+        final bounds = canvas.viewport!
+            .worldRect(size)
+            .expandToInclude(Offset.zero & size)
+            .inflate(1e-6);
+        expect(bounds.contains(oldView.topLeft), !atEdge);
+        final visible = MatrixUtils.transformRect(
+          Matrix4.inverted(transform.value),
+          Offset.zero & size,
+        );
+        expect(bounds.contains(visible.topLeft), isTrue);
+        expect(bounds.contains(visible.bottomRight), isTrue);
+        expect(transform.value, atEdge ? Matrix4.identity() : panned);
+        final pixels = await landPixels(tester);
+        expect([
+          for (var i = 3; i < pixels.length; i += 4)
+            if (pixels[i] > 0) pixels[i],
+        ], isNotEmpty);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(seconds: 2));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('the dashboard scrolls from outside the map', (tester) async {
     final scroll = ScrollController();
     addTearDown(scroll.dispose);
@@ -278,6 +422,53 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('returning onscreen refreshes connections and the origin', (
+    tester,
+  ) async {
+    final scroll = ScrollController();
+    addTearDown(scroll.dispose);
+    connect('Tokyo');
+    await pumpCard(tester, scroll: scroll);
+    origin.show(ProbeEntry(phase: ProbePhase.fresh, value: locateExit('香港')));
+    await tester.pump();
+    expect(
+      tester
+          .widget<ExitMapCanvas>(find.byType(ExitMapCanvas))
+          .routes
+          .single
+          .node,
+      'Tokyo',
+    );
+    scroll.jumpTo(1000);
+    await tester.pump();
+    await tester.pump();
+    expect(origin.watchers, 0);
+    connect('London');
+    origin.show(
+      ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
+    );
+    await tester.pump(const Duration(seconds: 2));
+    expect(
+      tester
+          .widget<ExitMapCanvas>(find.byType(ExitMapCanvas))
+          .routes
+          .single
+          .node,
+      'Tokyo',
+    );
+    scroll.jumpTo(0);
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    final canvas = tester.widget<ExitMapCanvas>(find.byType(ExitMapCanvas));
+    expect(canvas.routes.single.node, 'London');
+    expect(canvas.origin?.country, 'JP');
+    expect(origin.watchers, 1);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 2));
+    expect(origin.watchers, 0);
   });
 
   testWidgets(

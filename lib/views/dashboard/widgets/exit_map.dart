@@ -33,6 +33,8 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
         ConnectionCountersMixin<ExitMapCard> {
   final _traffic = ExitMapTraffic();
   final _transform = TransformationController();
+  (Size, Rect)? _cameraBounds;
+  var _cameraCheckPending = false;
   var _snapshot = const ExitMapSnapshot();
   ExitMapOrigin? _originProbe;
   ScrollPosition? _scroll;
@@ -139,6 +141,28 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
     });
   }
 
+  void _syncCamera(Size size, Rect world) {
+    final bounds = (size, world);
+    if (_cameraBounds == bounds) return;
+    _cameraBounds = bounds;
+    if (_cameraCheckPending) return;
+    _cameraCheckPending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _cameraCheckPending = false;
+      if (!mounted) return;
+      final (size, world) = _cameraBounds!;
+      final visible = MatrixUtils.transformRect(
+        Matrix4.inverted(_transform.value),
+        Offset.zero & size,
+      );
+      final bounds = world.inflate(1e-6);
+      if (!bounds.contains(visible.topLeft) ||
+          !bounds.contains(visible.bottomRight)) {
+        _transform.value = Matrix4.identity();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final strings = context.appLocalizations;
@@ -210,40 +234,80 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
                 ),
                 Expanded(
                   child: LayoutBuilder(
-                    builder: (context, constraints) => MediaQuery(
-                      data: MediaQuery.of(context).copyWith(
-                        gestureSettings: DeviceGestureSettings(
-                          touchSlop:
-                              (MediaQuery.gestureSettingsOf(
-                                    context,
-                                  ).touchSlop ??
-                                  kTouchSlop) /
-                              4,
-                        ),
-                      ),
-                      child: InteractiveViewer(
-                        transformationController: _transform,
-                        boundaryMargin: EdgeInsets.symmetric(
-                          horizontal: constraints.maxWidth / 2,
-                          vertical: constraints.maxHeight / 2,
-                        ),
-                        minScale: 1,
-                        maxScale: 4,
-                        trackpadScrollCausesScale: true,
-                        child: ExcludeSemantics(
-                          child: ExitMapCanvas(
-                            origin: origin,
-                            routes: _snapshot.routes,
-                            landColor: colors.onSurfaceVariant.withValues(
-                              alpha: 0.28,
-                            ),
-                            routeColor: colors.primary,
-                            originColor: colors.tertiary,
-                            animate: canPoll,
+                    builder: (context, constraints) {
+                      final size = constraints.biggest;
+                      if (size.isEmpty || !size.isFinite) {
+                        return const SizedBox.shrink();
+                      }
+                      final viewport = ExitMapViewport.fit(
+                        size,
+                        origin,
+                        origin == null
+                            ? const []
+                            : _snapshot.routes.map((route) => route.place),
+                      );
+                      final world = viewport
+                          .worldRect(size)
+                          .expandToInclude(Offset.zero & size);
+                      _syncCamera(size, world);
+                      return MediaQuery(
+                        data: MediaQuery.of(context).copyWith(
+                          gestureSettings: DeviceGestureSettings(
+                            touchSlop:
+                                (MediaQuery.gestureSettingsOf(
+                                      context,
+                                    ).touchSlop ??
+                                    kTouchSlop) /
+                                4,
                           ),
                         ),
-                      ),
-                    ),
+                        child: InteractiveViewer.builder(
+                          transformationController: _transform,
+                          boundaryMargin: EdgeInsets.fromLTRB(
+                            -world.left,
+                            -world.top,
+                            world.right - size.width,
+                            world.bottom - size.height,
+                          ),
+                          minScale: 1,
+                          maxScale: 4,
+                          trackpadScrollCausesScale: true,
+                          builder: (context, visible) {
+                            final rect = Rect.fromLTRB(
+                              visible.point0.x,
+                              visible.point0.y,
+                              visible.point2.x,
+                              visible.point2.y,
+                            );
+                            return SizedBox.fromSize(
+                              size: size,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Positioned.fromRect(
+                                    rect: rect,
+                                    child: ExcludeSemantics(
+                                      child: ExitMapCanvas(
+                                        origin: origin,
+                                        routes: _snapshot.routes,
+                                        landColor: colors.onSurfaceVariant
+                                            .withValues(alpha: 0.28),
+                                        routeColor: colors.primary,
+                                        originColor: colors.tertiary,
+                                        animate: canPoll,
+                                        sceneSize: size,
+                                        visibleRect: rect,
+                                        viewport: viewport,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
                 Text(

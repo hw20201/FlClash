@@ -176,6 +176,33 @@ void main() {
     expect(ExitMapViewport.fit(Size.zero, null, []).bounds.isFinite, isTrue);
   });
 
+  test('fitted views cache land beyond the initial viewport', () {
+    for (final size in [const Size(400, 180), const Size(180, 400)]) {
+      for (final origin in [
+        for (final name in ['Tokyo', 'London', 'San Francisco'])
+          locateExit(name),
+        const ExitMapPlace(
+          country: 'JP',
+          city: 'Tokyo',
+          latitude: 35.5,
+          longitude: 139.5,
+        ),
+      ]) {
+        final viewport = ExitMapViewport.fit(size, origin, []);
+        final points = exitMapLandPoints(viewport, size);
+        expect(points.length, 21519 * 2);
+        final world = viewport.worldRect(size).inflate(1e-3);
+        var outside = false;
+        for (var i = 0; i < points.length; i += 2) {
+          final point = Offset(points[i], points[i + 1]);
+          expect(world.contains(point), isTrue);
+          outside |= !(Offset.zero & size).contains(point);
+        }
+        expect(outside, isTrue);
+      }
+    }
+  });
+
   test('public-domain land bitmap contains the expected degree cells', () {
     final data = base64Decode(exitMapLandBase64);
     expect(data.length, 8100);

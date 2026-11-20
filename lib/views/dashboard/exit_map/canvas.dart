@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -22,6 +21,9 @@ class ExitMapCanvas extends StatefulWidget {
     required this.routeColor,
     required this.originColor,
     required this.animate,
+    this.sceneSize,
+    this.visibleRect,
+    this.viewport,
   });
 
   final ExitMapPlace? origin;
@@ -30,6 +32,9 @@ class ExitMapCanvas extends StatefulWidget {
   final Color routeColor;
   final Color originColor;
   final bool animate;
+  final Size? sceneSize;
+  final Rect? visibleRect;
+  final ExitMapViewport? viewport;
 
   @override
   State<ExitMapCanvas> createState() => _ExitMapCanvasState();
@@ -51,6 +56,8 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
   ExitMapViewport? _viewport;
   _Scene? _scene;
   Float32List _land = Float32List(0);
+  ui.Picture? _landPicture;
+  (Float32List, Color, double)? _landPictureKey;
   List<ExitMapRoute> _previousRoutes = const [];
   var _dirty = true;
 
@@ -69,7 +76,8 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
   void didUpdateWidget(covariant ExitMapCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.routes != oldWidget.routes ||
-        widget.origin != oldWidget.origin) {
+        widget.origin != oldWidget.origin ||
+        widget.viewport != oldWidget.viewport) {
       _dirty = true;
     }
     _syncAnimation();
@@ -98,11 +106,13 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
             route.share;
       }
     }
-    final viewport = ExitMapViewport.fit(
-      size,
-      origin,
-      corridors.values.map((corridor) => corridor.place),
-    );
+    final viewport =
+        widget.viewport ??
+        ExitMapViewport.fit(
+          size,
+          origin,
+          corridors.values.map((corridor) => corridor.place),
+        );
     if (_viewport != viewport || _size != size) {
       _land = exitMapLandPoints(viewport, size);
     }
@@ -166,8 +176,29 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
   static _Location _location(ExitMapPlace place) =>
       (place.latitude, place.longitude);
 
+  ui.Picture _landPictureFor(double dotSize) {
+    final key = (_land, widget.landColor, dotSize);
+    if (_landPictureKey != key) {
+      final recorder = ui.PictureRecorder();
+      Canvas(recorder).drawRawPoints(
+        ui.PointMode.points,
+        _land,
+        Paint()
+          ..color = widget.landColor
+          ..strokeWidth = dotSize
+          ..strokeCap = StrokeCap.round,
+      );
+      final previous = _landPicture;
+      _landPicture = recorder.endRecording();
+      _landPictureKey = key;
+      previous?.dispose();
+    }
+    return _landPicture!;
+  }
+
   @override
   void dispose() {
+    _landPicture?.dispose();
     _flow.dispose();
     _motion.dispose();
     super.dispose();
@@ -178,9 +209,10 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
     final showParticles = _canAnimate;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = constraints.biggest;
+        final size = widget.sceneSize ?? constraints.biggest;
         if (size.isEmpty || !size.isFinite) return const SizedBox.shrink();
         _layout(size);
+        final offset = widget.visibleRect?.topLeft ?? Offset.zero;
         final scene = _scene!;
         final dotSize = (size.width / (_viewport!.bounds.width * 360) * 0.8)
             .clamp(0.6, 1.8);
@@ -191,7 +223,7 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
               RepaintBoundary(
                 key: const ValueKey('exit-map-land'),
                 child: CustomPaint(
-                  painter: _LandPainter(_land, dotSize, widget.landColor),
+                  painter: _LandPainter(_landPictureFor(dotSize), offset),
                 ),
               ),
               RepaintBoundary(
@@ -202,6 +234,7 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
                     _motion,
                     widget.routeColor,
                     widget.originColor,
+                    offset,
                   ),
                 ),
               ),
@@ -216,6 +249,7 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
                       _motion,
                       _flow,
                       widget.routeColor,
+                      offset,
                       repaint: _particleRepaint,
                     ),
                     willChange: true,
@@ -232,24 +266,10 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
 final _landBits = base64Decode(exitMapLandBase64);
 
 Float32List exitMapLandPoints(ExitMapViewport viewport, Size size) {
-  final bounds = viewport.bounds;
-  final left = math.max(
-    bounds.left * 360 - 180,
-    viewport.centerLongitude - 180,
-  );
-  final right = math.min(
-    bounds.right * 360 - 180,
-    viewport.centerLongitude + 180,
-  );
-  final north = math.min(90.0, 90 - bounds.top * 180);
-  final south = math.max(-90.0, 90 - bounds.bottom * 180);
-  final firstColumn = (left + 179.5).ceil();
-  final lastColumn = (right + 179.5).floor();
-  final firstRow = (89.5 - north).ceil();
-  final lastRow = (89.5 - south).floor();
+  final firstColumn = (viewport.centerLongitude - 0.5).ceil();
   final points = <double>[];
-  for (var row = firstRow; row <= lastRow; row++) {
-    for (var column = firstColumn; column <= lastColumn; column++) {
+  for (var row = 0; row < 180; row++) {
+    for (var column = firstColumn; column < firstColumn + 360; column++) {
       final cell = row * 360 + column % 360;
       if (_landBits[cell >> 3] & (1 << (cell & 7)) == 0) continue;
       final point = viewport.projectCoordinates(
@@ -266,28 +286,20 @@ Float32List exitMapLandPoints(ExitMapViewport viewport, Size size) {
 }
 
 class _LandPainter extends CustomPainter {
-  const _LandPainter(this.points, this.dotSize, this.color);
-  final Float32List points;
-  final double dotSize;
-  final Color color;
+  const _LandPainter(this.picture, this.offset);
+  final ui.Picture picture;
+  final Offset offset;
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRawPoints(
-      ui.PointMode.points,
-      points,
-      Paint()
-        ..color = color
-        ..strokeWidth = dotSize
-        ..strokeCap = StrokeCap.round,
-    );
+    canvas.clipRect(Offset.zero & size);
+    canvas.translate(-offset.dx, -offset.dy);
+    canvas.drawPicture(picture);
   }
 
   @override
   bool shouldRepaint(covariant _LandPainter oldDelegate) =>
-      oldDelegate.points != points ||
-      oldDelegate.dotSize != dotSize ||
-      oldDelegate.color != color;
+      oldDelegate.picture != picture || oldDelegate.offset != offset;
 }
 
 class _Corridor {
@@ -352,16 +364,24 @@ class _Scene {
 }
 
 class _RoutePainter extends CustomPainter {
-  _RoutePainter(this.scene, this.motion, this.color, this.originColor)
-    : super(repaint: motion);
+  _RoutePainter(
+    this.scene,
+    this.motion,
+    this.color,
+    this.originColor,
+    this.offset,
+  ) : super(repaint: motion);
 
   final _Scene scene;
   final Animation<double> motion;
   final Color color;
   final Color originColor;
+  final Offset offset;
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.clipRect(Offset.zero & size);
+    canvas.translate(-offset.dx, -offset.dy);
     final frame = scene.frame(motion.value);
     final paint = Paint()..strokeCap = StrokeCap.round;
     for (final arc in frame.arcs.values) {
@@ -387,7 +407,8 @@ class _RoutePainter extends CustomPainter {
   bool shouldRepaint(covariant _RoutePainter oldDelegate) =>
       oldDelegate.scene != scene ||
       oldDelegate.color != color ||
-      oldDelegate.originColor != originColor;
+      oldDelegate.originColor != originColor ||
+      oldDelegate.offset != offset;
 }
 
 class _ParticlePainter extends CustomPainter {
@@ -395,7 +416,8 @@ class _ParticlePainter extends CustomPainter {
     this.scene,
     this.motion,
     this.flow,
-    this.color, {
+    this.color,
+    this.offset, {
     required super.repaint,
   });
 
@@ -403,9 +425,12 @@ class _ParticlePainter extends CustomPainter {
   final Animation<double> motion;
   final Animation<double> flow;
   final Color color;
+  final Offset offset;
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.clipRect(Offset.zero & size);
+    canvas.translate(-offset.dx, -offset.dy);
     final paint = Paint();
     final frame = scene.frame(motion.value);
     final progress = flow.value;
@@ -427,5 +452,7 @@ class _ParticlePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
-      oldDelegate.scene != scene || oldDelegate.color != color;
+      oldDelegate.scene != scene ||
+      oldDelegate.color != color ||
+      oldDelegate.offset != offset;
 }

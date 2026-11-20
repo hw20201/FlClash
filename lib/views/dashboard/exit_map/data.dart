@@ -200,6 +200,11 @@ class ExitMapViewport {
     ((90 - lat) / 180 - bounds.top) / bounds.height * size.height,
   );
 
+  Rect worldRect(Size size) => Rect.fromPoints(
+    projectCoordinates(90, centerLongitude - 180, size),
+    projectCoordinates(-90, centerLongitude + 180, size),
+  );
+
   @override
   bool operator ==(Object other) =>
       other is ExitMapViewport &&
