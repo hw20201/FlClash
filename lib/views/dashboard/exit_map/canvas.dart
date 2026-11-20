@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -212,7 +213,15 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
         final size = widget.sceneSize ?? constraints.biggest;
         if (size.isEmpty || !size.isFinite) return const SizedBox.shrink();
         _layout(size);
+        final world = _viewport!.worldRect(size);
         final offset = widget.visibleRect?.topLeft ?? Offset.zero;
+        if (!world.isFinite || world.width <= 0 || !offset.isFinite) {
+          return const SizedBox.shrink();
+        }
+        final wrap = (
+          world: world,
+          offset: Offset(offset.dx % world.width, offset.dy),
+        );
         final scene = _scene!;
         final dotSize = (size.width / (_viewport!.bounds.width * 360) * 0.8)
             .clamp(0.6, 1.8);
@@ -223,7 +232,11 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
               RepaintBoundary(
                 key: const ValueKey('exit-map-land'),
                 child: CustomPaint(
-                  painter: _LandPainter(_landPictureFor(dotSize), offset),
+                  painter: _LandPainter(
+                    _landPictureFor(dotSize),
+                    dotSize,
+                    wrap,
+                  ),
                 ),
               ),
               RepaintBoundary(
@@ -234,7 +247,7 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
                     _motion,
                     widget.routeColor,
                     widget.originColor,
-                    offset,
+                    wrap,
                   ),
                 ),
               ),
@@ -249,7 +262,7 @@ class _ExitMapCanvasState extends State<ExitMapCanvas>
                       _motion,
                       _flow,
                       widget.routeColor,
-                      offset,
+                      wrap,
                       repaint: _particleRepaint,
                     ),
                     willChange: true,
@@ -285,21 +298,42 @@ Float32List exitMapLandPoints(ExitMapViewport viewport, Size size) {
   return Float32List.fromList(points);
 }
 
+typedef _WorldWrap = ({Rect world, Offset offset});
+
+extension on _WorldWrap {
+  (int, int) copies(double left, double right, double width) => (
+    ((offset.dx - right) / world.width).ceil(),
+    ((offset.dx + width - left) / world.width).floor(),
+  );
+
+  double dx(int copy) => copy * world.width - offset.dx;
+
+  Offset project(Offset point, int copy) =>
+      point.translate(dx(copy), -offset.dy);
+}
+
 class _LandPainter extends CustomPainter {
-  const _LandPainter(this.picture, this.offset);
+  const _LandPainter(this.picture, this.dotSize, this.wrap);
   final ui.Picture picture;
-  final Offset offset;
+  final double dotSize;
+  final _WorldWrap wrap;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.clipRect(Offset.zero & size);
-    canvas.translate(-offset.dx, -offset.dy);
-    canvas.drawPicture(picture);
+    final bounds = wrap.world.inflate(dotSize / 2);
+    final (first, last) = wrap.copies(bounds.left, bounds.right, size.width);
+    for (var copy = first; copy <= last; copy++) {
+      canvas.save();
+      canvas.translate(wrap.dx(copy), -wrap.offset.dy);
+      canvas.drawPicture(picture);
+      canvas.restore();
+    }
   }
 
   @override
   bool shouldRepaint(covariant _LandPainter oldDelegate) =>
-      oldDelegate.picture != picture || oldDelegate.offset != offset;
+      oldDelegate.picture != picture || oldDelegate.wrap != wrap;
 }
 
 class _Corridor {
@@ -369,37 +403,59 @@ class _RoutePainter extends CustomPainter {
     this.motion,
     this.color,
     this.originColor,
-    this.offset,
+    this.wrap,
   ) : super(repaint: motion);
 
   final _Scene scene;
   final Animation<double> motion;
   final Color color;
   final Color originColor;
-  final Offset offset;
+  final _WorldWrap wrap;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.clipRect(Offset.zero & size);
-    canvas.translate(-offset.dx, -offset.dy);
     final frame = scene.frame(motion.value);
     final paint = Paint()..strokeCap = StrokeCap.round;
+    const endRadius = 3.0;
     for (final arc in frame.arcs.values) {
+      final padding = math.max(arc.width / 2, endRadius);
+      final (first, last) = wrap.copies(
+        math.min(arc.start.dx, arc.end.dx) - padding,
+        math.max(arc.start.dx, arc.end.dx) + padding,
+        size.width,
+      );
+      if (first > last) continue;
       paint
-        ..style = PaintingStyle.stroke
         ..strokeWidth = arc.width
         ..color = color.withValues(alpha: arc.opacity);
-      canvas.drawPath(arc.path, paint);
-      paint.style = PaintingStyle.fill;
-      canvas.drawCircle(arc.end, 3, paint);
+      for (var copy = first; copy <= last; copy++) {
+        canvas.save();
+        canvas.translate(wrap.dx(copy), -wrap.offset.dy);
+        paint.style = PaintingStyle.stroke;
+        canvas.drawPath(arc.path, paint);
+        paint.style = PaintingStyle.fill;
+        canvas.drawCircle(arc.end, endRadius, paint);
+        canvas.restore();
+      }
     }
     if (frame.origin case final origin?) {
-      paint
-        ..style = PaintingStyle.fill
-        ..color = originColor.withValues(alpha: 0.24);
-      canvas.drawCircle(origin, 8, paint);
-      paint.color = originColor;
-      canvas.drawCircle(origin, 4, paint);
+      const haloRadius = 8.0;
+      final (first, last) = wrap.copies(
+        origin.dx - haloRadius,
+        origin.dx + haloRadius,
+        size.width,
+      );
+      final halo = originColor.withValues(alpha: 0.24);
+      for (var copy = first; copy <= last; copy++) {
+        final center = wrap.project(origin, copy);
+        paint
+          ..style = PaintingStyle.fill
+          ..color = halo;
+        canvas.drawCircle(center, haloRadius, paint);
+        paint.color = originColor;
+        canvas.drawCircle(center, 4, paint);
+      }
     }
   }
 
@@ -408,7 +464,7 @@ class _RoutePainter extends CustomPainter {
       oldDelegate.scene != scene ||
       oldDelegate.color != color ||
       oldDelegate.originColor != originColor ||
-      oldDelegate.offset != offset;
+      oldDelegate.wrap != wrap;
 }
 
 class _ParticlePainter extends CustomPainter {
@@ -417,7 +473,7 @@ class _ParticlePainter extends CustomPainter {
     this.motion,
     this.flow,
     this.color,
-    this.offset, {
+    this.wrap, {
     required super.repaint,
   });
 
@@ -425,27 +481,32 @@ class _ParticlePainter extends CustomPainter {
   final Animation<double> motion;
   final Animation<double> flow;
   final Color color;
-  final Offset offset;
+  final _WorldWrap wrap;
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.clipRect(Offset.zero & size);
-    canvas.translate(-offset.dx, -offset.dy);
     final paint = Paint();
     final frame = scene.frame(motion.value);
     final progress = flow.value;
+    const radius = 2.4;
     for (final MapEntry(key: key, value: arc) in frame.arcs.entries) {
       if (!arc.hasTraffic || arc.start == arc.end) continue;
       final phase = key.hashCode % 101 / 101;
       for (var index = 0; index < 2; index++) {
         final t = (progress + phase + index / 2) % 1;
+        final point = exitMapAlong(arc.start, arc.control, arc.end, t);
+        final (first, last) = wrap.copies(
+          point.dx - radius,
+          point.dx + radius,
+          size.width,
+        );
+        if (first > last) continue;
         final alpha = (t * 12).clamp(0.0, 1.0) * ((1 - t) * 12).clamp(0.0, 1.0);
         paint.color = color.withValues(alpha: arc.opacity * alpha);
-        canvas.drawCircle(
-          exitMapAlong(arc.start, arc.control, arc.end, t),
-          2.4,
-          paint,
-        );
+        for (var copy = first; copy <= last; copy++) {
+          canvas.drawCircle(wrap.project(point, copy), radius, paint);
+        }
       }
     }
   }
@@ -454,5 +515,5 @@ class _ParticlePainter extends CustomPainter {
   bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
       oldDelegate.scene != scene ||
       oldDelegate.color != color ||
-      oldDelegate.offset != offset;
+      oldDelegate.wrap != wrap;
 }

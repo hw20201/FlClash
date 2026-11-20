@@ -8,7 +8,6 @@ import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/views/dashboard/layout.dart';
 import 'package:fl_clash/views/dashboard/style.dart';
 import 'package:fl_clash/widgets/widgets.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +15,7 @@ import 'package:intl/intl.dart';
 
 import '../exit_map/canvas.dart';
 import '../exit_map/data.dart';
+import '../exit_map/gestures.dart';
 import 'card.dart';
 
 class ExitMapCard extends ConsumerStatefulWidget {
@@ -33,6 +33,7 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
         ConnectionCountersMixin<ExitMapCard> {
   final _traffic = ExitMapTraffic();
   final _transform = TransformationController();
+  final _mapKey = GlobalKey();
   (Size, Rect)? _cameraBounds;
   var _cameraCheckPending = false;
   var _snapshot = const ExitMapSnapshot();
@@ -151,15 +152,8 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
       _cameraCheckPending = false;
       if (!mounted) return;
       final (size, world) = _cameraBounds!;
-      final visible = MatrixUtils.transformRect(
-        Matrix4.inverted(_transform.value),
-        Offset.zero & size,
-      );
-      final bounds = world.inflate(1e-6);
-      if (!bounds.contains(visible.topLeft) ||
-          !bounds.contains(visible.bottomRight)) {
-        _transform.value = Matrix4.identity();
-      }
+      final camera = constrainExitMapCamera(_transform.value, size, world);
+      if (camera != _transform.value) _transform.value = camera;
     });
   }
 
@@ -203,120 +197,120 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
     return LayoutBuilder(
       builder: (context, constraints) {
         _scheduleMeasure();
-        return DashboardCard(
-          child: SizedBox(
-            height: constraints.hasBoundedHeight ? null : 250 * scale,
-            child: Column(
-              spacing: 10,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DashboardCardHeader(
-                  glyph: AppGlyphs.proxies,
-                  title: strings.exitMap,
-                  trailing: [
-                    ListenableBuilder(
-                      listenable: _transform,
-                      builder: (context, _) => IconButton(
-                        tooltip: strings.reset,
-                        onPressed: _transform.value != Matrix4.identity()
-                            ? () => _transform.value = Matrix4.identity()
-                            : null,
-                        icon: const GlyphIcon(AppGlyphs.reset),
+        return ExitMapGestureRegion(
+          controller: _transform,
+          mapKey: _mapKey,
+          bounds: () => _cameraBounds,
+          enabled: canPoll,
+          child: DashboardCard(
+            child: SizedBox(
+              height: constraints.hasBoundedHeight ? null : 250 * scale,
+              child: Column(
+                spacing: 10,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DashboardCardHeader(
+                    glyph: AppGlyphs.proxies,
+                    title: strings.exitMap,
+                    trailing: [
+                      ListenableBuilder(
+                        listenable: _transform,
+                        builder: (context, _) => IconButton(
+                          tooltip: strings.reset,
+                          onPressed: _transform.value != Matrix4.identity()
+                              ? () => _transform.value = Matrix4.identity()
+                              : null,
+                          icon: const GlyphIcon(AppGlyphs.reset),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    you,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: DashboardText.label(context),
+                  ),
+                  Expanded(
+                    child: SizedBox(
+                      key: _mapKey,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final size = constraints.biggest;
+                          if (size.isEmpty || !size.isFinite) {
+                            return const SizedBox.shrink();
+                          }
+                          final viewport = ExitMapViewport.fit(
+                            size,
+                            origin,
+                            origin == null
+                                ? const []
+                                : _snapshot.routes.map((route) => route.place),
+                          );
+                          final world = viewport.worldRect(size);
+                          _syncCamera(
+                            size,
+                            Rect.fromLTRB(
+                              world.left,
+                              world.top < 0 ? world.top : 0,
+                              world.right,
+                              world.bottom > size.height
+                                  ? world.bottom
+                                  : size.height,
+                            ),
+                          );
+                          return ListenableBuilder(
+                            key: const ValueKey('exit-map-camera'),
+                            listenable: _transform,
+                            builder: (context, _) {
+                              final rect = MatrixUtils.transformRect(
+                                Matrix4.inverted(_transform.value),
+                                Offset.zero & size,
+                              );
+                              return ClipRect(
+                                key: const ValueKey('exit-map-viewport'),
+                                child: Transform(
+                                  alignment: Alignment.topLeft,
+                                  transform: _transform.value,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Positioned.fromRect(
+                                        rect: rect,
+                                        child: ExcludeSemantics(
+                                          child: ExitMapCanvas(
+                                            origin: origin,
+                                            routes: _snapshot.routes,
+                                            landColor: colors.onSurfaceVariant
+                                                .withValues(alpha: 0.28),
+                                            routeColor: colors.primary,
+                                            originColor: colors.tertiary,
+                                            animate: canPoll,
+                                            sceneSize: size,
+                                            visibleRect: rect,
+                                            viewport: viewport,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
-                  ],
-                ),
-                Text(
-                  you,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.label(context),
-                ),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final size = constraints.biggest;
-                      if (size.isEmpty || !size.isFinite) {
-                        return const SizedBox.shrink();
-                      }
-                      final viewport = ExitMapViewport.fit(
-                        size,
-                        origin,
-                        origin == null
-                            ? const []
-                            : _snapshot.routes.map((route) => route.place),
-                      );
-                      final world = viewport
-                          .worldRect(size)
-                          .expandToInclude(Offset.zero & size);
-                      _syncCamera(size, world);
-                      return MediaQuery(
-                        data: MediaQuery.of(context).copyWith(
-                          gestureSettings: DeviceGestureSettings(
-                            touchSlop:
-                                (MediaQuery.gestureSettingsOf(
-                                      context,
-                                    ).touchSlop ??
-                                    kTouchSlop) /
-                                4,
-                          ),
-                        ),
-                        child: InteractiveViewer.builder(
-                          transformationController: _transform,
-                          boundaryMargin: EdgeInsets.fromLTRB(
-                            -world.left,
-                            -world.top,
-                            world.right - size.width,
-                            world.bottom - size.height,
-                          ),
-                          minScale: 1,
-                          maxScale: 4,
-                          trackpadScrollCausesScale: true,
-                          builder: (context, visible) {
-                            final rect = Rect.fromLTRB(
-                              visible.point0.x,
-                              visible.point0.y,
-                              visible.point2.x,
-                              visible.point2.y,
-                            );
-                            return SizedBox.fromSize(
-                              size: size,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Positioned.fromRect(
-                                    rect: rect,
-                                    child: ExcludeSemantics(
-                                      child: ExitMapCanvas(
-                                        origin: origin,
-                                        routes: _snapshot.routes,
-                                        landColor: colors.onSurfaceVariant
-                                            .withValues(alpha: 0.28),
-                                        routeColor: colors.primary,
-                                        originColor: colors.tertiary,
-                                        animate: canPoll,
-                                        sceneSize: size,
-                                        visibleRect: rect,
-                                        viewport: viewport,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
                   ),
-                ),
-                Text(
-                  summary,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: DashboardText.label(context),
-                ),
-              ],
+                  Text(
+                    summary,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: DashboardText.label(context),
+                  ),
+                ],
+              ),
             ),
           ),
         );
