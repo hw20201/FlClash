@@ -142,84 +142,50 @@ Map<String, String> exitMapReplacements(
   };
 }
 
-@immutable
-class ExitMapViewport {
-  const ExitMapViewport(this.bounds, this.centerLongitude);
+const exitMapWorld = Rect.fromLTWH(0, 0, 360, 180);
 
-  factory ExitMapViewport.fit(
-    Size size,
-    ExitMapPlace? origin,
-    Iterable<ExitMapPlace> exits,
-  ) {
-    final center = origin?.longitude ?? 123;
-    var bounds = const Rect.fromLTRB(276 / 360, 44 / 180, 330 / 360, 94 / 180);
-    if (origin != null) {
-      Offset degrees(ExitMapPlace place) =>
-          Offset(unwrapLongitude(place.longitude, center), -place.latitude);
-      final start = degrees(origin);
-      var left = start.dx;
-      var right = start.dx;
-      var top = start.dy;
-      var bottom = start.dy;
-      for (final place in exits) {
-        final end = degrees(place);
-        left = math.min(left, end.dx);
-        right = math.max(right, end.dx);
-        top = math.min(top, math.min(end.dy, exitMapControl(start, end).dy));
-        bottom = math.max(bottom, end.dy);
-      }
-      bounds = Rect.fromCenter(
-        center: Offset((left + right + 360) / 720, (top + bottom + 180) / 360),
-        width: math.max((right - left) * 1.18, 30) / 360,
-        height: math.max((bottom - top) * 1.25, 24) / 180,
+Offset exitMapWorldPoint(ExitMapPlace place) =>
+    Offset((place.longitude + 180) % 360, 90 - place.latitude);
+
+Offset exitMapNearestCopy(Offset point, Offset reference) =>
+    Offset(unwrapLongitude(point.dx, reference.dx), point.dy);
+
+Rect exitMapFitBounds(
+  Size size,
+  ExitMapPlace? origin,
+  Iterable<ExitMapPlace> exits,
+) {
+  var bounds = const Rect.fromLTRB(276, 44, 330, 94);
+  if (origin != null) {
+    final start = exitMapWorldPoint(origin);
+    var extent = start & Size.zero;
+    for (final place in exits) {
+      final end = exitMapNearestCopy(exitMapWorldPoint(place), start);
+      extent = extent.expandToInclude(
+        Rect.fromPoints(end, exitMapControl(start, end)),
       );
     }
-    if (size.isEmpty || !size.isFinite) return ExitMapViewport(bounds, center);
-    final aspect = size.aspectRatio;
-    return ExitMapViewport(
-      Rect.fromCenter(
-        center: bounds.center,
-        width: math.max(bounds.width, bounds.height * aspect / 2),
-        height: math.max(bounds.height, bounds.width * 2 / aspect),
-      ),
-      center,
+    bounds = Rect.fromCenter(
+      center: extent.center,
+      width: math.max(extent.width * 1.18, 60),
+      height: math.max(extent.height * 1.25, 38),
     );
   }
-
-  final Rect bounds;
-  final double centerLongitude;
-
-  Offset project(ExitMapPlace place, Size size) => projectCoordinates(
-    place.latitude,
-    unwrapLongitude(place.longitude, centerLongitude),
-    size,
+  if (size.isEmpty || !size.isFinite) return bounds;
+  return Rect.fromCenter(
+    center: bounds.center,
+    width: math.max(bounds.width, bounds.height * size.aspectRatio),
+    height: math.max(bounds.height, bounds.width / size.aspectRatio),
   );
-
-  Offset projectCoordinates(double lat, double lon, Size size) => Offset(
-    ((lon + 180) / 360 - bounds.left) / bounds.width * size.width,
-    ((90 - lat) / 180 - bounds.top) / bounds.height * size.height,
-  );
-
-  Rect worldRect(Size size) => Rect.fromPoints(
-    projectCoordinates(90, centerLongitude - 180, size),
-    projectCoordinates(-90, centerLongitude + 180, size),
-  );
-
-  @override
-  bool operator ==(Object other) =>
-      other is ExitMapViewport &&
-      other.bounds == bounds &&
-      other.centerLongitude == centerLongitude;
-
-  @override
-  int get hashCode => Object.hash(bounds, centerLongitude);
 }
 
 double unwrapLongitude(double longitude, double center) =>
     center + (longitude - center + 180) % 360 - 180;
 
-Offset exitMapControl(Offset start, Offset end) =>
-    (start + end) / 2 + Offset(0, -(end - start).distance * 0.26);
+Offset exitMapControl(Offset start, Offset end) {
+  final delta = end - start;
+  return (start + end) / 2 + Offset(delta.dy, -delta.dx) * 0.26;
+}
 
 Offset exitMapAlong(Offset start, Offset control, Offset end, double t) =>
     start * ((1 - t) * (1 - t)) + control * (2 * (1 - t) * t) + end * (t * t);

@@ -13,6 +13,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../exit_map/camera.dart';
 import '../exit_map/canvas.dart';
 import '../exit_map/data.dart';
 import '../exit_map/gestures.dart';
@@ -28,14 +29,13 @@ class ExitMapCard extends ConsumerStatefulWidget {
 class _ExitMapCardState extends ConsumerState<ExitMapCard>
     with
         WidgetsBindingObserver,
+        SingleTickerProviderStateMixin,
         ActivePollingMixin<ExitMapCard>,
         RouteMotionHoldMixin<ExitMapCard>,
         ConnectionCountersMixin<ExitMapCard> {
   final _traffic = ExitMapTraffic();
-  final _transform = TransformationController();
+  late final _camera = ExitMapCamera(this);
   final _mapKey = GlobalKey();
-  (Size, Rect)? _cameraBounds;
-  var _cameraCheckPending = false;
   var _snapshot = const ExitMapSnapshot();
   ExitMapOrigin? _originProbe;
   ScrollPosition? _scroll;
@@ -123,7 +123,7 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
 
   @override
   void dispose() {
-    _transform.dispose();
+    _camera.dispose();
     _scroll?.removeListener(_scheduleMeasure);
     _originProbe?.unwatch(directOutbound);
     super.dispose();
@@ -142,20 +142,11 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
     });
   }
 
-  void _syncCamera(Size size, Rect world) {
-    final bounds = (size, world);
-    if (_cameraBounds == bounds) return;
-    _cameraBounds = bounds;
-    if (_cameraCheckPending) return;
-    _cameraCheckPending = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _cameraCheckPending = false;
-      if (!mounted) return;
-      final (size, world) = _cameraBounds!;
-      final camera = constrainExitMapCamera(_transform.value, size, world);
-      if (camera != _transform.value) _transform.value = camera;
-    });
+  void _takeCameraControl() {
+    if (_camera.takeControl()) setState(() {});
   }
+
+  void _resetCamera() => setState(_camera.reset);
 
   @override
   Widget build(BuildContext context) {
@@ -165,46 +156,51 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
     );
     final origin = originEntry.value;
     final colors = context.colorScheme;
+    final surface = DashboardColors.of(context).tone;
     final scale = DashboardDensityScope.scaleOf(context);
+    final animate =
+        canPoll &&
+        TickerMode.valuesOf(context).enabled &&
+        !MediaQuery.disableAnimationsOf(context);
     final location = origin == null
-        ? ''
-        : [
-            if (origin.approximate) '≈',
-            origin.flag,
-            origin.country == 'CN' ? strings.exitMapChina : origin.city,
-          ].where((part) => part.isNotEmpty).join(' ');
-    final you = location.isEmpty
-        ? strings.exitMapYou
-        : '${strings.exitMapYou} · $location';
-    final status = origin == null
         ? originEntry.isLoading
               ? strings.exitMapLocating
+              : _camera.canReset
+              ? strings.unknown
               : strings.exitMapNoOrigin
-        : _snapshot.routes.isEmpty
-        ? strings.exitMapNoTraffic
-        : strings.exitMapTrafficHint;
+        : [
+            strings.exitMapYou,
+            [
+              if (origin.approximate) '≈',
+              origin.flag,
+              if (origin.country == 'CN')
+                strings.exitMapChina
+              else if (!origin.approximate && origin.city.isNotEmpty)
+                origin.city
+              else
+                origin.country,
+            ].where((part) => part.isNotEmpty).join(' '),
+          ].where((part) => part.isNotEmpty).join(' · ');
     final percent = NumberFormat.percentPattern(strings.localeName);
-    final exits = _snapshot.routes
-        .take(2)
-        .map((route) => '${route.node} ${percent.format(route.share)}')
-        .join(' · ');
-    final summary = [
-      if (origin != null && exits.isNotEmpty) exits,
-      status,
-      if (_snapshot.unlocated > 0)
+    final exitSummary = [
+      if (origin != null)
+        for (final route in _snapshot.routes.take(2))
+          '${route.node} ${percent.format(route.share)}',
+      if (origin != null && _snapshot.unlocated > 0)
         strings.exitMapUnlocated(_snapshot.unlocated),
     ].join(' · ');
     return LayoutBuilder(
       builder: (context, constraints) {
         _scheduleMeasure();
         return ExitMapGestureRegion(
-          controller: _transform,
+          controller: _camera.view,
           mapKey: _mapKey,
-          bounds: () => _cameraBounds,
+          bounds: () => _camera.bounds,
           enabled: canPoll,
+          onInteractionStart: _takeCameraControl,
           child: DashboardCard(
             child: SizedBox(
-              height: constraints.hasBoundedHeight ? null : 250 * scale,
+              height: constraints.hasBoundedHeight ? null : 270 * scale,
               child: Column(
                 spacing: 10,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -213,23 +209,49 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
                     glyph: AppGlyphs.proxies,
                     title: strings.exitMap,
                     trailing: [
-                      ListenableBuilder(
-                        listenable: _transform,
-                        builder: (context, _) => IconButton(
-                          tooltip: strings.reset,
-                          onPressed: _transform.value != Matrix4.identity()
-                              ? () => _transform.value = Matrix4.identity()
-                              : null,
-                          icon: const GlyphIcon(AppGlyphs.reset),
-                        ),
+                      IconButton(
+                        tooltip: strings.reset,
+                        onPressed: _camera.canReset ? _resetCamera : null,
+                        icon: const GlyphIcon(AppGlyphs.reset),
                       ),
                     ],
                   ),
-                  Text(
-                    you,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: DashboardText.label(context),
+                  Row(
+                    spacing: 7,
+                    children: [
+                      GlyphIcon(
+                        AppGlyphs.target,
+                        size: 16,
+                        color: colors.tertiary,
+                      ),
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: animate
+                              ? const Duration(milliseconds: 190)
+                              : Duration.zero,
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          layoutBuilder: (current, previous) => Stack(
+                            alignment: AlignmentDirectional.centerStart,
+                            children: [
+                              for (final child in previous)
+                                ExcludeSemantics(child: child),
+                              ?current,
+                            ],
+                          ),
+                          child: EmojiText(
+                            location,
+                            key: ValueKey(location),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: DashboardText.label(
+                              context,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Expanded(
                     child: SizedBox(
@@ -240,74 +262,37 @@ class _ExitMapCardState extends ConsumerState<ExitMapCard>
                           if (size.isEmpty || !size.isFinite) {
                             return const SizedBox.shrink();
                           }
-                          final viewport = ExitMapViewport.fit(
+                          _camera.layout(
                             size,
                             origin,
-                            origin == null
-                                ? const []
-                                : _snapshot.routes.map((route) => route.place),
+                            _snapshot.routes,
+                            animate: animate,
                           );
-                          final world = viewport.worldRect(size);
-                          _syncCamera(
-                            size,
-                            Rect.fromLTRB(
-                              world.left,
-                              world.top < 0 ? world.top : 0,
-                              world.right,
-                              world.bottom > size.height
-                                  ? world.bottom
-                                  : size.height,
-                            ),
-                          );
-                          return ListenableBuilder(
-                            key: const ValueKey('exit-map-camera'),
-                            listenable: _transform,
-                            builder: (context, _) {
-                              final rect = MatrixUtils.transformRect(
-                                Matrix4.inverted(_transform.value),
-                                Offset.zero & size,
-                              );
-                              return ClipRect(
-                                key: const ValueKey('exit-map-viewport'),
-                                child: Transform(
-                                  alignment: Alignment.topLeft,
-                                  transform: _transform.value,
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      Positioned.fromRect(
-                                        rect: rect,
-                                        child: ExcludeSemantics(
-                                          child: ExitMapCanvas(
-                                            origin: origin,
-                                            routes: _snapshot.routes,
-                                            landColor: colors.onSurfaceVariant
-                                                .withValues(alpha: 0.28),
-                                            routeColor: colors.primary,
-                                            originColor: colors.tertiary,
-                                            animate: canPoll,
-                                            sceneSize: size,
-                                            visibleRect: rect,
-                                            viewport: viewport,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                          return ClipRSuperellipse(
+                            key: const ValueKey('exit-map-viewport'),
+                            borderRadius: AppRadius.all(DashboardCorner.block),
+                            child: ColoredBox(
+                              color: surface,
+                              child: Semantics(
+                                label: exitSummary.isEmpty ? null : exitSummary,
+                                child: ExitMapCanvas(
+                                  camera: _camera.view,
+                                  origin: origin,
+                                  routes: _snapshot.routes,
+                                  landColor: colors.onSurfaceVariant.withValues(
+                                    alpha: 0.22,
                                   ),
+                                  routeColor: colors.primary,
+                                  originColor: colors.tertiary,
+                                  surfaceColor: surface,
+                                  animate: animate,
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           );
                         },
                       ),
                     ),
-                  ),
-                  Text(
-                    summary,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: DashboardText.label(context),
                   ),
                 ],
               ),

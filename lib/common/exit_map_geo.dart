@@ -67,9 +67,9 @@ class _PlaceIndex {
       final representative = cities[(code, city)]!;
       final place = ExitMapPlace(
         country: code,
-        city: city,
-        latitude: representative.latitude,
-        longitude: representative.longitude,
+        city: '',
+        latitude: code == 'CN' ? 35 : representative.latitude,
+        longitude: code == 'CN' ? 105 : representative.longitude,
         approximate: true,
       );
       countries[code] = place;
@@ -91,12 +91,12 @@ class _PlaceIndex {
   late final _PlaceAliases _shortCodes;
 
   ExitMapPlace? lookup(String name) {
-    ExitMapPlace? relay;
+    var hasChina = false;
     ExitMapPlace? city;
     ExitMapPlace? region;
     for (final (_, place) in _names.matches(name)) {
       if (place.country == 'CN') {
-        if (relay == null || relay.approximate) relay = place;
+        hasChina = true;
       } else if (place.approximate) {
         region = place;
       } else {
@@ -114,14 +114,14 @@ class _PlaceIndex {
           continue;
         }
         if (place.country == 'CN') {
-          relay ??= place;
+          hasChina = true;
         } else {
           exit = place;
         }
       }
       if (exit != null) return exit;
     }
-    return relay;
+    return hasChina ? countries['CN'] : null;
   }
 
   static bool _digit(int code) => code >= 48 && code <= 57;

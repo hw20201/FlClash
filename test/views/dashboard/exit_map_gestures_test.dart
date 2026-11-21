@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 const _width = 300.0;
 const _size = Size(_width, 160);
 const _world = Rect.fromLTRB(30, -50, 270, 210);
+const _limits = ExitMapCameraBounds(size: _size, world: _world, maxScale: 4);
 const _header = ValueKey('test-header');
 
 Future<GlobalKey> _pumpRegion(
@@ -29,7 +30,7 @@ Future<GlobalKey> _pumpRegion(
           child: ExitMapGestureRegion(
             controller: camera,
             mapKey: mapKey,
-            bounds: () => (_size, _world),
+            bounds: () => _limits,
             enabled: enabled,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -55,18 +56,27 @@ TransformationController _camera() {
 void main() {
   test('camera wraps by the clamped scale times the projected world width', () {
     for (final direction in [-1, 1]) {
-      final camera = constrainExitMapCamera(
-        Matrix4.identity()
-          ..translateByDouble(direction * 1033.0, direction * 1000.0, 0, 1)
-          ..scaleByDouble(8, 8, 8, 1),
-        _size,
-        _world,
+      final camera = _limits.constrain(
+        exitMapCameraMatrix(8, Offset(direction * 1033.0, direction * 1000.0)),
       );
       final translation = camera.getTranslation();
       expect(camera.getMaxScaleOnAxis(), 4);
       expect(translation.x, direction * 73);
       expect(translation.y, direction > 0 ? 200 : -680);
     }
+  });
+
+  test('world zoom fits both axes with room for the coastline', () {
+    final camera = _limits.constrain(
+      exitMapCameraMatrix(0.001, const Offset(0, 992)),
+    );
+    final scale = camera.getMaxScaleOnAxis();
+    expect(scale * _world.height, closeTo(_size.height * 0.88, 1e-9));
+    expect(scale * _world.width, lessThan(_size.width));
+    expect(
+      camera.getTranslation().y + _world.center.dy * scale,
+      _size.height / 2,
+    );
   });
 
   testWidgets('pan wraps at world width even in a wider map box', (
@@ -118,9 +128,12 @@ void main() {
     await pinch.panZoomUpdate(point, scale: 5.5);
     expect(camera.value.getMaxScaleOnAxis(), closeTo(11 / 3, 1e-9));
     await pinch.panZoomUpdate(point, scale: 0.25);
-    expect(camera.value.getMaxScaleOnAxis(), 1);
+    expect(camera.value.getMaxScaleOnAxis(), _limits.minScale);
     await pinch.panZoomUpdate(point, scale: 0.30);
-    expect(camera.value.getMaxScaleOnAxis(), closeTo(1.2, 1e-9));
+    expect(
+      camera.value.getMaxScaleOnAxis(),
+      closeTo(1.2 * _limits.minScale, 1e-9),
+    );
     await pinch.panZoomEnd();
   });
 

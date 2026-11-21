@@ -29,6 +29,17 @@ void main() {
     expect(locateExit('jp-02')?.country, 'JP');
   });
 
+  test('mainland city names only provide the China anchor', () {
+    final china = exitMapCountry('CN');
+    expect(china?.city, isEmpty);
+    expect(china?.latitude, 35);
+    expect(china?.longitude, 105);
+    expect(china?.approximate, isTrue);
+    for (final name in ['上海 01', 'China Shenzhen 02', 'CN-03']) {
+      expect(locateExit(name), china, reason: name);
+    }
+  });
+
   test(
     'country fallback is marked approximate and ISO flags are validated',
     () {

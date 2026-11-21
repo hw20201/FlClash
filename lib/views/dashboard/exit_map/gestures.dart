@@ -4,18 +4,41 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/widgets.dart';
 
-Matrix4 constrainExitMapCamera(Matrix4 camera, Size size, Rect world) {
-  final scale = camera.getMaxScaleOnAxis().clamp(1.0, 4.0);
-  final translation = camera.getTranslation();
-  final period = world.width * scale;
-  final x = (translation.x + period / 2) % period - period / 2;
-  final y = translation.y.clamp(
-    size.height - world.bottom * scale,
-    -world.top * scale,
-  );
-  return Matrix4.identity()
-    ..translateByDouble(x, y, 0, 1)
-    ..scaleByDouble(scale, scale, scale, 1);
+Matrix4 exitMapCameraMatrix(double scale, Offset offset) => Matrix4.identity()
+  ..translateByDouble(offset.dx, offset.dy, 0, 1)
+  ..scaleByDouble(scale, scale, scale, 1);
+
+class ExitMapCameraBounds {
+  const ExitMapCameraBounds({
+    required this.size,
+    required this.world,
+    required this.maxScale,
+    this.verticalPadding = 0,
+  });
+
+  final Size size;
+  final Rect world;
+  final double maxScale;
+  final double verticalPadding;
+
+  double get minScale =>
+      math.min(size.width / world.width, size.height / world.height) * 0.88;
+
+  double clampScale(double scale) => scale.clamp(minScale, maxScale);
+
+  Matrix4 constrain(Matrix4 camera, {bool clampZoom = true}) {
+    final requested = camera.getMaxScaleOnAxis();
+    final scale = clampZoom ? clampScale(requested) : requested;
+    final translation = camera.getTranslation();
+    final period = world.width * scale;
+    final x = (translation.x + period / 2) % period - period / 2;
+    final top = verticalPadding - world.top * scale;
+    final bottom = size.height - verticalPadding - world.bottom * scale;
+    final y = bottom > top
+        ? (top + bottom) / 2
+        : translation.y.clamp(bottom, top);
+    return exitMapCameraMatrix(scale, Offset(x, y));
+  }
 }
 
 class ExitMapGestureRegion extends StatefulWidget {
@@ -25,13 +48,15 @@ class ExitMapGestureRegion extends StatefulWidget {
     required this.mapKey,
     required this.bounds,
     required this.enabled,
+    this.onInteractionStart,
     required this.child,
   });
 
   final TransformationController controller;
   final GlobalKey mapKey;
-  final (Size, Rect)? Function() bounds;
+  final ExitMapCameraBounds? Function() bounds;
   final bool enabled;
+  final VoidCallback? onInteractionStart;
   final Widget child;
 
   @override
@@ -87,14 +112,7 @@ class _ExitMapGestureRegionState extends State<ExitMapGestureRegion>
   void _setCamera(double scale, Offset translation) {
     final bounds = widget.bounds();
     if (bounds == null) return;
-    final (size, world) = bounds;
-    final camera = constrainExitMapCamera(
-      Matrix4.identity()
-        ..translateByDouble(translation.dx, translation.dy, 0, 1)
-        ..scaleByDouble(scale, scale, scale, 1),
-      size,
-      world,
-    );
+    final camera = bounds.constrain(exitMapCameraMatrix(scale, translation));
     _applying = true;
     try {
       if (camera != widget.controller.value) widget.controller.value = camera;
@@ -108,21 +126,24 @@ class _ExitMapGestureRegionState extends State<ExitMapGestureRegion>
     _active = widget.enabled && _recognizer.canUpdate;
     final box = _mapBox;
     if (!_active || box == null) return;
+    widget.onInteractionStart?.call();
     _startScale = widget.controller.value.getMaxScaleOnAxis();
     _anchor = widget.controller.toScene(box.globalToLocal(details.focalPoint));
   }
 
   void _update(ScaleUpdateDetails details) {
     final box = _mapBox;
+    final bounds = widget.bounds();
     if (!_active ||
         !_recognizer.canUpdate ||
         box == null ||
+        bounds == null ||
         !details.scale.isFinite ||
         details.scale <= 0) {
       return;
     }
     final requestedScale = _startScale * details.scale;
-    final scale = requestedScale.clamp(1.0, 4.0);
+    final scale = bounds.clampScale(requestedScale);
     final point = box.globalToLocal(details.focalPoint);
     _setCamera(scale, point - _anchor * scale);
     _anchor = widget.controller.toScene(point);
@@ -173,14 +194,16 @@ class _ExitMapGestureRegionState extends State<ExitMapGestureRegion>
     }
     GestureBinding.instance.pointerSignalResolver.register(event, (_) {
       _inertia.stop();
-      final point = _mapBox!.globalToLocal(event.position);
+      final box = _mapBox;
+      final bounds = widget.bounds();
+      if (box == null || bounds == null) return;
+      widget.onInteractionStart?.call();
+      final point = box.globalToLocal(event.position);
       final anchor = widget.controller.toScene(point);
-      final scale =
-          (widget.controller.value.getMaxScaleOnAxis() *
-                  math.exp(
-                    -event.scrollDelta.dy / kDefaultMouseScrollToScaleFactor,
-                  ))
-              .clamp(1.0, 4.0);
+      final scale = bounds.clampScale(
+        widget.controller.value.getMaxScaleOnAxis() *
+            math.exp(-event.scrollDelta.dy / kDefaultMouseScrollToScaleFactor),
+      );
       _setCamera(scale, point - anchor * scale);
     });
   }

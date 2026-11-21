@@ -1,60 +1,88 @@
 import 'dart:ui' as ui;
 
 import 'package:fl_clash/common/exit_map_geo.dart';
+import 'package:fl_clash/views/dashboard/exit_map/camera.dart';
 import 'package:fl_clash/views/dashboard/exit_map/canvas.dart';
 import 'package:fl_clash/views/dashboard/exit_map/data.dart';
+import 'package:fl_clash/views/dashboard/exit_map/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-const _wrapViewport = ExitMapViewport(
-  Rect.fromLTWH(0.125, 0.25, 0.5, 0.5),
-  180,
-);
-const _sceneSize = Size(180, 90);
+const _size = Size(96, 70);
 const _origin = ExitMapPlace(
-  country: 'GH',
+  country: 'RU',
   city: 'Origin',
-  latitude: 0,
-  longitude: 1,
+  latitude: 45,
+  longitude: 176,
 );
 const _exit = ExitMapPlace(
-  country: 'SD',
+  country: 'US',
   city: 'Exit',
-  latitude: 15,
-  longitude: 39,
+  latitude: 62,
+  longitude: -150,
+);
+const _next = ExitMapPlace(
+  country: 'US',
+  city: 'New exit',
+  latitude: 32,
+  longitude: -150,
 );
 const _seamExit = ExitMapPlace(
-  country: 'GH',
+  country: 'FJ',
   city: 'Seam exit',
-  latitude: -15,
-  longitude: 0,
+  latitude: 25,
+  longitude: -178,
+);
+const _route = ExitMapRoute(
+  node: 'Exit',
+  groups: {'Proxy'},
+  place: _exit,
+  share: 1,
+);
+const _replacement = ExitMapRoute(
+  node: 'New exit',
+  groups: {'Proxy'},
+  place: _next,
+  share: 1,
 );
 const _layers = ['exit-map-land', 'exit-map-routes', 'exit-map-flow'];
+const _offset = Offset(-337, -18);
 
-Widget _wrappedCanvas(
-  Rect visible, {
-  List<ExitMapRoute> routes = const [
-    ExitMapRoute(node: 'Exit', groups: {}, place: _exit, share: 1),
-  ],
-}) => MediaQuery(
-  data: const MediaQueryData(),
-  child: Directionality(
-    textDirection: TextDirection.ltr,
-    child: Center(
-      child: SizedBox.fromSize(
-        size: visible.size,
-        child: ExitMapCanvas(
-          origin: _origin,
-          routes: routes,
-          landColor: const Color(0xff808080),
-          routeColor: const Color(0xff3366ff),
-          originColor: const Color(0xffff6600),
-          animate: true,
-          sceneSize: _sceneSize,
-          visibleRect: visible,
-          viewport: _wrapViewport,
+TransformationController _camera([Offset offset = _offset]) {
+  final camera = TransformationController(exitMapCameraMatrix(1, offset));
+  addTearDown(camera.dispose);
+  return camera;
+}
+
+Widget _canvas(
+  TransformationController camera, {
+  ExitMapPlace? origin = _origin,
+  List<ExitMapRoute> routes = const [_route],
+  Size size = _size,
+  bool animate = true,
+  bool reducedMotion = false,
+  bool tickerEnabled = true,
+}) => TickerMode(
+  enabled: tickerEnabled,
+  child: MediaQuery(
+    data: MediaQueryData(disableAnimations: reducedMotion),
+    child: Directionality(
+      textDirection: TextDirection.ltr,
+      child: Center(
+        child: SizedBox.fromSize(
+          size: size,
+          child: ExitMapCanvas(
+            camera: camera,
+            origin: origin,
+            routes: routes,
+            landColor: const Color(0xff808080),
+            routeColor: const Color(0xff3366ff),
+            originColor: const Color(0xffff6600),
+            surfaceColor: const Color(0xff101014),
+            animate: animate,
+          ),
         ),
       ),
     ),
@@ -62,15 +90,6 @@ Widget _wrappedCanvas(
 );
 
 Finder _layer(String name) => find.byKey(ValueKey(name));
-
-CustomPainter _landPainter(WidgetTester tester) => tester
-    .widget<CustomPaint>(
-      find.descendant(
-        of: _layer('exit-map-land'),
-        matching: find.byType(CustomPaint),
-      ),
-    )
-    .painter!;
 
 Future<Map<String, Uint8List>> _layerPixels(
   WidgetTester tester,
@@ -95,91 +114,52 @@ Future<Map<String, Uint8List>> _layerPixels(
   return pixels;
 }))!;
 
-int _pixelIndex(Rect visible, Offset point) =>
-    (point.dy.floor() * visible.width.toInt() + point.dx.floor()) * 4;
+Future<Uint8List> _routes(WidgetTester tester) async =>
+    (await _layerPixels(tester, ['exit-map-routes']))['exit-map-routes']!;
 
-Widget _canvas({
-  bool animate = true,
-  bool reducedMotion = false,
-  String exit = 'Tokyo',
-}) => MediaQuery(
-  data: MediaQueryData(disableAnimations: reducedMotion),
-  child: Directionality(
-    textDirection: TextDirection.ltr,
-    child: Center(
-      child: SizedBox(
-        width: 400,
-        height: 200,
-        child: ExitMapCanvas(
-          origin: locateExit('香港'),
-          routes: [
-            ExitMapRoute(
-              node: exit,
-              groups: const {'Proxy'},
-              place: locateExit(exit)!,
-              share: 1,
-            ),
-          ],
-          landColor: const Color(0xff808080),
-          routeColor: const Color(0xff3366ff),
-          originColor: const Color(0xffff6600),
-          animate: animate,
-        ),
-      ),
-    ),
-  ),
-);
+Offset _point(ExitMapPlace place) =>
+    exitMapNearestCopy(exitMapWorldPoint(place), exitMapWorldPoint(_origin)) +
+    _offset;
+
+int _pixelIndex(Size size, Offset point) =>
+    (point.dy.floor() * size.width.toInt() + point.dx.floor()) * 4;
 
 void main() {
-  testWidgets('all layers repeat across positive and negative world turns', (
+  testWidgets('land, arcs and particles wrap on the same world period', (
     tester,
   ) async {
-    final world = _wrapViewport.worldRect(_sceneSize);
-    final visible = Rect.fromLTWH(world.right - 8, 4, 80, 70);
-    await tester.pumpWidget(_wrappedCanvas(visible));
-    await tester.pump(const Duration(milliseconds: 700));
+    final camera = _camera();
+    await tester.pumpWidget(_canvas(camera));
+    await tester.pump(const Duration(milliseconds: 1550));
     final baseline = await _layerPixels(tester, _layers);
-    final landPainter = _landPainter(tester);
     final land = baseline['exit-map-land']!;
     final routes = baseline['exit-map-routes']!;
     final flow = baseline['exit-map-flow']!;
-    var landBeforeSeam = false;
-    var landAfterSeam = false;
-    var particlePixels = 0;
-    for (var alpha = 3; alpha < land.length; alpha += 4) {
-      if (land[alpha] != 0) {
-        if (alpha ~/ 4 % visible.width.toInt() < 8) {
-          landBeforeSeam = true;
-        } else {
-          landAfterSeam = true;
-        }
-      }
-      if (flow[alpha] > 64) {
-        particlePixels++;
-        expect(routes[alpha], isPositive);
-      }
+    expect(land[_pixelIndex(_size, const Offset(3, 31)) + 3], 0);
+    for (final landPoint in [const Offset(3, 6), const Offset(53, 10)]) {
+      expect(land[_pixelIndex(_size, landPoint) + 3], greaterThan(200));
     }
-    expect(landBeforeSeam, isTrue);
-    expect(landAfterSeam, isTrue);
-    expect(particlePixels, isPositive);
-
-    Offset pointInView(ExitMapPlace place) =>
-        _wrapViewport.project(place, _sceneSize) +
-        Offset(world.width, 0) -
-        visible.topLeft;
-    final origin = _pixelIndex(visible, pointInView(_origin));
-    final exit = _pixelIndex(visible, pointInView(_exit));
+    final origin = _pixelIndex(_size, _point(_origin));
+    final exit = _pixelIndex(_size, _point(_exit) + const Offset(2.5, 0));
     expect(routes[origin], 255);
     expect(routes[origin + 2], 0);
     expect(routes[exit + 2], greaterThan(routes[exit]));
+    expect([
+      for (var i = 3; i < flow.length; i += 4) flow[i],
+    ], contains(greaterThan(64)));
 
     for (final turns in [-3, -1, 1, 4]) {
-      await tester.pumpWidget(_wrappedCanvas(visible.translate(11, 0)));
-      expect(_landPainter(tester).shouldRepaint(landPainter), isTrue);
-      await tester.pumpWidget(
-        _wrappedCanvas(visible.translate(turns * world.width, 0)),
+      camera.value = exitMapCameraMatrix(1, _offset + const Offset(11, 0));
+      await tester.pump();
+      final shifted = (await _layerPixels(tester, [
+        'exit-map-land',
+      ]))['exit-map-land'];
+      expect(listEquals(shifted, land), isFalse);
+      camera.value = exitMapCameraMatrix(
+        1,
+        _offset + Offset(turns * exitMapWorld.width, 0),
       );
-      expect(_landPainter(tester).shouldRepaint(landPainter), isFalse);
+      await tester.pump();
       final actual = await _layerPixels(tester, _layers);
       for (final name in _layers) {
         expect(
@@ -189,22 +169,26 @@ void main() {
         );
       }
     }
-
-    await tester.pumpWidget(_wrappedCanvas(visible.translate(0, world.height)));
+    camera.value = exitMapCameraMatrix(
+      1,
+      _offset - Offset(0, exitMapWorld.height),
+    );
+    await tester.pump();
     final offWorld = await _layerPixels(tester, _layers);
     for (final pixels in offWorld.values) {
       expect(pixels.every((value) => value == 0), isTrue);
     }
   });
 
-  testWidgets('offscreen route and origin paint through the world seam', (
+  testWidgets('markers and route paint across the seam from outside the clip', (
     tester,
   ) async {
-    final seam = _wrapViewport.worldRect(_sceneSize).right;
-    final visible = Rect.fromLTWH(seam - 8, 4, 7, 70);
+    const size = Size(4, 70);
+    final camera = _camera(const Offset(-357, -26));
     await tester.pumpWidget(
-      _wrappedCanvas(
-        visible,
+      _canvas(
+        camera,
+        size: size,
         routes: const [
           ExitMapRoute(
             node: 'Seam exit',
@@ -215,23 +199,20 @@ void main() {
         ],
       ),
     );
-    const layer = 'exit-map-routes';
-    final pixels = (await _layerPixels(tester, [layer]))[layer]!;
-    final originY = _wrapViewport.project(_origin, _sceneSize).dy - visible.top;
-    final exitY = _wrapViewport.project(_seamExit, _sceneSize).dy - visible.top;
-    final halo = _pixelIndex(visible, Offset(2, originY));
-    final arc = _pixelIndex(visible, Offset(6, exitY));
-    expect(pixels[halo], greaterThan(pixels[halo + 2]));
-    expect(pixels[arc + 2], greaterThan(pixels[arc]));
+    final pixels = await _routes(tester);
+    final origin = _pixelIndex(size, const Offset(1, 19));
+    final exit = _pixelIndex(size, const Offset(2, 39));
+    expect(pixels[origin], greaterThan(pixels[origin + 2]));
+    expect(pixels[exit + 2], greaterThan(pixels[exit]));
   });
 
   testWidgets('flow repaints without rebuilding land or route geometry', (
     tester,
   ) async {
-    await tester.pumpWidget(_canvas());
+    await tester.pumpWidget(_canvas(_camera()));
     await tester.pump(const Duration(seconds: 1));
     RenderRepaintBoundary layer(String name) =>
-        tester.renderObject<RenderRepaintBoundary>(find.byKey(ValueKey(name)));
+        tester.renderObject<RenderRepaintBoundary>(_layer(name));
     final land = layer('exit-map-land')..debugResetMetrics();
     final routes = layer('exit-map-routes')..debugResetMetrics();
     final flow = layer('exit-map-flow')..debugResetMetrics();
@@ -249,21 +230,68 @@ void main() {
   });
 
   testWidgets(
-    'node changes animate and stop after disposal or reduced motion',
+    'origin and route appearance, replacement and loss have intermediate frames',
     (tester) async {
-      await tester.pumpWidget(_canvas());
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pumpWidget(_canvas(exit: 'London'));
-      await tester.pump(const Duration(milliseconds: 325));
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(_canvas(exit: 'London', reducedMotion: true));
-      await tester.pump();
-      expect(find.byKey(const ValueKey('exit-map-flow')), findsNothing);
+      final camera = _camera();
+      await tester.pumpWidget(_canvas(camera, origin: null));
+      final empty = await _routes(tester);
+      int originAlpha(Uint8List bytes) =>
+          bytes[_pixelIndex(_size, _point(_origin)) + 3];
+
+      await tester.pumpWidget(_canvas(camera));
+      expect(await _routes(tester), orderedEquals(empty));
+      await tester.pump(exitMapTransitionDuration ~/ 2);
+      expect(originAlpha(await _routes(tester)), inExclusiveRange(0, 255));
+      await tester.pump(exitMapTransitionDuration);
+      final original = await _routes(tester);
+      expect(originAlpha(original), 255);
+
+      await tester.pumpWidget(_canvas(camera, routes: const [_replacement]));
+      expect(await _routes(tester), orderedEquals(original));
+      await tester.pump(exitMapTransitionDuration ~/ 2);
+      final mid = await _routes(tester);
+      final endpoint = Offset.lerp(_point(_exit), _point(_next), 0.5)!;
+      final ring = _pixelIndex(_size, endpoint + const Offset(2.5, 0));
+      expect(mid[ring + 2], greaterThan(mid[ring]));
+      await tester.pump(exitMapTransitionDuration);
+      final replaced = await _routes(tester);
+      expect(listEquals(mid, replaced), isFalse);
+
+      await tester.pumpWidget(_canvas(camera, origin: null));
+      expect(await _routes(tester), orderedEquals(replaced));
+      await tester.pump(exitMapTransitionDuration ~/ 2);
+      expect(originAlpha(await _routes(tester)), inExclusiveRange(0, 255));
+      await tester.pump(exitMapTransitionDuration);
+      expect(await _routes(tester), orderedEquals(empty));
       expect(tester.binding.transientCallbackCount, 0);
-      await tester.pumpWidget(_canvas(exit: 'London', animate: false));
-      expect(tester.binding.transientCallbackCount, 0);
-      await tester.pumpWidget(const SizedBox.shrink());
-      expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('reduced motion and inactive map stop scheduling frames', (
+    tester,
+  ) async {
+    final camera = _camera();
+    await tester.pumpWidget(_canvas(camera));
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(_canvas(camera, routes: const [_replacement]));
+    await tester.pump(exitMapTransitionDuration ~/ 2);
+    await tester.pumpWidget(
+      _canvas(camera, routes: const [_replacement], reducedMotion: true),
+    );
+    expect(_layer('exit-map-flow'), findsNothing);
+    expect(tester.binding.transientCallbackCount, 0);
+    final settled = await _routes(tester);
+    await tester.pumpWidget(
+      _canvas(camera, routes: const [_replacement], tickerEnabled: false),
+    );
+    expect(_layer('exit-map-flow'), findsNothing);
+    expect(tester.binding.transientCallbackCount, 0);
+    expect(await _routes(tester), orderedEquals(settled));
+    await tester.pumpWidget(
+      _canvas(camera, routes: const [_replacement], animate: false),
+    );
+    expect(tester.binding.transientCallbackCount, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+    expect(tester.takeException(), isNull);
+  });
 }

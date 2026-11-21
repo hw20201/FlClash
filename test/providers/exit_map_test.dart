@@ -59,9 +59,11 @@ void main() {
   test('falls back to a country without using the Cloudflare edge city', () {
     final place = parseExitMapOrigin('ip=1.2.3.4\nloc=JP\ncolo=LAX\n');
     expect(place?.country, 'JP');
-    expect(place?.city, '东京');
+    expect(place?.city, isEmpty);
     expect(place?.approximate, isTrue);
-    expect(parseExitMapOrigin('{"country_code":"US"}')?.approximate, isTrue);
+    final us = parseExitMapOrigin('{"country_code":"US"}');
+    expect(us?.approximate, isTrue);
+    expect(us?.city, isEmpty);
   });
 
   test(

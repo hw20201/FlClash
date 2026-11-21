@@ -63,7 +63,7 @@ ExitMapPlace? parseExitMapOrigin(String body) {
         }
       }
       // The Cloudflare edge city can differ from the user's location.
-      return _originCountry(values['loc'] ?? '');
+      return exitMapCountry(values['loc'] ?? '');
     }
     final decoded = jsonDecode(body);
     if (decoded is! Map<String, dynamic> || decoded['success'] == false) {
@@ -80,7 +80,7 @@ ExitMapPlace? parseExitMapOrigin(String body) {
     final country = RegExp(r'^[A-Za-z]{2}$').hasMatch(rawCountryText)
         ? rawCountryText.toUpperCase()
         : locateExit(rawCountryText)?.country ?? '';
-    if (country == 'CN') return _originCountry(country);
+    if (country == 'CN') return exitMapCountry(country);
     double? number(Object? value) =>
         value is num ? value.toDouble() : double.tryParse('$value');
     var lat = number(data['latitude'] ?? data['lat']);
@@ -109,19 +109,8 @@ ExitMapPlace? parseExitMapOrigin(String body) {
         longitude: lon,
       );
     }
-    return _originCountry(country);
+    return exitMapCountry(country);
   } on FormatException {
     return null;
   }
 }
-
-ExitMapPlace? _originCountry(String country) =>
-    country.trim().toUpperCase() == 'CN'
-    ? const ExitMapPlace(
-        country: 'CN',
-        city: '',
-        latitude: 35,
-        longitude: 105,
-        approximate: true,
-      )
-    : exitMapCountry(country);

@@ -10,7 +10,9 @@ import 'package:fl_clash/providers/core.dart';
 import 'package:fl_clash/providers/exit_map.dart';
 import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/state.dart';
+import 'package:fl_clash/views/dashboard/exit_map/camera.dart';
 import 'package:fl_clash/views/dashboard/exit_map/canvas.dart';
+import 'package:fl_clash/views/dashboard/exit_map/data.dart';
 import 'package:fl_clash/views/dashboard/exit_map/gestures.dart';
 import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:fl_clash/views/dashboard/widgets/exit_map.dart';
@@ -138,6 +140,26 @@ void main() {
       .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
       .controller;
 
+  ExitMapCameraBounds limits(WidgetTester tester) => tester
+      .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
+      .bounds()!;
+
+  double panX(Matrix4 before, Matrix4 after) {
+    final period = after.getMaxScaleOnAxis() * exitMapWorld.width;
+    return (after.getTranslation().x - before.getTranslation().x + period / 2) %
+            period -
+        period / 2;
+  }
+
+  void expectCamera(Matrix4 actual, Matrix4 target) {
+    expect(
+      actual.getMaxScaleOnAxis(),
+      closeTo(target.getMaxScaleOnAxis(), 1e-9),
+    );
+    expect(panX(target, actual), closeTo(0, 1e-8));
+    expect(actual.getTranslation().y, closeTo(target.getTranslation().y, 1e-8));
+  }
+
   Finder mapViewport() => find.byKey(const ValueKey('exit-map-viewport'));
 
   Finder resetButton() => find.byWidgetPredicate(
@@ -190,12 +212,14 @@ void main() {
     expect(find.text('Locating your direct connection…'), findsOneWidget);
     origin.show(const ProbeEntry(phase: ProbePhase.failed));
     await tester.pump();
+    await tester.pump(exitMapTransitionDuration);
     expect(find.text('Location unavailable · East Asia view'), findsOneWidget);
     origin.show(
       ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
     );
     await tester.pump();
-    expect(find.text('No active proxy exits to show'), findsOneWidget);
+    expect(find.text('No active proxy exits to show'), findsNothing);
+    expect(tester.getSize(mapViewport()).height, greaterThan(165));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
     expect(origin.watchers, 0);
@@ -215,7 +239,10 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(find.text('You · ≈ 🇨🇳 China'), findsOneWidget);
+    final label = tester.widget<Text>(find.text('You · ≈ 🇨🇳 China'));
+    final spans = (label.textSpan! as TextSpan).children!.whereType<TextSpan>();
+    final flag = spans.singleWhere((span) => span.text == '🇨🇳');
+    expect(flag.style?.fontFamily, 'Twemoji');
     expect(find.textContaining('Shanghai'), findsNothing);
     final place = tester
         .widget<ExitMapCanvas>(find.byType(ExitMapCanvas))
@@ -255,6 +282,7 @@ void main() {
         .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
         .controller;
     final size = tester.getSize(find.byType(ExitMapCard));
+    final home = Matrix4.copy(transform.value);
     final reset = find.byWidgetPredicate(
       (widget) => widget is IconButton && widget.tooltip == 'Reset',
     );
@@ -267,14 +295,18 @@ void main() {
     }
     await pan.up();
     await tester.pump();
-    expect(transform.value.getMaxScaleOnAxis(), 1);
-    expect(transform.value.getTranslation().x, greaterThan(0));
-    expect(transform.value.getTranslation().y, lessThan(0));
+    expect(transform.value.getMaxScaleOnAxis(), home.getMaxScaleOnAxis());
+    expect(panX(home, transform.value), greaterThan(0));
+    expect(
+      transform.value.getTranslation().y,
+      lessThan(home.getTranslation().y),
+    );
     expect(scroll.position.pixels, 0);
     expect(tester.widget<IconButton>(reset).onPressed, isNotNull);
     await tester.tap(reset);
     await tester.pump();
-    expect(transform.value, Matrix4.identity());
+    await tester.pump(exitMapTransitionDuration);
+    expectCamera(transform.value, home);
     expect(tester.getSize(find.byType(ExitMapCard)), size);
     expect(tester.widget<IconButton>(reset).onPressed, isNull);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -294,6 +326,7 @@ void main() {
           .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
           .controller;
       final cardBounds = tester.getRect(find.byType(ExitMapCard));
+      final home = Matrix4.copy(transform.value);
       final pan = await tester.startGesture(tester.getCenter(viewer));
       for (var i = 0; i < 24; i++) {
         await pan.moveBy(delta);
@@ -301,10 +334,13 @@ void main() {
       }
       await pan.up();
       await tester.pump();
-      expect(transform.value.getMaxScaleOnAxis(), 1);
-      expect(transform.value.getTranslation().y, lessThan(0));
+      expect(transform.value.getMaxScaleOnAxis(), home.getMaxScaleOnAxis());
+      expect(
+        transform.value.getTranslation().y,
+        lessThan(home.getTranslation().y),
+      );
       if (delta.dx != 0) {
-        expect(transform.value.getTranslation().x, greaterThan(0));
+        expect(panX(home, transform.value), greaterThan(0));
       }
       expect(scroll.position.pixels, 0);
       expect(tester.getRect(find.byType(ExitMapCard)), cardBounds);
@@ -322,25 +358,31 @@ void main() {
       ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
     );
     await tester.pump();
-    final viewer = find.byKey(const ValueKey('exit-map-viewport'));
-    final transform = tester
-        .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
-        .controller;
-    final size = tester.getSize(viewer);
+    await tester.pump(exitMapTransitionDuration);
+    final transform = camera(tester);
+    final home = Matrix4.copy(transform.value);
     final before = await landPixels(tester);
-    transform.value = Matrix4.identity()
-      ..translateByDouble(0, -size.height * 0.4, 0, 1);
+    final land = tester.renderObject<RenderRepaintBoundary>(
+      find.byKey(const ValueKey('exit-map-land')),
+    )..debugResetMetrics();
+    final pan = await tester.startGesture(tester.getCenter(mapViewport()));
+    for (var step = 0; step < 4; step++) {
+      await pan.moveBy(const Offset(-28, -14));
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await pan.cancel();
     await tester.pump();
-    final after = await landPixels(tester);
-    expect(after, isNot(orderedEquals(before)));
-    final width = size.width.ceil();
-    final firstPixel = width * (size.height * 0.7).ceil();
-    expect([
-      for (var i = firstPixel * 4 + 3; i < after.length; i += 4)
-        if (after[i] > 0) after[i],
-    ], isNotEmpty);
-    transform.value = Matrix4.identity();
+    expect(panX(home, transform.value), lessThan(-20));
+    expect(
+      land.debugAsymmetricPaintCount + land.debugSymmetricPaintCount,
+      greaterThan(0),
+    );
+    expect(await landPixels(tester), isNot(orderedEquals(before)));
+
+    await tester.tap(resetButton());
     await tester.pump();
+    await tester.pump(exitMapTransitionDuration);
+    expectCamera(transform.value, home);
     expect(await landPixels(tester), orderedEquals(before));
     expect(find.byKey(const ValueKey('exit-map-flow')), findsNothing);
     await tester.pumpWidget(const SizedBox.shrink());
@@ -348,90 +390,82 @@ void main() {
     expect(tester.binding.transientCallbackCount, 0);
   });
 
-  for (final atEdge in [false, true]) {
-    testWidgets(
-      'a live refit ${atEdge ? 'clamps latitude without resetting zoom' : 'preserves a valid latitude'} and wraps longitude',
-      (tester) async {
-        await pumpCard(tester);
-        origin.show(
-          ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
-        );
-        await tester.pump();
-        final transform = camera(tester);
-        final size = tester.getSize(mapViewport());
-        final before = tester.widget<ExitMapCanvas>(find.byType(ExitMapCanvas));
-        final oldWorld = before.viewport!.worldRect(size);
-        final x = oldWorld.width * 12 + 20;
-        final y = atEdge ? 1e6 : -10.0;
-        transform.value = Matrix4.identity()
-          ..translateByDouble(x, y, 0, 1)
-          ..scaleByDouble(2, 2, 2, 1);
-        await tester.pump();
-        connect('London');
-        await tester.pump(const Duration(seconds: 1));
-        await tester.pump();
-        await tester.pump();
-        final canvas = tester.widget<ExitMapCanvas>(find.byType(ExitMapCanvas));
-        expect(canvas.routes.single.node, 'London');
-        expect(canvas.viewport, isNot(before.viewport));
-        final bounds = tester
-            .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
-            .bounds()!
-            .$2;
-        final translation = transform.value.getTranslation();
-        final horizontalTurns = (x - translation.x) / (bounds.width * 2);
-        expect(transform.value.getMaxScaleOnAxis(), 2);
-        expect(horizontalTurns, closeTo(horizontalTurns.roundToDouble(), 1e-6));
-        expect(translation.x.abs(), lessThanOrEqualTo(bounds.width));
-        expect(translation.y, atEdge ? -bounds.top * 2 : y);
-        final visible = MatrixUtils.transformRect(
-          Matrix4.inverted(transform.value),
-          Offset.zero & size,
-        );
-        expect(visible.top, greaterThanOrEqualTo(bounds.top - 1e-6));
-        expect(visible.bottom, lessThanOrEqualTo(bounds.bottom + 1e-6));
-        final pixels = await landPixels(tester);
-        expect([
-          for (var i = 3; i < pixels.length; i += 4)
-            if (pixels[i] > 0) pixels[i],
-        ], isNotEmpty);
-        await closeCard(tester);
-      },
-    );
-  }
-
-  testWidgets('a dateline fit keeps the renderer horizontal period', (
+  testWidgets('an automatic fit animates and settles around the new route', (
     tester,
   ) async {
-    connect('London');
     await pumpCard(tester);
+    final transform = camera(tester);
+    final initial = Matrix4.copy(transform.value);
     origin.show(
-      ProbeEntry(
-        phase: ProbePhase.fresh,
-        value: parseExitMapOrigin(
-          '{"country":"FJ","city":"Dateline","loc":"-17,179"}',
-        ),
-      ),
+      ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
     );
     await tester.pump();
+    expectCamera(transform.value, initial);
+    await tester.pump(exitMapTransitionDuration);
+    final regional = Matrix4.copy(transform.value);
+    expect(regional, isNot(initial));
+
+    connect('London');
+    await tester.pump(const Duration(seconds: 1));
     await tester.pump();
-    final canvas = tester.widget<ExitMapCanvas>(find.byType(ExitMapCanvas));
-    expect(canvas.routes.single.node, 'London');
-    final size = tester.getSize(mapViewport());
-    final world = canvas.viewport!.worldRect(size);
-    final bounds = tester
-        .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
-        .bounds()!
-        .$2;
-    expect(bounds.width, world.width);
-    expect(bounds.left, world.left);
-    expect(bounds.right, world.right);
-    expect(bounds.top, lessThanOrEqualTo(0));
-    expect(bounds.bottom, greaterThanOrEqualTo(size.height));
+    expectCamera(transform.value, regional);
+    await tester.pump(exitMapTransitionDuration ~/ 2);
+    final mid = transform.value.getMaxScaleOnAxis();
+    await tester.pump(exitMapTransitionDuration);
+    final end = transform.value.getMaxScaleOnAxis();
+    expect(end, lessThan(mid));
+    expect(mid, lessThan(regional.getMaxScaleOnAxis()));
+    final region = limits(tester);
+    expect(region.world, exitMapWorld);
+    expect(region.maxScale, closeTo(4 * end, 1e-9));
+    expect(
+      tester
+          .widget<ExitMapCanvas>(find.byType(ExitMapCanvas))
+          .routes
+          .single
+          .node,
+      'London',
+    );
     await closeCard(tester);
   });
 
-  for (final region in ['header', 'location', 'footer', 'padding']) {
+  testWidgets(
+    'a manually panned map stays in place when location and route refresh',
+    (tester) async {
+      await pumpCard(tester);
+      final transform = camera(tester);
+      final gesture = await tester.startGesture(
+        tester.getCenter(mapViewport()),
+      );
+      await gesture.moveBy(const Offset(80, 48));
+      await tester.pump();
+      await gesture.cancel();
+      final manual = Matrix4.copy(transform.value);
+      final maximum = limits(tester).maxScale;
+      expect(tester.widget<IconButton>(resetButton()).onPressed, isNotNull);
+
+      connect('London');
+      origin.show(
+        ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      await tester.pump(exitMapTransitionDuration);
+      expectCamera(transform.value, manual);
+      expect(limits(tester).maxScale, maximum);
+      await tester.tap(resetButton());
+      await tester.pump();
+      await tester.pump(exitMapTransitionDuration);
+      expect(
+        transform.value.getMaxScaleOnAxis(),
+        lessThan(manual.getMaxScaleOnAxis()),
+      );
+      expect(tester.widget<IconButton>(resetButton()).onPressed, isNull);
+      await closeCard(tester);
+    },
+  );
+
+  for (final region in ['header', 'location', 'padding']) {
     testWidgets('a $region pinch zooms only the map', (tester) async {
       final scroll = ScrollController();
       addTearDown(scroll.dispose);
@@ -440,17 +474,18 @@ void main() {
         ProbeEntry(phase: ProbePhase.fresh, value: locateExit('Tokyo')),
       );
       await tester.pump();
+      await tester.pump(exitMapTransitionDuration);
+      final transform = camera(tester);
+      final home = Matrix4.copy(transform.value);
       final header = find.byType(DashboardCardHeader);
       final location = find.text('You · 🇯🇵 ${locateExit('Tokyo')!.city}');
-      final footer = find.text('No active proxy exits to show');
       final reset = resetButton();
-      final fixed = [find.byType(ExitMapCard), header, location, footer, reset];
+      final fixed = [find.byType(ExitMapCard), header, location, reset];
       final before = fixed.map(tester.getRect).toList();
       final card = before.first;
       final center = switch (region) {
         'header' => tester.getRect(header).centerLeft + const Offset(90, 0),
         'location' => tester.getCenter(location),
-        'footer' => tester.getCenter(footer),
         _ => Offset(card.left + 6, card.center.dy),
       };
       final span = region == 'padding'
@@ -460,7 +495,10 @@ void main() {
       final second = await tester.startGesture(center + span, pointer: 2);
       await tester.pump();
       await spreadPointers(tester, first, second, center - span, center + span);
-      expect(camera(tester).value.getMaxScaleOnAxis(), greaterThan(1));
+      expect(
+        transform.value.getMaxScaleOnAxis(),
+        greaterThan(home.getMaxScaleOnAxis()),
+      );
       expect(fixed.map(tester.getRect).toList(), before);
       expect(scroll.position.pixels, 0);
       expect(tester.widget<IconButton>(reset).onPressed, isNotNull);
@@ -468,7 +506,8 @@ void main() {
       await second.up();
       await tester.tap(reset);
       await tester.pump();
-      expect(camera(tester).value, Matrix4.identity());
+      await tester.pump(exitMapTransitionDuration);
+      expectCamera(transform.value, home);
       await closeCard(tester);
     });
   }
@@ -481,6 +520,7 @@ void main() {
         addTearDown(scroll.dispose);
         await pumpCard(tester, scroll: scroll);
         final transform = camera(tester);
+        final home = Matrix4.copy(transform.value);
         final cardBounds = tester.getRect(find.byType(ExitMapCard));
         final header = tester.getRect(find.byType(DashboardCardHeader));
         var mapPosition = tester.getCenter(mapViewport());
@@ -495,12 +535,12 @@ void main() {
             await first.moveTo(mapPosition);
             await tester.pump(const Duration(milliseconds: 16));
           }
-          expect(transform.value.getTranslation().x, greaterThan(0));
+          expect(panX(home, transform.value), greaterThan(0));
         } else {
           headerPosition += const Offset(6, 0);
           await first.moveTo(headerPosition);
           await tester.pump();
-          expect(transform.value, Matrix4.identity());
+          expectCamera(transform.value, home);
         }
         final second = await tester.startGesture(
           mapFirst ? headerPosition : mapPosition,
@@ -515,8 +555,14 @@ void main() {
           mapFirst ? headerPosition : mapPosition,
           factor: 1.8,
         );
-        expect(transform.value.getMaxScaleOnAxis(), greaterThan(1));
-        expect(transform.value.getMaxScaleOnAxis(), lessThanOrEqualTo(4));
+        expect(
+          transform.value.getMaxScaleOnAxis(),
+          greaterThan(home.getMaxScaleOnAxis()),
+        );
+        expect(
+          transform.value.getMaxScaleOnAxis(),
+          lessThanOrEqualTo(limits(tester).maxScale),
+        );
         expect(scroll.position.pixels, 0);
         expect(tester.getRect(find.byType(ExitMapCard)), cardBounds);
         await first.up();
@@ -526,18 +572,18 @@ void main() {
     );
   }
 
-  for (final region in ['header', 'location', 'footer', 'padding']) {
+  for (final region in ['header', 'location', 'padding']) {
     testWidgets('one $region finger scrolls the dashboard', (tester) async {
       final scroll = ScrollController();
       addTearDown(scroll.dispose);
       await pumpCard(tester, scroll: scroll);
       final card = tester.getRect(find.byType(ExitMapCard));
+      final home = Matrix4.copy(camera(tester).value);
       final position = switch (region) {
         'header' =>
           tester.getRect(find.byType(DashboardCardHeader)).centerLeft +
               const Offset(90, 0),
-        'location' => tester.getCenter(find.text('You')),
-        'footer' => tester.getCenter(
+        'location' => tester.getCenter(
           find.text('Location unavailable · East Asia view'),
         ),
         _ => Offset(card.left + 6, card.center.dy),
@@ -548,7 +594,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 16));
       }
       expect(scroll.position.pixels, greaterThan(0));
-      expect(camera(tester).value, Matrix4.identity());
+      expectCamera(camera(tester).value, home);
       await finger.up();
       await closeCard(tester);
     });
@@ -561,6 +607,7 @@ void main() {
     addTearDown(scroll.dispose);
     await pumpCard(tester, scroll: scroll);
     final transform = camera(tester);
+    final home = Matrix4.copy(transform.value);
     final header = tester.getRect(find.byType(DashboardCardHeader));
     final first = await tester.startGesture(
       header.centerLeft + const Offset(90, 0),
@@ -581,12 +628,12 @@ void main() {
       await second.moveBy(const Offset(10, -3));
       await tester.pump(const Duration(milliseconds: 16));
     }
-    expect(transform.value, Matrix4.identity());
+    expectCamera(transform.value, home);
     expect(scroll.position.pixels, greaterThanOrEqualTo(scrolling));
     await first.up();
     await second.moveBy(const Offset(40, 0));
     await tester.pump();
-    expect(transform.value, Matrix4.identity());
+    expectCamera(transform.value, home);
     await second.up();
     scroll.jumpTo(0);
     await tester.pump();
@@ -595,7 +642,7 @@ void main() {
     await tester.pump();
     await fresh.moveBy(const Offset(20, 0));
     await tester.pump();
-    expect(transform.value.getTranslation().x, greaterThan(0));
+    expect(panX(home, transform.value), greaterThan(0));
     await fresh.up();
     await closeCard(tester);
   });
@@ -607,6 +654,7 @@ void main() {
     addTearDown(scroll.dispose);
     await pumpCard(tester, scroll: scroll);
     final transform = camera(tester);
+    final home = Matrix4.copy(transform.value);
     final mapPosition = tester.getCenter(mapViewport());
     final headerPosition =
         tester.getRect(find.byType(DashboardCardHeader)).centerLeft +
@@ -621,7 +669,10 @@ void main() {
       headerPosition,
       factor: 1.6,
     );
-    expect(transform.value.getMaxScaleOnAxis(), greaterThan(1));
+    expect(
+      transform.value.getMaxScaleOnAxis(),
+      greaterThan(home.getMaxScaleOnAxis()),
+    );
     await first.up();
     final before = Matrix4.copy(transform.value);
     for (var step = 0; step < 5; step++) {
@@ -639,6 +690,7 @@ void main() {
   testWidgets('a continuous pinch clamps to both scale limits', (tester) async {
     await pumpCard(tester);
     final transform = camera(tester);
+    final bounds = limits(tester);
     final center = tester.getCenter(mapViewport());
     const span = Offset(20, 0);
     final first = await tester.startGesture(center - span, pointer: 1);
@@ -651,15 +703,20 @@ void main() {
       center + span,
       factor: 12,
     );
-    expect(transform.value.getMaxScaleOnAxis(), 4);
+    expect(transform.value.getMaxScaleOnAxis(), bounds.maxScale);
     for (var step = 1; step <= 8; step++) {
       final halfSpan = 240 - 238 * step / 8;
       await first.moveTo(center - Offset(halfSpan, 0));
       await second.moveTo(center + Offset(halfSpan, 0));
       await tester.pump(const Duration(milliseconds: 16));
-      expect(transform.value.getMaxScaleOnAxis(), inInclusiveRange(1, 4));
+      expect(
+        transform.value.getMaxScaleOnAxis(),
+        inInclusiveRange(bounds.minScale, bounds.maxScale),
+      );
     }
-    expect(transform.value.getMaxScaleOnAxis(), 1);
+    expect(transform.value.getMaxScaleOnAxis(), bounds.minScale);
+    expect(bounds.world.width * bounds.minScale, lessThan(bounds.size.width));
+    expect(bounds.world.height * bounds.minScale, lessThan(bounds.size.height));
     await first.up();
     await second.up();
     await closeCard(tester);
@@ -685,6 +742,7 @@ void main() {
   ) async {
     await pumpCard(tester);
     final transform = camera(tester);
+    final home = Matrix4.copy(transform.value);
     final gesture = await fastMapPan(tester);
     await gesture.up(timeStamp: const Duration(milliseconds: 144));
     final released = Matrix4.copy(transform.value);
@@ -693,9 +751,10 @@ void main() {
     expect(transform.value, isNot(released));
     await tester.tap(resetButton());
     await tester.pump();
-    expect(transform.value, Matrix4.identity());
+    await tester.pump(exitMapTransitionDuration);
+    expectCamera(transform.value, home);
     await tester.pump(const Duration(milliseconds: 600));
-    expect(transform.value, Matrix4.identity());
+    expectCamera(transform.value, home);
     expect(tester.binding.transientCallbackCount, 0);
     await closeCard(tester);
   });
@@ -722,6 +781,8 @@ void main() {
   ) async {
     await pumpCard(tester);
     final transform = camera(tester);
+    final home = Matrix4.copy(transform.value);
+    final bounds = limits(tester);
     final card = tester.getRect(find.byType(ExitMapCard));
     final point = tester.getCenter(mapViewport());
     final trackpad = await tester.createGesture(
@@ -732,19 +793,22 @@ void main() {
       await trackpad.panZoomUpdate(point, scale: 1 + step * 0.25);
       await tester.pump(const Duration(milliseconds: 16));
     }
-    expect(transform.value.getMaxScaleOnAxis(), greaterThan(1));
+    expect(
+      transform.value.getMaxScaleOnAxis(),
+      greaterThan(home.getMaxScaleOnAxis()),
+    );
     expect(tester.getRect(find.byType(ExitMapCard)), card);
     await trackpad.panZoomEnd();
     await tester.sendEventToBinding(
       PointerScrollEvent(position: point, scrollDelta: const Offset(0, -2000)),
     );
     await tester.pump();
-    expect(transform.value.getMaxScaleOnAxis(), 4);
+    expect(transform.value.getMaxScaleOnAxis(), bounds.maxScale);
     await tester.sendEventToBinding(
       PointerScrollEvent(position: point, scrollDelta: const Offset(0, 2000)),
     );
     await tester.pump();
-    expect(transform.value.getMaxScaleOnAxis(), 1);
+    expect(transform.value.getMaxScaleOnAxis(), bounds.minScale);
     expect(tester.getRect(find.byType(ExitMapCard)), card);
     await closeCard(tester);
   });
@@ -771,6 +835,7 @@ void main() {
     final transform = tester
         .widget<ExitMapGestureRegion>(find.byType(ExitMapGestureRegion))
         .controller;
+    final home = Matrix4.copy(transform.value);
     final center = tester.getCenter(viewer);
     final first = await tester.startGesture(
       center - const Offset(20, 0),
@@ -787,27 +852,34 @@ void main() {
     await first.moveTo(center - const Offset(200, 0));
     await second.moveTo(center + const Offset(200, 0));
     await tester.pump();
-    expect(transform.value.getMaxScaleOnAxis(), greaterThan(1));
-    expect(transform.value.getMaxScaleOnAxis(), lessThanOrEqualTo(4));
+    expect(
+      transform.value.getMaxScaleOnAxis(),
+      greaterThan(home.getMaxScaleOnAxis()),
+    );
+    expect(
+      transform.value.getMaxScaleOnAxis(),
+      lessThanOrEqualTo(limits(tester).maxScale),
+    );
     await first.up();
     await second.up();
     await tester.pump();
     final zoom = transform.value.getMaxScaleOnAxis();
-    final before = transform.value.getTranslation();
+    final before = Matrix4.copy(transform.value);
     final pan = await tester.startGesture(center);
     for (var i = 0; i < 3; i++) {
       await pan.moveBy(const Offset(25, 0));
       await tester.pump();
     }
     await pan.up();
-    expect(transform.value.getTranslation().x, greaterThan(before.x));
+    expect(panX(before, transform.value), greaterThan(0));
     expect(transform.value.getMaxScaleOnAxis(), zoom);
     final reset = find.byWidgetPredicate(
       (widget) => widget is IconButton && widget.tooltip == 'Reset',
     );
     await tester.tap(reset);
     await tester.pump();
-    expect(transform.value, Matrix4.identity());
+    await tester.pump(exitMapTransitionDuration);
+    expectCamera(transform.value, home);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 2));
     expect(tester.takeException(), isNull);

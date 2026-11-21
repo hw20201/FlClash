@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:fl_clash/common/exit_map_geo.dart';
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/views/dashboard/exit_map/canvas.dart';
 import 'package:fl_clash/views/dashboard/exit_map/data.dart';
-import 'package:fl_clash/views/dashboard/exit_map/land.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -134,6 +131,20 @@ void main() {
     );
   });
 
+  test('vertical and horizontal routes both bend between their endpoints', () {
+    const start = Offset(20, 20);
+    const south = Offset(20, 60);
+    const east = Offset(60, 20);
+    expect(
+      exitMapAlong(start, exitMapControl(start, south), south, 0.5).dx,
+      greaterThan(start.dx),
+    );
+    expect(
+      exitMapAlong(start, exitMapControl(start, east), east, 0.5).dy,
+      lessThan(start.dy),
+    );
+  });
+
   test('fits endpoints and full arcs on wide, tall and dateline viewports', () {
     for (final size in [
       const Size(1200, 150),
@@ -148,10 +159,10 @@ void main() {
           'London',
           'Auckland',
         ].map(locateExit).whereType<ExitMapPlace>().toList();
-        final viewport = ExitMapViewport.fit(size, origin, exits);
-        final start = viewport.project(origin, size);
+        final bounds = exitMapFitBounds(size, origin, exits).inflate(1e-9);
+        final start = exitMapWorldPoint(origin);
         for (final exit in exits) {
-          final end = viewport.project(exit, size);
+          final end = exitMapNearestCopy(exitMapWorldPoint(exit), start);
           for (var i = 0; i <= 100; i++) {
             final point = exitMapAlong(
               start,
@@ -159,64 +170,40 @@ void main() {
               end,
               i / 100,
             );
-            expect(point.dx, inInclusiveRange(0, size.width));
-            expect(point.dy, inInclusiveRange(0, size.height));
+            expect(bounds.contains(point), isTrue, reason: '$size $name $exit');
           }
         }
       }
     }
     expect(unwrapLongitude(-179, 179), 181);
     expect(unwrapLongitude(179, -179), -181);
-    final viewport = ExitMapViewport.fit(const Size(400, 200), null, []);
+    final bounds = exitMapFitBounds(
+      const Size(400, 200),
+      null,
+      [],
+    ).inflate(1e-9);
     for (final (lat, lon) in [(-4.0, 96.0), (46.0, 150.0)]) {
-      final point = viewport.projectCoordinates(lat, lon, const Size(400, 200));
-      expect(point.dx, inInclusiveRange(-1e-9, 400 + 1e-9));
-      expect(point.dy, inInclusiveRange(-1e-9, 200 + 1e-9));
+      expect(bounds.contains(Offset(lon + 180, 90 - lat)), isTrue);
     }
-    expect(ExitMapViewport.fit(Size.zero, null, []).bounds.isFinite, isTrue);
+    expect(exitMapFitBounds(Size.zero, null, []).isFinite, isTrue);
   });
 
-  test('fitted views cache land beyond the initial viewport', () {
-    for (final size in [const Size(400, 180), const Size(180, 400)]) {
-      for (final origin in [
-        for (final name in ['Tokyo', 'London', 'San Francisco'])
-          locateExit(name),
-        const ExitMapPlace(
-          country: 'JP',
-          city: 'Tokyo',
-          latitude: 35.5,
-          longitude: 139.5,
-        ),
-      ]) {
-        final viewport = ExitMapViewport.fit(size, origin, []);
-        final points = exitMapLandPoints(viewport, size);
-        expect(points.length, 21519 * 2);
-        final world = viewport.worldRect(size).inflate(1e-3);
-        var outside = false;
-        for (var i = 0; i < points.length; i += 2) {
-          final point = Offset(points[i], points[i + 1]);
-          expect(world.contains(point), isTrue);
-          outside |= !(Offset.zero & size).contains(point);
-        }
-        expect(outside, isTrue);
-      }
+  test('offline coastline uses the same world coordinates as endpoints', () {
+    final land = exitMapLandPath();
+    expect(land.computeMetrics().length, greaterThan(100));
+    expect(
+      exitMapWorld.inflate(0.05).contains(land.getBounds().topLeft),
+      isTrue,
+    );
+    expect(
+      exitMapWorld.inflate(0.05).contains(land.getBounds().bottomRight),
+      isTrue,
+    );
+    for (final (lat, lon) in [(40.0, -100.0), (52.0, 13.0), (-24.0, 134.0)]) {
+      expect(land.contains(Offset(lon + 180, 90 - lat)), isTrue);
     }
-  });
-
-  test('public-domain land bitmap contains the expected degree cells', () {
-    final data = base64Decode(exitMapLandBase64);
-    expect(data.length, 8100);
-    var cells = 0;
-    for (final byte in data) {
-      for (var bit = 0; bit < 8; bit++) {
-        if (byte & (1 << bit) != 0) cells++;
-      }
+    for (final (lat, lon) in [(0.0, -40.0), (0.0, -145.0), (-20.0, 85.0)]) {
+      expect(land.contains(Offset(lon + 180, 90 - lat)), isFalse);
     }
-    expect(cells, 21519);
-    const size = Size(720, 360);
-    const viewport = ExitMapViewport(Rect.fromLTWH(0, 0, 1, 1), 0);
-    final points = exitMapLandPoints(viewport, size);
-    expect(points.length, cells * 2);
-    expect(points, everyElement(inInclusiveRange(0, 720)));
   });
 }
