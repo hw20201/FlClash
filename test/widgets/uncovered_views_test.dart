@@ -333,11 +333,11 @@ void main() {
     await tester.pump();
     expect(tester.widget<LoadingBar>(find.byType(LoadingBar)).active, isFalse);
 
-    await tester.tap(find.text('Check for updates'));
+    await tester.tap(find.widgetWithText(TonalButton, 'Check for updates'));
     await tester.pump();
     expect(tester.widget<LoadingBar>(find.byType(LoadingBar)).active, isTrue);
 
-    await tester.tap(find.text('Check for updates'));
+    await tester.tap(find.widgetWithText(TonalButton, 'Check for updates'));
     await tester.pump(const Duration(milliseconds: 100));
     expect(adapter.requests, 1);
 
