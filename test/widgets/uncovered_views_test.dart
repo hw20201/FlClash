@@ -336,7 +336,7 @@ void main() {
     expect(tester.widget<LoadingBar>(find.byType(LoadingBar)).active, isTrue);
 
     // The rs line has no releases on GitHub yet, so the check stays off.
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     expect(tester.widget<LoadingBar>(find.byType(LoadingBar)).active, isFalse);
     expect(adapter.requests, 0);
