@@ -209,6 +209,7 @@ class ProxiesAction extends _$ProxiesAction {
         logLevel: coreFailureLogLevel(error),
       );
       profilesAction.updateCurrentSelectedMap(groupName, rollbackName);
+      sync.selectEnded(groupName, null);
       dialogs.showBanner(
         currentAppLocalizations.changeProxyFailedTip,
         level: BannerLevel.error,

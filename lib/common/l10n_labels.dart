@@ -21,6 +21,16 @@ extension PageLabelL10n on PageLabel {
   }
 }
 
+extension UpdateChannelL10n on UpdateChannel {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      UpdateChannel.stable => appLocalizations.updateChannelStable,
+      UpdateChannel.pre => appLocalizations.updateChannelPre,
+    };
+  }
+}
+
 extension DnsQueryInitiatorL10n on DnsQueryInitiator {
   String get label {
     final appLocalizations = currentAppLocalizations;
@@ -141,13 +151,44 @@ extension LocaleL10n on Locale {
   }
 }
 
+extension ConnectionFailureKindL10n on ConnectionFailureKind {
+  String get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ConnectionFailureKind.timeout => appLocalizations.timeout,
+      ConnectionFailureKind.refused => appLocalizations.failureRefused,
+      ConnectionFailureKind.unreachable => appLocalizations.failureUnreachable,
+      ConnectionFailureKind.dns => appLocalizations.failureDns,
+      ConnectionFailureKind.handshake => appLocalizations.failureHandshake,
+      ConnectionFailureKind.other => appLocalizations.failureOther,
+    };
+  }
+}
+
+extension ConnectionEndReasonL10n on ConnectionEndReason {
+  /// Null for [ConnectionEndReason.failed], which the failure itself names.
+  String? get label {
+    final appLocalizations = currentAppLocalizations;
+    return switch (this) {
+      ConnectionEndReason.local => appLocalizations.connectionEndLocal,
+      ConnectionEndReason.remote => appLocalizations.connectionEndRemote,
+      ConnectionEndReason.finished => appLocalizations.connectionEndFinished,
+      ConnectionEndReason.timeout => appLocalizations.timeout,
+      ConnectionEndReason.reset => appLocalizations.connectionEndReset,
+      ConnectionEndReason.core => appLocalizations.connectionEndCore,
+      ConnectionEndReason.error => appLocalizations.error,
+      ConnectionEndReason.failed => null,
+    };
+  }
+}
+
 extension RecordFacetKindL10n on RecordFacetKind {
   String? get title {
     final appLocalizations = currentAppLocalizations;
     return switch (this) {
       RecordFacetKind.network => appLocalizations.protocol,
       RecordFacetKind.rule => appLocalizations.rule,
-      RecordFacetKind.level => appLocalizations.logLevel,
+      RecordFacetKind.level => appLocalizations.filter,
       RecordFacetKind.mitm ||
       RecordFacetKind.app ||
       RecordFacetKind.proxy ||
@@ -159,14 +200,30 @@ extension RecordFacetKindL10n on RecordFacetKind {
   }
 }
 
-extension RecordGroupingL10n on RecordGrouping {
-  String get label {
+extension ServiceFaultL10n on ServiceFault {
+  String get serviceLabel {
     final appLocalizations = currentAppLocalizations;
-    return switch (this) {
-      RecordGrouping.app => appLocalizations.app,
-      RecordGrouping.host => appLocalizations.host,
-      RecordGrouping.rule => appLocalizations.rule,
-      RecordGrouping.exit => appLocalizations.outboundExit,
+    final name = switch (service) {
+      FaultService.mixed => appLocalizations.mixedPort,
+      FaultService.http => appLocalizations.httpPort,
+      FaultService.socks => appLocalizations.socksPort,
+      FaultService.redir => appLocalizations.redirPort,
+      FaultService.tproxy => appLocalizations.tproxyPort,
+      FaultService.tun => appLocalizations.tun,
+      FaultService.dns => appLocalizations.dnsServer,
+      FaultService.unknown => appLocalizations.other,
+    };
+    return address.isEmpty ? name : '$name $address';
+  }
+
+  String get reasonLabel {
+    final appLocalizations = currentAppLocalizations;
+    return switch (reason) {
+      FaultReason.addressInUse => appLocalizations.faultAddressInUse,
+      FaultReason.addressNotAvailable =>
+        appLocalizations.faultAddressNotAvailable,
+      FaultReason.permissionDenied => appLocalizations.faultPermissionDenied,
+      FaultReason.other => message,
     };
   }
 }
