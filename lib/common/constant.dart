@@ -198,6 +198,7 @@ const shareLinkSchemes = {
   'socks5',
   'socks5h',
   'anytls',
+  'nowhere',
   'mierus',
 };
 
