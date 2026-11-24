@@ -340,7 +340,7 @@ void main() {
     await tester.pump();
     expect(tester.widget<LoadingBar>(find.byType(LoadingBar)).active, isFalse);
     expect(adapter.requests, 0);
-    expect(find.text('The app is already up to date'), findsNothing);
+    expect(find.text('The app is already up to date'), findsOneWidget);
 
     expect(tester.takeException(), null);
   });
