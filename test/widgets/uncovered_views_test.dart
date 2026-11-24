@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:fl_clash/common/app_localizations.dart';
 import 'package:fl_clash/common/exception.dart';
 import 'package:fl_clash/common/l10n_labels.dart';
-import 'package:fl_clash/common/release_asset.dart';
 import 'package:fl_clash/common/request.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/features/form/form.dart';
@@ -337,33 +335,13 @@ void main() {
     await tester.pump();
     expect(tester.widget<LoadingBar>(find.byType(LoadingBar)).active, isTrue);
 
-    await tester.tap(find.widgetWithText(TonalButton, 'Check for updates'));
+    // The rs line has no releases on GitHub yet, so the check stays off.
     await tester.pump(const Duration(milliseconds: 100));
-    expect(adapter.requests, 1);
-
-    adapter.response.complete(
-      ResponseBody.fromString(
-        jsonEncode([
-          {
-            'tag_name': 'v0.0.0-rs.1',
-            'draft': false,
-            'assets': [
-              {'name': updateChecksumsName('v0.0.0-rs.1')},
-            ],
-          },
-        ]),
-        200,
-        headers: {
-          Headers.contentTypeHeader: [Headers.jsonContentType],
-        },
-      ),
-    );
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-    await tester.pumpAndSettle();
-
     expect(tester.widget<LoadingBar>(find.byType(LoadingBar)).active, isFalse);
-    expect(find.text('The app is already up to date'), findsOneWidget);
+    expect(adapter.requests, 0);
+    expect(find.text('The app is already up to date'), findsNothing);
+
     expect(tester.takeException(), null);
   });
 
