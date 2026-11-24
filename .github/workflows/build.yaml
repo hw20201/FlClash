@@ -285,7 +285,9 @@ jobs:
     env:
       CARGO_TERM_COLOR: always
       # The release budget in bytes for the desktop Core.
-      CORE_MAX_BYTES: 30000000
+      # Must stay above the release binary, which the vendored Nowhere
+      # protocol pushed past 30000000.
+      CORE_MAX_BYTES: 31000000
       CONCORD_REQUIRE_APP_TREE: '1'
     steps:
       - name: Checkout
