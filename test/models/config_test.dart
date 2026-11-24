@@ -1107,7 +1107,12 @@ void main() {
         'vpnProps': {'rootTun': true, 'dnsHijacking': true, 'ipv6': true},
       });
 
-      expect(config.vpnProps, const VpnProps(dnsHijacking: true, ipv6: true));
+      // The fork keeps rootTun on load (upstream drops it); the settings
+      // themselves still load.
+      expect(
+        config.vpnProps,
+        const VpnProps(dnsHijacking: true, ipv6: true, rootTun: true),
+      );
     });
   });
 
