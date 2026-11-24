@@ -228,34 +228,6 @@ extension ServiceFaultL10n on ServiceFault {
   }
 }
 
-extension ServiceFaultL10n on ServiceFault {
-  String get serviceLabel {
-    final appLocalizations = currentAppLocalizations;
-    final name = switch (service) {
-      FaultService.mixed => appLocalizations.mixedPort,
-      FaultService.http => appLocalizations.httpPort,
-      FaultService.socks => appLocalizations.socksPort,
-      FaultService.redir => appLocalizations.redirPort,
-      FaultService.tproxy => appLocalizations.tproxyPort,
-      FaultService.tun => appLocalizations.tun,
-      FaultService.dns => appLocalizations.dnsServer,
-      FaultService.unknown => appLocalizations.other,
-    };
-    return address.isEmpty ? name : '$name $address';
-  }
-
-  String get reasonLabel {
-    final appLocalizations = currentAppLocalizations;
-    return switch (reason) {
-      FaultReason.addressInUse => appLocalizations.faultAddressInUse,
-      FaultReason.addressNotAvailable =>
-        appLocalizations.faultAddressNotAvailable,
-      FaultReason.permissionDenied => appLocalizations.faultPermissionDenied,
-      FaultReason.other => message,
-    };
-  }
-}
-
 extension ServiceStartFailureL10n on ServiceStartFailure {
   String get label {
     final appLocalizations = currentAppLocalizations;
