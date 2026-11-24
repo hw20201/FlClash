@@ -249,6 +249,7 @@ const concordKeyTiers = <String, Map<String, ConcordTier>>{
     'hysteria2': ConcordTier.t0,
     'tuic': ConcordTier.t0,
     'anytls': ConcordTier.t0,
+    'nowhere': ConcordTier.t0,
     'socks5': ConcordTier.t0,
     'http': ConcordTier.t0,
     'wireguard': ConcordTier.t1,
