@@ -24,32 +24,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get dashboard => '대시보드';
 
   @override
-  String get exitMap => '출구 지도';
-
-  @override
-  String get exitMapYou => '내 위치';
-
-  @override
-  String get exitMapChina => '중국';
-
-  @override
-  String get exitMapLocating => '직접 연결의 위치를 찾는 중…';
-
-  @override
-  String get exitMapNoOrigin => '위치를 확인할 수 없음 · 동아시아 보기';
-
-  @override
-  String get exitMapNoTraffic => '표시할 활성 프록시 출구가 없습니다';
-
-  @override
-  String get exitMapTrafficHint => '선의 굵기는 활성 프록시 트래픽 비중을 나타냅니다';
-
-  @override
-  String exitMapUnlocated(int count) {
-    return '위치 미확인 출구: $count';
-  }
-
-  @override
   String get proxies => '프록시';
 
   @override
@@ -4293,19 +4267,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get vpnServiceStartFailed => 'VPN 서비스를 시작하지 못했습니다.';
 
   @override
-  String get rootTun => 'Root 모드';
-
-  @override
-  String get rootTunDesc => '시스템 VPN 대신 root를 사용합니다.';
-
-  @override
-  String get rootTunUnavailable => '이 기기에서 root를 찾지 못했습니다';
-
-  @override
-  String rootTunFallback(Object reason) {
-    return 'Root를 사용할 수 없어($reason) 이번에는 시스템 VPN을 사용합니다.';
-  }
-
   String get requestPath => '경로';
 
   @override
@@ -4357,4 +4318,18 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get httpConditionTip =>
       '같은 필드의 조건은 하나만 맞으면 되고, 다른 필드의 조건은 모두 맞아야 합니다.';
+
+  @override
+  String get rootTun => 'Root 모드';
+
+  @override
+  String get rootTunDesc => '시스템 VPN 대신 root를 사용합니다.';
+
+  @override
+  String get rootTunUnavailable => '이 기기에서 root를 찾지 못했습니다';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root를 사용할 수 없어($reason) 이번에는 시스템 VPN을 사용합니다.';
+  }
 }

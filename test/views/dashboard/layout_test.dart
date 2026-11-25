@@ -133,10 +133,6 @@ void main() {
     expect(table.width / groups.width, closeTo(1.5, 0.01));
     expect(groups.top, table.top);
     expect(table.bottom, 824 - 24);
-    final map = rectOf(tester, ExitMapCard);
-    expect(map.top, table.bottom + 16);
-    expect(map.height, 320);
-    expect(scrollExtentOf(tester), map.height + 16);
     expect(find.byType(OutboundModeCard), findsNothing);
     expect(tester.takeException(), isNull);
 
@@ -226,8 +222,6 @@ void main() {
     expect(rectOf(tester, CurrentOutboundCard).height, 176);
     expect(rectOf(tester, OutboundModeBar).height, 56);
     expect(rectOf(tester, IntranetIpCard).height, 152);
-    expect(rectOf(tester, ExitMapCard).height, 288);
-    expect(scrollExtentOf(tester), 288 + 16);
     expect(tester.takeException(), isNull);
 
     await teardown(tester);
@@ -248,10 +242,6 @@ void main() {
     expect(stats.width, closeTo(current.width, 0.01));
     expect(groups.top, stats.top);
     expect(find.text('12 groups', findRichText: true), findsOneWidget);
-    final map = rectOf(tester, ExitMapCard);
-    expect(map.top, stats.bottom + 16);
-    expect(map.height, 288);
-    expect(scrollExtentOf(tester), map.height + 16);
     expect(find.byType(Scrollable), findsOneWidget);
     expect(tester.takeException(), isNull);
 

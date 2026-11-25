@@ -138,54 +138,6 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get dashboard;
 
-  /// No description provided for @exitMap.
-  ///
-  /// In en, this message translates to:
-  /// **'Exit map'**
-  String get exitMap;
-
-  /// No description provided for @exitMapYou.
-  ///
-  /// In en, this message translates to:
-  /// **'You'**
-  String get exitMapYou;
-
-  /// No description provided for @exitMapChina.
-  ///
-  /// In en, this message translates to:
-  /// **'China'**
-  String get exitMapChina;
-
-  /// No description provided for @exitMapLocating.
-  ///
-  /// In en, this message translates to:
-  /// **'Locating your direct connection…'**
-  String get exitMapLocating;
-
-  /// No description provided for @exitMapNoOrigin.
-  ///
-  /// In en, this message translates to:
-  /// **'Location unavailable · East Asia view'**
-  String get exitMapNoOrigin;
-
-  /// No description provided for @exitMapNoTraffic.
-  ///
-  /// In en, this message translates to:
-  /// **'No active proxy exits to show'**
-  String get exitMapNoTraffic;
-
-  /// No description provided for @exitMapTrafficHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Line width shows the share of active proxy traffic'**
-  String get exitMapTrafficHint;
-
-  /// No description provided for @exitMapUnlocated.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlocated exits: {count}'**
-  String exitMapUnlocated(int count);
-
   /// No description provided for @proxies.
   ///
   /// In en, this message translates to:
@@ -7770,30 +7722,6 @@ abstract class AppLocalizations {
   /// **'The VPN service could not start.'**
   String get vpnServiceStartFailed;
 
-  /// No description provided for @rootTun.
-  ///
-  /// In en, this message translates to:
-  /// **'Root mode'**
-  String get rootTun;
-
-  /// No description provided for @rootTunDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Uses root instead of the system VPN.'**
-  String get rootTunDesc;
-
-  /// No description provided for @rootTunUnavailable.
-  ///
-  /// In en, this message translates to:
-  /// **'No root found on this device'**
-  String get rootTunUnavailable;
-
-  /// No description provided for @rootTunFallback.
-  ///
-  /// In en, this message translates to:
-  /// **'Root is unavailable ({reason}), so this run uses the system VPN.'**
-  String rootTunFallback(Object reason);
-
   /// No description provided for @requestPath.
   ///
   /// In en, this message translates to:
@@ -7889,6 +7817,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Conditions on one field match any of them, on different fields all.'**
   String get httpConditionTip;
+
+  /// No description provided for @rootTun.
+  ///
+  /// In en, this message translates to:
+  /// **'Root mode'**
+  String get rootTun;
+
+  /// No description provided for @rootTunDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses root instead of the system VPN.'**
+  String get rootTunDesc;
+
+  /// No description provided for @rootTunUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No root found on this device'**
+  String get rootTunUnavailable;
+
+  /// No description provided for @rootTunFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Root is unavailable ({reason}), so this run uses the system VPN.'**
+  String rootTunFallback(Object reason);
 }
 
 class _AppLocalizationsDelegate

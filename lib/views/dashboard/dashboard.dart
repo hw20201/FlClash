@@ -168,7 +168,6 @@ class _DesktopDashboard extends StatelessWidget {
     final middleHeight = (compact ? 152 : 176) * scale;
     final tablesHeight = connectionsTableMinHeight(density, scale);
     final summaryHeight = (compact ? 112 : 120) * scale;
-    final mapHeight = (compact ? 288 : 320) * scale;
     return LayoutBuilder(
       builder: (context, constraints) {
         final room =
@@ -200,10 +199,6 @@ class _DesktopDashboard extends StatelessWidget {
                 (1, NetworkTakeoverTile(TakeoverSwitch.tun)),
               ]
             : const [(2, VpnTile())];
-        final map = sized(
-          mapHeight,
-          const RepaintBoundary(child: ExitMapCard()),
-        );
         final half = columns ~/ 2;
         final summaries = row([
           (half, const ConnectionStatsCard()),
@@ -241,7 +236,6 @@ class _DesktopDashboard extends StatelessWidget {
                   row(const [(1, ServiceStatusCard()), (1, MemoryInfo())]),
                 ),
                 sized(summaryHeight, summaries),
-                map,
               ],
             ),
           );
@@ -320,7 +314,6 @@ class _DesktopDashboard extends StatelessWidget {
                   ],
                 ),
               ),
-              map,
             ],
           ),
         );

@@ -2,7 +2,6 @@ import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/views/dashboard/dashboard.dart';
-import 'package:fl_clash/views/dashboard/widgets/card.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -105,7 +104,7 @@ void main() {
     await teardown(tester);
   });
 
-  testWidgets('the desktop grid bounces before scrolling to the map', (
+  testWidgets('the desktop grid bounces when its cards fit the viewport', (
     tester,
   ) async {
     final position = await pumpDashboard(
@@ -113,7 +112,7 @@ void main() {
       const Size(1220, 900),
       SupportPlatform.MacOS,
     );
-    expect(position.maxScrollExtent, 320 + 16);
+    expect(position.maxScrollExtent, 0);
 
     final gesture = await tester.startGesture(const Offset(600, 450));
     await gesture.moveBy(const Offset(0, 20));
