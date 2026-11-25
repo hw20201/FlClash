@@ -923,8 +923,7 @@ class MitmModuleView extends ConsumerWidget {
                 .where((rule) => rule.extendedMatching)
                 .length) {
               0 => null,
-              final count =>
-                appLocalizations.mitmExtendedMatchingNote(count),
+              final count => appLocalizations.mitmExtendedMatchingNote(count),
             },
             rules: true,
             ruleSetsOf: () => {
