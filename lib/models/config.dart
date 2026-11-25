@@ -140,7 +140,6 @@ const List<DashboardWidget> defaultDashboardWidgets = [
   DashboardWidget.currentOutbound,
   DashboardWidget.networkSpeed,
   DashboardWidget.trafficHistory,
-  DashboardWidget.exitMap,
   DashboardWidget.outboundMode,
   DashboardWidget.vpnButton,
   DashboardWidget.networkTakeover,
@@ -159,7 +158,6 @@ final List<DashboardWidget> platformDefaultDashboardWidgets = system.isAndroid
         DashboardWidget.networkSpeed,
         DashboardWidget.trafficHistory,
         DashboardWidget.outboundMode,
-        DashboardWidget.exitMap,
         DashboardWidget.profiles,
         DashboardWidget.proxyGroups,
       ]

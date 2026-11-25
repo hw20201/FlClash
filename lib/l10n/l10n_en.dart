@@ -24,33 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboard => 'Dashboard';
 
   @override
-  String get exitMap => 'Exit map';
-
-  @override
-  String get exitMapYou => 'You';
-
-  @override
-  String get exitMapChina => 'China';
-
-  @override
-  String get exitMapLocating => 'Locating your direct connection…';
-
-  @override
-  String get exitMapNoOrigin => 'Location unavailable · East Asia view';
-
-  @override
-  String get exitMapNoTraffic => 'No active proxy exits to show';
-
-  @override
-  String get exitMapTrafficHint =>
-      'Line width shows the share of active proxy traffic';
-
-  @override
-  String exitMapUnlocated(int count) {
-    return 'Unlocated exits: $count';
-  }
-
-  @override
   String get proxies => 'Proxies';
 
   @override
@@ -4410,19 +4383,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vpnServiceStartFailed => 'The VPN service could not start.';
 
   @override
-  String get rootTun => 'Root mode';
-
-  @override
-  String get rootTunDesc => 'Uses root instead of the system VPN.';
-
-  @override
-  String get rootTunUnavailable => 'No root found on this device';
-
-  @override
-  String rootTunFallback(Object reason) {
-    return 'Root is unavailable ($reason), so this run uses the system VPN.';
-  }
-
   String get requestPath => 'Path';
 
   @override
@@ -4475,4 +4435,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get httpConditionTip =>
       'Conditions on one field match any of them, on different fields all.';
+
+  @override
+  String get rootTun => 'Root mode';
+
+  @override
+  String get rootTunDesc => 'Uses root instead of the system VPN.';
+
+  @override
+  String get rootTunUnavailable => 'No root found on this device';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root is unavailable ($reason), so this run uses the system VPN.';
+  }
 }

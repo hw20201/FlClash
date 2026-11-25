@@ -24,32 +24,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get dashboard => 'ダッシュボード';
 
   @override
-  String get exitMap => '出口マップ';
-
-  @override
-  String get exitMapYou => '自分';
-
-  @override
-  String get exitMapChina => '中国';
-
-  @override
-  String get exitMapLocating => '直接接続の位置を取得中…';
-
-  @override
-  String get exitMapNoOrigin => '位置を取得できません · 東アジア表示';
-
-  @override
-  String get exitMapNoTraffic => '表示できる使用中のプロキシ出口がありません';
-
-  @override
-  String get exitMapTrafficHint => '線の太さは使用中のプロキシ通信量の割合を示します';
-
-  @override
-  String exitMapUnlocated(int count) {
-    return '位置不明の出口：$count';
-  }
-
-  @override
   String get proxies => 'プロキシ';
 
   @override
@@ -4196,19 +4170,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get vpnServiceStartFailed => 'VPN サービスを起動できませんでした。';
 
   @override
-  String get rootTun => 'Root モード';
-
-  @override
-  String get rootTunDesc => 'システム VPN の代わりに root を使います。';
-
-  @override
-  String get rootTunUnavailable => 'この端末に root が見つかりません';
-
-  @override
-  String rootTunFallback(Object reason) {
-    return 'Root が使えないため（$reason）、今回はシステム VPN を使います。';
-  }
-
   String get requestPath => 'パス';
 
   @override
@@ -4259,4 +4220,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get httpConditionTip => '同じフィールドの条件はいずれか一つ、異なるフィールドの条件はすべてに一致します。';
+
+  @override
+  String get rootTun => 'Root モード';
+
+  @override
+  String get rootTunDesc => 'システム VPN の代わりに root を使います。';
+
+  @override
+  String get rootTunUnavailable => 'この端末に root が見つかりません';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root が使えないため（$reason）、今回はシステム VPN を使います。';
+  }
 }

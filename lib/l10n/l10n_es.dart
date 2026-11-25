@@ -24,33 +24,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dashboard => 'Panel';
 
   @override
-  String get exitMap => 'Mapa de salidas';
-
-  @override
-  String get exitMapYou => 'Tú';
-
-  @override
-  String get exitMapChina => 'China';
-
-  @override
-  String get exitMapLocating => 'Localizando tu conexión directa…';
-
-  @override
-  String get exitMapNoOrigin => 'Ubicación no disponible · Asia Oriental';
-
-  @override
-  String get exitMapNoTraffic => 'No hay salidas de proxy activas para mostrar';
-
-  @override
-  String get exitMapTrafficHint =>
-      'El grosor indica la proporción del tráfico activo por proxy';
-
-  @override
-  String exitMapUnlocated(int count) {
-    return 'Salidas sin ubicar: $count';
-  }
-
-  @override
   String get proxies => 'Proxies';
 
   @override
@@ -4458,19 +4431,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get vpnServiceStartFailed => 'No se pudo iniciar el servicio VPN.';
 
   @override
-  String get rootTun => 'Modo root';
-
-  @override
-  String get rootTunDesc => 'Usa root en lugar de la VPN del sistema.';
-
-  @override
-  String get rootTunUnavailable => 'No se encontró root en este dispositivo';
-
-  @override
-  String rootTunFallback(Object reason) {
-    return 'Root no está disponible ($reason), así que esta sesión usa la VPN del sistema.';
-  }
-
   String get requestPath => 'Ruta';
 
   @override
@@ -4523,4 +4483,18 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get httpConditionTip =>
       'Las condiciones de un mismo campo se cumplen con una de ellas; las de campos distintos, todas.';
+
+  @override
+  String get rootTun => 'Modo root';
+
+  @override
+  String get rootTunDesc => 'Usa root en lugar de la VPN del sistema.';
+
+  @override
+  String get rootTunUnavailable => 'No se encontró root en este dispositivo';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root no está disponible ($reason), así que esta sesión usa la VPN del sistema.';
+  }
 }

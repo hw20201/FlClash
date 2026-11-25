@@ -24,34 +24,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dashboard => 'Панель';
 
   @override
-  String get exitMap => 'Карта выходов';
-
-  @override
-  String get exitMapYou => 'Вы';
-
-  @override
-  String get exitMapChina => 'Китай';
-
-  @override
-  String get exitMapLocating =>
-      'Определяется местоположение прямого подключения…';
-
-  @override
-  String get exitMapNoOrigin => 'Местоположение недоступно · Восточная Азия';
-
-  @override
-  String get exitMapNoTraffic => 'Нет активных прокси-выходов для отображения';
-
-  @override
-  String get exitMapTrafficHint =>
-      'Толщина линии показывает долю активного прокси-трафика';
-
-  @override
-  String exitMapUnlocated(int count) {
-    return 'Выходы без местоположения: $count';
-  }
-
-  @override
   String get proxies => 'Прокси';
 
   @override
@@ -4410,19 +4382,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get vpnServiceStartFailed => 'Не удалось запустить службу VPN.';
 
   @override
-  String get rootTun => 'Режим root';
-
-  @override
-  String get rootTunDesc => 'Использует root вместо системного VPN.';
-
-  @override
-  String get rootTunUnavailable => 'Root на устройстве не найден';
-
-  @override
-  String rootTunFallback(Object reason) {
-    return 'Root недоступен ($reason), поэтому сейчас используется системный VPN.';
-  }
-
   String get requestPath => 'Путь';
 
   @override
@@ -4474,4 +4433,18 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get httpConditionTip =>
       'Условия по одному полю объединяются через «или», по разным полям — через «и».';
+
+  @override
+  String get rootTun => 'Режим root';
+
+  @override
+  String get rootTunDesc => 'Использует root вместо системного VPN.';
+
+  @override
+  String get rootTunUnavailable => 'Root на устройстве не найден';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root недоступен ($reason), поэтому сейчас используется системный VPN.';
+  }
 }

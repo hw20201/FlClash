@@ -24,33 +24,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dashboard => 'Tableau de bord';
 
   @override
-  String get exitMap => 'Carte des sorties';
-
-  @override
-  String get exitMapYou => 'Vous';
-
-  @override
-  String get exitMapChina => 'Chine';
-
-  @override
-  String get exitMapLocating => 'Localisation de votre connexion directe…';
-
-  @override
-  String get exitMapNoOrigin => 'Position indisponible · Asie de l’Est';
-
-  @override
-  String get exitMapNoTraffic => 'Aucune sortie de proxy active à afficher';
-
-  @override
-  String get exitMapTrafficHint =>
-      'L’épaisseur indique la part du trafic proxy actif';
-
-  @override
-  String exitMapUnlocated(int count) {
-    return 'Sorties non localisées : $count';
-  }
-
-  @override
   String get proxies => 'Proxys';
 
   @override
@@ -4461,19 +4434,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get vpnServiceStartFailed => 'Le service VPN n\'a pas pu démarrer.';
 
   @override
-  String get rootTun => 'Mode root';
-
-  @override
-  String get rootTunDesc => 'Utilise root au lieu du VPN système.';
-
-  @override
-  String get rootTunUnavailable => 'Aucun root détecté sur cet appareil';
-
-  @override
-  String rootTunFallback(Object reason) {
-    return 'Root n\'est pas disponible ($reason) : cette session utilise le VPN système.';
-  }
-
   String get requestPath => 'Chemin';
 
   @override
@@ -4526,4 +4486,18 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get httpConditionTip =>
       'Les conditions d’un même champ en demandent une seule, celles de champs différents toutes.';
+
+  @override
+  String get rootTun => 'Mode root';
+
+  @override
+  String get rootTunDesc => 'Utilise root au lieu du VPN système.';
+
+  @override
+  String get rootTunUnavailable => 'Aucun root détecté sur cet appareil';
+
+  @override
+  String rootTunFallback(Object reason) {
+    return 'Root n\'est pas disponible ($reason) : cette session utilise le VPN système.';
+  }
 }

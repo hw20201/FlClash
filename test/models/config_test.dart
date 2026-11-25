@@ -1251,6 +1251,25 @@ void main() {
       expect(props.hideIp, true);
     });
 
+    test('drops the removed map card while preserving saved card order', () {
+      final props = AppSettingProps.safeFromJson({
+        'dashboardWidgets': ['currentOutbound', 'exitMap', 'networkSpeed'],
+      });
+
+      expect(props.dashboardWidgets, [
+        DashboardWidget.currentOutbound,
+        DashboardWidget.networkSpeed,
+      ]);
+    });
+
+    test('restores defaults when only the removed map card was saved', () {
+      final props = AppSettingProps.safeFromJson({
+        'dashboardWidgets': ['exitMap'],
+      });
+
+      expect(props.dashboardWidgets, platformDefaultDashboardWidgets);
+    });
+
     test('restores the default dashboard when it knows none of the cards', () {
       final props = AppSettingProps.safeFromJson({
         'dashboardWidgets': ['futureCard', 'otherFutureCard'],
