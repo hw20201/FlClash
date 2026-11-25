@@ -60,7 +60,7 @@ object ServiceController {
     ): Result<String> = runCatching {
         NetworkObserver.start()
         suspendCancellableCoroutine { continuation ->
-            Core.quickSetup(initParams, setupParams) { result ->
+            Core.quickSetup(initParams, setupParams, SystemCaStore::trusts) { result ->
                 continuation.resume(result)
             }
         }
@@ -95,7 +95,10 @@ object ServiceController {
         }
 
         val currentBinding = binding ?: return@withLock ServiceStart.Failed
-        val result = currentBinding.useService { service -> service.start() }
+        val result =
+            currentBinding
+                .useService { service -> service.start() }
+                .mapCatching { Core.startListener().getOrThrow() }
         if (result.isFailure) {
             val error = result.exceptionOrNull()
             GlobalState.log("Unable to start background service: $error")
@@ -111,7 +114,6 @@ object ServiceController {
             }
         }
 
-        Core.startListener()
         runtime = ServiceRuntime(
             vpn = options.enable,
             startedAtMillis = runtime?.startedAtMillis ?: System.currentTimeMillis(),

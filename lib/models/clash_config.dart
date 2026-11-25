@@ -45,14 +45,7 @@ const minTunMtu = 1280;
 const maxTunMtu = 65535;
 const defaultCongestionController = 'cubic';
 
-// The TUN congestion controls the app knows, cubic first as the default; the
-// Core's reported list decides which of them are offered.
-const congestionControllers = [
-  defaultCongestionController,
-  'reno',
-  'bbr',
-  'bbr3',
-];
+const congestionControllers = [defaultCongestionController, 'reno', 'bbr'];
 const defaultDnsHijack = ['any:53'];
 const defaultTunUdpTimeout = 300;
 
@@ -95,6 +88,7 @@ abstract class ProxyGroup with _$ProxyGroup {
     @JsonKey(name: 'exclude-type') String? excludeType,
     @JsonKey(name: 'expected-status') String? expectedStatus,
     int? tolerance,
+    @JsonKey(name: 'policy-priority') String? policyPriority,
     LoadBalanceStrategy? strategy,
     @JsonKey(name: 'hash-key') String? hashKey,
     @JsonKey(name: 'default-selected') String? defaultSelected,
@@ -141,8 +135,11 @@ extension ProxyGroupExt on ProxyGroup {
       if (includeAllProviders == true) 'include-all-providers': true,
       if (hidden != null) 'hidden': hidden,
       if (icon?.isNotEmpty == true) 'icon': icon,
-      if (type == GroupType.URLTest && tolerance != null)
+      if ((type == GroupType.URLTest || type == GroupType.Smart) &&
+          tolerance != null)
         'tolerance': tolerance,
+      if (type == GroupType.Smart && policyPriority?.isNotEmpty == true)
+        'policy-priority': policyPriority,
       if (type == GroupType.Selector && defaultSelected?.isNotEmpty == true)
         'default-selected': defaultSelected,
       if (type == GroupType.LoadBalance && strategy != null)
@@ -215,6 +212,7 @@ const proxyGroupTextKeys = [
   'exclude-type',
   'expected-status',
   'hash-key',
+  'policy-priority',
   'default-selected',
   'empty-fallback',
   'icon',
@@ -259,6 +257,7 @@ const customProxyTypes = [
   'ssh',
   'mieru',
   'anytls',
+  'nowhere',
   'sudoku',
   'masque',
   'trusttunnel',
@@ -400,7 +399,7 @@ extension CustomProxyExt on CustomProxy {
     'vmess' => const {'server', 'port', 'uuid', 'alterId', 'cipher'},
     'vless' => const {'server', 'port', 'uuid'},
     'snell' => const {'server', 'port', 'psk'},
-    'trojan' || 'anytls' => const {'server', 'port', 'password'},
+    'trojan' || 'anytls' || 'nowhere' => const {'server', 'port', 'password'},
     'hysteria' => const {'server', 'up', 'down'},
     'hysteria2' => const {'server'},
     'wireguard' => const {'private-key'},
@@ -431,7 +430,10 @@ extension CustomProxyExt on CustomProxy {
     'vmess' => const [ProxyField.cipher, ProxyField.alterId, ProxyField.uuid],
     'vless' => const [ProxyField.uuid],
     'tuic' => const [ProxyField.uuid, ProxyField.password],
-    'trojan' || 'anytls' || 'hysteria2' => const [ProxyField.password],
+    'trojan' ||
+    'anytls' ||
+    'nowhere' ||
+    'hysteria2' => const [ProxyField.password],
     'hysteria' => const [ProxyField.up, ProxyField.down, ProxyField.authStr],
     'snell' => const [ProxyField.psk],
     'sudoku' => const [ProxyField.key],
@@ -547,6 +549,7 @@ extension CustomProxyExt on CustomProxy {
         'shadowquic',
         'gost-relay',
         'anytls',
+        'nowhere',
         'masque',
         'trusttunnel',
       }.contains(type),
@@ -724,6 +727,7 @@ extension CustomProxyExt on CustomProxy {
       'vmess' => const ['tcp', 'ws', 'http', 'h2', 'grpc', 'mekya', 'mkcp'],
       'vless' => const ['tcp', 'ws', 'http', 'h2', 'grpc', 'xhttp'],
       'trojan' => const ['tcp', 'ws', 'grpc'],
+      'nowhere' => const ['tcp', 'udp'],
       _ => const [],
     },
     ProxyField.flow => const ['xtls-rprx-vision'],
@@ -1183,7 +1187,7 @@ int _mtuFromJson(int value) =>
     value > 0 ? value.clamp(minTunMtu, maxTunMtu) : defaultTunMtu;
 
 String _congestionControllerFromJson(String value) =>
-    value.isEmpty ? defaultCongestionController : value;
+    congestionControllers.contains(value) ? value : defaultCongestionController;
 
 extension TunExt on Tun {
   List<String> excludedRoutes({required bool bypassPrivateRoute}) => [
@@ -1249,8 +1253,8 @@ abstract class Dns with _$Dns {
     String fakeIpRange,
     @Default('') @JsonKey(name: 'fake-ip-range6') String fakeIpRange6,
     @Default([
-      'dns.msftnsci.com',
-      'www.msftnsci.com',
+      'dns.msftncsi.com',
+      'www.msftncsi.com',
       'www.msftconnecttest.com',
     ])
     @JsonKey(name: 'fake-ip-filter')
@@ -1558,7 +1562,10 @@ abstract class ProfileTun with _$ProfileTun {
   const factory ProfileTun({
     @Default(defaultTunMtu) int mtu,
     @Default(defaultCongestionController)
-    @JsonKey(name: 'congestion-controller')
+    @JsonKey(
+      name: 'congestion-controller',
+      fromJson: _congestionControllerFromJson,
+    )
     String congestionController,
     @Default(false) @JsonKey(name: 'strict-route') bool strictRoute,
     @Default([]) @JsonKey(name: 'route-address') List<String> routeAddress,
