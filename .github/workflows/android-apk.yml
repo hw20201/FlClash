@@ -97,7 +97,7 @@ jobs:
       - name: Build debug APK
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-path }}
-        run: flutter build apk --debug --target-platform android-arm64
+        run: flutter build apk --debug --target-platform android-x64
 
       - name: Verify debug APK signature
         shell: bash
