@@ -2735,6 +2735,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noSearchResults => 'Ничего не найдено';
 
   @override
+  String get noActiveConnections => 'Нет активных соединений';
+
+  @override
+  String get noFailedConnections => 'Нет соединений со сбоем';
+
+  @override
+  String get noFailedDnsQueries => 'Нет DNS-запросов со сбоем';
+
+  @override
+  String get noCachedDnsQueries => 'Нет DNS-запросов, отвеченных из кэша';
+
+  @override
+  String get noFailedHttpRequests => 'Нет HTTP-запросов со сбоем';
+
+  @override
+  String get noRewrittenHttpRequests => 'Нет изменённых HTTP-запросов';
+
+  @override
   String get showPassword => 'Показать пароль';
 
   @override
@@ -4195,6 +4213,9 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get mitmModuleUnreadableRisk =>
       'Не удалось прочитать файл модуля, поэтому неизвестно, что он меняет. Включайте, только если доверяете источнику.';
+
+  @override
+  String get mitmModuleHostsUnread => 'Не удалось прочитать хосты этого модуля';
 
   @override
   String get skipServerCertVerify => 'Пропускать проверку сертификата сервера';

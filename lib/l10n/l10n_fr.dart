@@ -2757,6 +2757,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noSearchResults => 'Aucun résultat';
 
   @override
+  String get noActiveConnections => 'Aucune connexion active';
+
+  @override
+  String get noFailedConnections => 'Aucune connexion échouée';
+
+  @override
+  String get noFailedDnsQueries => 'Aucune requête DNS échouée';
+
+  @override
+  String get noCachedDnsQueries => 'Aucune requête DNS servie par le cache';
+
+  @override
+  String get noFailedHttpRequests => 'Aucune requête HTTP échouée';
+
+  @override
+  String get noRewrittenHttpRequests => 'Aucune requête HTTP réécrite';
+
+  @override
   String get showPassword => 'Afficher le mot de passe';
 
   @override
@@ -4240,6 +4258,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get mitmModuleUnreadableRisk =>
       'Le fichier du module est illisible, on ne sait donc pas ce qu\'il modifie. Ne l\'activez que si vous faites confiance à sa source.';
+
+  @override
+  String get mitmModuleHostsUnread =>
+      'Impossible de lire les hôtes de ce module';
 
   @override
   String get skipServerCertVerify =>

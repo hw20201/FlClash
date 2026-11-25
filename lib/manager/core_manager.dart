@@ -43,6 +43,8 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   final _feeds = <String, StreamSubscription<Object?>>{};
   StreamSubscription<String>? _crashes;
   bool _away = false;
+  var _shownSince = 0;
+  static const _pausedAway = ['connections', 'counters', 'dns', 'logs'];
   bool _recordingHistory = false;
 
   bool get _pausesInBackground => widget.pausesInBackground ?? system.isAndroid;
@@ -53,6 +55,11 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     WidgetsBinding.instance.addObserver(this);
     _demand.addListener(_syncConnectionCounters);
     _history.addListener(_syncHistory);
+    ref.listenManual(
+      appVisibleProvider,
+      (_, visible) => _setAway(!visible),
+      fireImmediately: true,
+    );
     ref.listenManual(appVisibleProvider, (_, _) => _syncHistory());
     ref.listenManual(
       runTimeProvider.select((value) => value != null),
@@ -136,6 +143,26 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         logLevel: coreFailureLogLevel(error),
       ),
     );
+    if (_away && _pausedAway.contains(name)) {
+      _feeds[name]!.pause();
+    }
+  }
+
+  void _setAway(bool away) {
+    if (away == _away) {
+      return;
+    }
+    _away = away;
+    if (!away) {
+      _shownSince = DateTime.now().millisecondsSinceEpoch;
+    }
+    for (final name in _pausedAway) {
+      if (away) {
+        _feeds[name]?.pause();
+      } else {
+        _feeds[name]?.resume();
+      }
+    }
   }
 
   void _openFeeds() {
@@ -144,13 +171,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     ref.read(connectionBookProvider).clear();
     ref.read(requestsProvider.notifier).startOver();
     ref.read(dnsQueriesProvider.notifier).startOver();
-    _feed('dns', api.watchDns(), (entries) {
+    _feed('dns', api.watchDns(), (batch) {
       ref
           .read(dnsQueriesProvider.notifier)
-          .addQueries(entries.map(dnsQueryOf).toList());
+          .addQueries(batch.entries.map(dnsQueryOf).toList());
       ref
           .read(dnsQueryCountProvider.notifier)
-          .update((count) => count + entries.length);
+          .update((count) => count + batch.entries.length + batch.dropped);
     });
     _sync
       ..reset()
@@ -175,9 +202,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       _core.api.watchConnections(maxBatchMs: 250, counters: false),
       _onConnections,
     );
-    if (_away) {
-      _feeds['connections']?.pause();
-    }
     _syncConnectionCounters();
   }
 
@@ -195,9 +219,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       _core.api.watchConnections(maxBatchMs: 250, counters: true),
       _onCounters,
     );
-    if (_away) {
-      _feeds['counters']?.pause();
-    }
   }
 
   void _syncHistory() {
@@ -242,17 +263,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         _pausesInBackground &&
         (state == AppLifecycleState.paused ||
             state == AppLifecycleState.hidden);
-    if (away == _away) {
-      return;
-    }
-    _away = away;
-    for (final name in const ['connections', 'counters']) {
-      if (away) {
-        _feeds[name]?.pause();
-      } else {
-        _feeds[name]?.resume();
-      }
-    }
+    // The app being out of sight also keeps it away, even if the lifecycle
+    // already came back: only _setAway owns the transition.
+    _setAway(away || !ref.read(appVisibleProvider));
     _syncHistory();
   }
 
@@ -269,7 +282,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }
     if (ref.read(appSettingProvider).openLogs) {
       _feed('logs', _core.api.watchLogs(), (entries) {
-        entries.map(logOf).forEach(_onLog);
+        for (final entry in entries) {
+          _onLog(logOf(entry), announce: entry.time >= _shownSince);
+        }
       });
     } else {
       unawaited(_feeds.remove('logs')?.cancel());
@@ -300,6 +315,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         ref
             .read(geoResourceActionProvider.notifier)
             .handleCoreUpdate(name, phase, error);
+      case ResourceUpdateEvent(
+        kind: ResourceKind.mitmModule,
+        :final name,
+        phase: ResourcePhase.updated,
+      ):
+        ref.invalidate(mitmModuleStatusProvider);
+        if (int.tryParse(name) case final id?) {
+          ref.invalidate(mitmModuleContentProvider(id));
+        }
       case ResourceUpdateEvent(kind: ResourceKind.mitmModule):
         ref.invalidate(mitmModuleStatusProvider);
       case ResourceUpdateEvent(
@@ -411,9 +435,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     ref.read(providersProvider.notifier).setProvider(provider);
   }
 
-  void _onLog(Log log) {
+  void _onLog(Log log, {required bool announce}) {
     ref.read(logsProvider.notifier).add(log);
-    if (log.logLevel == LogLevel.error) {
+    if (announce && log.logLevel == LogLevel.error) {
       throttler.call(
         FunctionTag.coreErrorNotifier,
         () => dialogs.showBanner(log.payload, level: BannerLevel.error),

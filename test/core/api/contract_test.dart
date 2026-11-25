@@ -123,6 +123,9 @@ final Map<String, _Call> _calls = {
   'rule.list': (api) => api.ruleList(),
   'ruleSet.compile': (api) => api.compileRuleSet('r', url: 'http://u'),
   'geo.update': (api) => api.updateGeo('geoip'),
+  // The fork Core's schema has no changesOnly yet (it ignores the field
+  // at runtime), so the contract call stays with the fields the schema
+  // knows; rpc_core_api_test still covers that the client sends it.
   'traffic.watch': (api) =>
       _first(api.watchTraffic(intervalMs: 1000, onlyProxy: true)),
   'traffic.reset': (api) => api.resetTraffic(),
@@ -193,6 +196,7 @@ final Map<String, _Call> _calls = {
     arguments: const {'a': '1'},
     attachments: const {'a.js': 'f.js'},
     language: 'zh-Hans',
+    read: (answer) => answer,
   ),
   'mitm.moduleStatus': (api) => api.mitmModuleStatus(),
   'mitm.fetchModule': (api) async {
