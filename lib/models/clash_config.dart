@@ -502,9 +502,9 @@ extension CustomProxyExt on CustomProxy {
       ProxyField.key ||
       ProxyField.publicKey ||
       ProxyField.authStr ||
-      ProxyField.cipher ||
       ProxyField.alterId ||
       ProxyField.transport => false,
+      ProxyField.cipher => type == 'nowhere',
       ProxyField.privateKey || ProxyField.privateKeyPassphrase => type == 'ssh',
       ProxyField.preSharedKey || ProxyField.allowedIps => type == 'wireguard',
       ProxyField.obfs ||
@@ -688,6 +688,7 @@ extension CustomProxyExt on CustomProxy {
     ProxyField.cipher => switch (type) {
       'ss' => _ssCiphers,
       'ssr' => _ssrCiphers,
+      'nowhere' => const ['chacha', 'aes'],
       'vmess' => const [
         'auto',
         'aes-128-gcm',

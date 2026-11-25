@@ -41,6 +41,10 @@ void main() {
     });
   }
 
+  test('Nowhere completion offers the two Morph ciphers', () {
+    expect(proxy.variants['nowhere']!['cipher']!.values, ['chacha', 'aes']);
+  });
+
   test('completes only the rule types Concord applies', () {
     expect(concordSupportedKeys('rule-types'), containsAll(ruleTypes.keys));
   });

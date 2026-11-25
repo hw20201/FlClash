@@ -333,3 +333,5 @@ const concordTunCongestionController = ['cubic', 'reno', 'bbr'];
 const concordProxyIpStackMode = ['auto', 'gvisor', 'mips'];
 
 const concordProxyIpStackCongestionController = ['cubic', 'reno', 'bbr'];
+
+const concordProxyNowhereCipher = ['chacha', 'aes'];

@@ -1127,6 +1127,30 @@ void main() {
     );
   });
 
+  test('Nowhere cipher stays optional and survives other field edits', () {
+    const proxy = CustomProxy(
+      id: 0,
+      definition: {
+        'name': 'Portal',
+        'type': 'nowhere',
+        'server': 'portal.example',
+        'port': 443,
+        'password': '0123456789abcdef0123456789abcdef',
+      },
+    );
+    expect(proxy.options, contains(ProxyField.cipher));
+    expect(proxy.requiredKeys, isNot(contains('cipher')));
+    expect(proxy.choicesOf(ProxyField.cipher), ['chacha', 'aes']);
+    expect(proxy.definition, isNot(contains('cipher')));
+    final aes = proxy.withField(ProxyField.cipher, 'aes');
+    expect(
+      aes.withField(ProxyField.network, 'udp').definition['cipher'],
+      'aes',
+    );
+    expect(aes.withField(ProxyField.cipher, null).definition, proxy.definition);
+    expect(aes.withType('vmess').definition['cipher'], 'auto');
+  });
+
   test('a new type keeps what it reads alike and starts from the values '
       'nearly every server takes', () {
     const proxy = CustomProxy(

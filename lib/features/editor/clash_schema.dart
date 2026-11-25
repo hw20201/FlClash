@@ -849,6 +849,7 @@ const _proxyVariants = <String, Map<String, YamlSchema>>{
     'sni': _str,
     'pin': _str,
     'morph': _bool,
+    'cipher': YamlSchema.scalar(concordProxyNowhereCipher),
     'tcp-prelude': _str,
     'udp-prelude': _str,
     'handshake-timeout': _str,

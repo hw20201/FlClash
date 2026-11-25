@@ -82,16 +82,19 @@ void main() {
       }
     }
 
-    test('the ip-stack of every proxy that has one', () {
+    test('every proxy field and shared ip-stack option', () {
       final variants = top['proxies']!.entry!.variants;
-      final stacks = [
-        for (final fields in variants.values) ?fields['ip-stack'],
-      ];
-      expect(stacks, isNotEmpty);
-      for (final stack in stacks) {
-        for (final MapEntry(:key, value: allowed) in values['proxy']!.entries) {
-          final field = key.substring('ip-stack.'.length);
-          expect(stack.fields[field]!.values, unorderedEquals(allowed));
+      for (final MapEntry(:key, value: allowed) in values['proxy']!.entries) {
+        final [section, field] = key.split('.');
+        final fields = section == 'ip-stack'
+            ? [
+                for (final proxy in variants.values)
+                  if (proxy['ip-stack'] case final stack?) stack.fields[field]!,
+              ]
+            : [variants[section]![field]!];
+        expect(fields, isNotEmpty, reason: key);
+        for (final schema in fields) {
+          expect(schema.values, unorderedEquals(allowed), reason: key);
         }
       }
     });
