@@ -711,7 +711,16 @@ void main() {
         ),
       ),
     );
-    expect(find.text(currentAppLocalizations.itemsCount(2)), findsOneWidget);
+    // FlowCat's row shows the count and, for the rule asking for extended
+    // matching, the note below it.
+    expect(
+      find.textContaining(currentAppLocalizations.itemsCount(2)),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining(currentAppLocalizations.mitmExtendedMatchingNote(1)),
+      findsOneWidget,
+    );
   });
 
   testWidgets('routing rules say which ask for extended matching', (

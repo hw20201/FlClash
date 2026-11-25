@@ -44,6 +44,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   StreamSubscription<String>? _crashes;
   bool _away = false;
   var _shownSince = 0;
+  static const _pausedAway = ['connections', 'counters', 'dns', 'logs'];
   bool _recordingHistory = false;
 
   bool get _pausesInBackground => widget.pausesInBackground ?? system.isAndroid;
@@ -54,6 +55,11 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     WidgetsBinding.instance.addObserver(this);
     _demand.addListener(_syncConnectionCounters);
     _history.addListener(_syncHistory);
+    ref.listenManual(
+      appVisibleProvider,
+      (_, visible) => _setAway(!visible),
+      fireImmediately: true,
+    );
     ref.listenManual(appVisibleProvider, (_, _) => _syncHistory());
     ref.listenManual(
       runTimeProvider.select((value) => value != null),
@@ -137,6 +143,26 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         logLevel: coreFailureLogLevel(error),
       ),
     );
+    if (_away && _pausedAway.contains(name)) {
+      _feeds[name]!.pause();
+    }
+  }
+
+  void _setAway(bool away) {
+    if (away == _away) {
+      return;
+    }
+    _away = away;
+    if (!away) {
+      _shownSince = DateTime.now().millisecondsSinceEpoch;
+    }
+    for (final name in _pausedAway) {
+      if (away) {
+        _feeds[name]?.pause();
+      } else {
+        _feeds[name]?.resume();
+      }
+    }
   }
 
   void _openFeeds() {
@@ -176,9 +202,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       _core.api.watchConnections(maxBatchMs: 250, counters: false),
       _onConnections,
     );
-    if (_away) {
-      _feeds['connections']?.pause();
-    }
     _syncConnectionCounters();
   }
 
@@ -196,9 +219,6 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       _core.api.watchConnections(maxBatchMs: 250, counters: true),
       _onCounters,
     );
-    if (_away) {
-      _feeds['counters']?.pause();
-    }
   }
 
   void _syncHistory() {
@@ -243,20 +263,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         _pausesInBackground &&
         (state == AppLifecycleState.paused ||
             state == AppLifecycleState.hidden);
-    if (away == _away) {
-      return;
-    }
-    _away = away;
-    if (!away) {
-      _shownSince = DateTime.now().millisecondsSinceEpoch;
-    }
-    for (final name in const ['connections', 'counters']) {
-      if (away) {
-        _feeds[name]?.pause();
-      } else {
-        _feeds[name]?.resume();
-      }
-    }
+    // The app being out of sight also keeps it away, even if the lifecycle
+    // already came back: only _setAway owns the transition.
+    _setAway(away || !ref.read(appVisibleProvider));
     _syncHistory();
   }
 

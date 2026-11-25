@@ -13,12 +13,12 @@ const appName = 'FlClash';
 
 /// What the system shows for the installed package, as the packaging files
 /// name it.
-const packageDisplayName = rsSideBySide ? 'FlClash RS' : appName;
+const packageDisplayName = rsSideBySide ? 'FlowCat RS' : appName;
 
 /// Keeps registrations and backups apart from a FlClash install beside it:
 /// the autostart entry, whose Windows Run value the installer reads under
 /// [packageDisplayName] (value names ignore case), and the WebDAV backup root.
-const sideBySideName = rsSideBySide ? 'FlClash rs' : appName;
+const sideBySideName = rsSideBySide ? 'FlowCat rs' : appName;
 const _appSlug = rsSideBySide ? 'flowcat-rs' : 'flclash';
 
 /// Root mode stays out of the network page until its TUN start is fixed.
@@ -33,7 +33,7 @@ const suAccessGlowShown = false;
 const productName = 'FlClash';
 const appHelperService = 'FlClashHelperService';
 const helperServiceName = rsSideBySide
-    ? 'FlClashRsHelperService'
+    ? 'FlowCatRsHelperService'
     : 'FlClashHelperService';
 const coreManifestName = 'manifest.json';
 const browserUa =
