@@ -2576,6 +2576,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noSearchResults => '没有匹配的结果';
 
   @override
+  String get noActiveConnections => '暂无活动连接';
+
+  @override
+  String get noFailedConnections => '暂无失败的连接';
+
+  @override
+  String get noFailedDnsQueries => '暂无失败的DNS查询';
+
+  @override
+  String get noCachedDnsQueries => '暂无命中缓存的DNS查询';
+
+  @override
+  String get noFailedHttpRequests => '暂无失败的 HTTP 请求';
+
+  @override
+  String get noRewrittenHttpRequests => '暂无改写过的 HTTP 请求';
+
+  @override
   String get showPassword => '显示密码';
 
   @override
@@ -3950,6 +3968,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mitmModuleUnreadableRisk => '无法读取模块文件，不清楚它会改动什么。只在信任其来源时开启。';
+
+  @override
+  String get mitmModuleHostsUnread => '无法读取此模块的主机名';
 
   @override
   String get skipServerCertVerify => '跳过服务器证书验证';

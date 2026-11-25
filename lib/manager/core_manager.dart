@@ -43,6 +43,7 @@ class _CoreContainerState extends ConsumerState<CoreManager>
   final _feeds = <String, StreamSubscription<Object?>>{};
   StreamSubscription<String>? _crashes;
   bool _away = false;
+  var _shownSince = 0;
   bool _recordingHistory = false;
 
   bool get _pausesInBackground => widget.pausesInBackground ?? system.isAndroid;
@@ -144,13 +145,13 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     ref.read(connectionBookProvider).clear();
     ref.read(requestsProvider.notifier).startOver();
     ref.read(dnsQueriesProvider.notifier).startOver();
-    _feed('dns', api.watchDns(), (entries) {
+    _feed('dns', api.watchDns(), (batch) {
       ref
           .read(dnsQueriesProvider.notifier)
-          .addQueries(entries.map(dnsQueryOf).toList());
+          .addQueries(batch.entries.map(dnsQueryOf).toList());
       ref
           .read(dnsQueryCountProvider.notifier)
-          .update((count) => count + entries.length);
+          .update((count) => count + batch.entries.length + batch.dropped);
     });
     _sync
       ..reset()
@@ -246,6 +247,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
       return;
     }
     _away = away;
+    if (!away) {
+      _shownSince = DateTime.now().millisecondsSinceEpoch;
+    }
     for (final name in const ['connections', 'counters']) {
       if (away) {
         _feeds[name]?.pause();
@@ -269,7 +273,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     }
     if (ref.read(appSettingProvider).openLogs) {
       _feed('logs', _core.api.watchLogs(), (entries) {
-        entries.map(logOf).forEach(_onLog);
+        for (final entry in entries) {
+          _onLog(logOf(entry), announce: entry.time >= _shownSince);
+        }
       });
     } else {
       unawaited(_feeds.remove('logs')?.cancel());
@@ -300,6 +306,15 @@ class _CoreContainerState extends ConsumerState<CoreManager>
         ref
             .read(geoResourceActionProvider.notifier)
             .handleCoreUpdate(name, phase, error);
+      case ResourceUpdateEvent(
+        kind: ResourceKind.mitmModule,
+        :final name,
+        phase: ResourcePhase.updated,
+      ):
+        ref.invalidate(mitmModuleStatusProvider);
+        if (int.tryParse(name) case final id?) {
+          ref.invalidate(mitmModuleContentProvider(id));
+        }
       case ResourceUpdateEvent(kind: ResourceKind.mitmModule):
         ref.invalidate(mitmModuleStatusProvider);
       case ResourceUpdateEvent(
@@ -411,9 +426,9 @@ class _CoreContainerState extends ConsumerState<CoreManager>
     ref.read(providersProvider.notifier).setProvider(provider);
   }
 
-  void _onLog(Log log) {
+  void _onLog(Log log, {required bool announce}) {
     ref.read(logsProvider.notifier).add(log);
-    if (log.logLevel == LogLevel.error) {
+    if (announce && log.logLevel == LogLevel.error) {
       throttler.call(
         FunctionTag.coreErrorNotifier,
         () => dialogs.showBanner(log.payload, level: BannerLevel.error),
