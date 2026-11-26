@@ -32,7 +32,6 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
   var _offset = 0;
   var _busy = false;
   ScrollController? _scrollController;
-  final _viewportMetrics = ValueNotifier<ScrollMetrics?>(null);
 
   @override
   void didChangeDependencies() {
@@ -43,7 +42,6 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
   @override
   void dispose() {
     _scrollController?.dispose();
-    _viewportMetrics.dispose();
     super.dispose();
   }
 
@@ -182,60 +180,52 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
                     ],
                   ),
                 ),
-                body: NotificationListener<ScrollMetricsNotification>(
-                  onNotification: (notification) {
-                    _viewportMetrics.value = notification.metrics;
-                    return false;
-                  },
-                  child: ListView(
-                    controller: _scrollController,
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      controlsHeight + 4,
-                      16,
-                      20 + context.bottomInset,
-                    ),
-                    children: [
-                      if (!store.ready)
-                        const Padding(
-                          padding: EdgeInsets.all(36),
-                          child: Center(child: ActivityIndicator(size: 24)),
+                body: ListView(
+                  controller: _scrollController,
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    controlsHeight + 4,
+                    16,
+                    20 + context.bottomInset,
+                  ),
+                  children: [
+                    if (!store.ready)
+                      const Padding(
+                        padding: EdgeInsets.all(36),
+                        child: Center(child: ActivityIndicator(size: 24)),
+                      )
+                    else ...[
+                      if (store.error)
+                        _StorageError(
+                          message: l10n.trafficHistoryStorageError,
+                          onRetry: () => _run(store.refresh),
+                        ),
+                      if (store.earliest == null)
+                        _EmptyHistory(
+                          recording: store.recording,
+                          onRecordingChanged: (value) =>
+                              _run(() => store.setRecording(value)),
                         )
                       else ...[
-                        if (store.error)
-                          _StorageError(
-                            message: l10n.trafficHistoryStorageError,
-                            onRetry: () => _run(store.refresh),
-                          ),
-                        if (store.earliest == null)
-                          _EmptyHistory(
-                            recording: store.recording,
-                            onRecordingChanged: (value) =>
-                                _run(() => store.setRecording(value)),
-                          )
-                        else ...[
-                          _RecordingControl(
-                            recording: store.recording,
-                            onChanged: (value) =>
-                                _run(() => store.setRecording(value)),
-                          ),
-                          const SizedBox(height: 12),
-                          _OverviewCard(snapshot: snapshot),
-                          const SizedBox(height: 12),
-                          TrafficHistoryChart(
-                            snapshot: snapshot,
-                            period: _period,
-                            topClearance: controlsHeight,
-                            viewportChanges: _viewportMetrics,
-                          ),
-                          const SizedBox(height: 20),
-                          _RuleHitSection(snapshot: snapshot),
-                          const SizedBox(height: 20),
-                          _RankingsSection(snapshot: snapshot),
-                        ],
+                        _RecordingControl(
+                          recording: store.recording,
+                          onChanged: (value) =>
+                              _run(() => store.setRecording(value)),
+                        ),
+                        const SizedBox(height: 12),
+                        _OverviewCard(snapshot: snapshot),
+                        const SizedBox(height: 12),
+                        TrafficHistoryChart(
+                          snapshot: snapshot,
+                          period: _period,
+                        ),
+                        const SizedBox(height: 20),
+                        _RuleHitSection(snapshot: snapshot),
+                        const SizedBox(height: 20),
+                        _RankingsSection(snapshot: snapshot),
                       ],
                     ],
-                  ),
+                  ],
                 ),
               );
             },

@@ -5,7 +5,6 @@ import 'package:fl_clash/models/common.dart' show TrafficShowExt;
 import 'package:fl_clash/models/traffic_history.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 final _growthCurve = SpringCurve(
@@ -18,14 +17,10 @@ class TrafficHistoryChart extends StatefulWidget {
     super.key,
     required this.snapshot,
     required this.period,
-    this.topClearance = 0,
-    this.viewportChanges,
   });
 
   final TrafficHistorySnapshot snapshot;
   final TrafficHistoryPeriod period;
-  final double topClearance;
-  final Listenable? viewportChanges;
 
   @override
   State<TrafficHistoryChart> createState() => _TrafficHistoryChartState();
@@ -33,18 +28,13 @@ class TrafficHistoryChart extends StatefulWidget {
 
 class _TrafficHistoryChartState extends State<TrafficHistoryChart>
     with SingleTickerProviderStateMixin {
-  final _plotKey = GlobalKey();
-  late final _motion = AnimationController(vsync: this);
+  late final _motion = AnimationController(vsync: this, value: 1);
   late List<TrafficPoint> _points;
   late List<double> _from;
   late List<double> _to;
-  ScrollPosition? _position;
-  ValueListenable<double>? _overhang;
   var _maxValue = 0;
   var _selected = 0;
-  var _visible = false;
-  var _checkScheduled = false;
-  var _entering = true;
+  var _entering = false;
   var _animate = false;
 
   bool get _hourly => widget.period == TrafficHistoryPeriod.day;
@@ -53,9 +43,8 @@ class _TrafficHistoryChartState extends State<TrafficHistoryChart>
   void initState() {
     super.initState();
     _readPoints();
-    _from = List.filled(_to.length, 0);
+    _from = List.of(_to);
     _selectPeak();
-    widget.viewportChanges?.addListener(_scheduleVisibilityCheck);
   }
 
   void _readPoints() {
@@ -82,38 +71,17 @@ class _TrafficHistoryChartState extends State<TrafficHistoryChart>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final position = Scrollable.maybeOf(context)?.position;
-    if (position != _position) {
-      _position?.removeListener(_scheduleVisibilityCheck);
-      _position = position;
-      _position?.addListener(_scheduleVisibilityCheck);
-    }
-    final overhang = SheetOverhangScope.of(context);
-    if (overhang != _overhang) {
-      _overhang?.removeListener(_scheduleVisibilityCheck);
-      _overhang = overhang;
-      _overhang?.addListener(_scheduleVisibilityCheck);
-    }
-    final animate =
+    _animate =
         !context.disableAnimations && TickerMode.valuesOf(context).enabled;
-    if (_animate != animate) {
-      _animate = animate;
-      _visible = false;
-    }
     if (!_animate) {
       _motion.stop();
       _motion.value = 1;
     }
-    _scheduleVisibilityCheck();
   }
 
   @override
   void didUpdateWidget(TrafficHistoryChart oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.viewportChanges != widget.viewportChanges) {
-      oldWidget.viewportChanges?.removeListener(_scheduleVisibilityCheck);
-      widget.viewportChanges?.addListener(_scheduleVisibilityCheck);
-    }
     final changedRange =
         oldWidget.period != widget.period ||
         oldWidget.snapshot.start != widget.snapshot.start ||
@@ -121,14 +89,17 @@ class _TrafficHistoryChartState extends State<TrafficHistoryChart>
     final current = [for (var i = 0; i < _to.length; i++) _valueAt(i)];
     final previous = _to;
     _readPoints();
-    if (changedRange) {
+    if (oldWidget.period != widget.period) {
       _selectPeak();
       _start(entering: true);
-    } else if (!listEquals(previous, _to)) {
-      _from = current;
+    } else if (changedRange || !listEquals(previous, _to)) {
+      if (changedRange) _selectPeak();
+      _from = List.generate(
+        _to.length,
+        (index) => index < current.length ? current[index] : 0,
+      );
       _start(entering: false);
     }
-    _scheduleVisibilityCheck();
   }
 
   double _valueAt(int index) {
@@ -150,70 +121,20 @@ class _TrafficHistoryChartState extends State<TrafficHistoryChart>
     _motion.stop();
     if (!_animate) {
       _motion.value = 1;
-    } else if (_visible) {
+    } else {
       _motion.duration = Duration(milliseconds: entering ? 850 : 280);
       _motion.forward(from: 0);
-    } else {
-      _motion.value = 0;
     }
-  }
-
-  void _scheduleVisibilityCheck() {
-    if (_checkScheduled) return;
-    _checkScheduled = true;
-    WidgetsBinding.instance.ensureVisualUpdate();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkScheduled = false;
-      if (!mounted) return;
-      final plot = _plotKey.currentContext?.findRenderObject();
-      if (plot is! RenderBox || !plot.attached || !plot.hasSize) return;
-      final viewport = RenderAbstractViewport.maybeOf(plot);
-      final (bounds, viewportBounds) = switch (viewport) {
-        final RenderBox box => (
-          MatrixUtils.transformRect(
-            plot.getTransformTo(box),
-            Offset.zero & plot.size,
-          ),
-          (Offset.zero & box.size).intersect(
-            MatrixUtils.transformRect(
-              Matrix4.inverted(box.getTransformTo(null)),
-              Offset.zero & MediaQuery.sizeOf(context),
-            ),
-          ),
-        ),
-        _ => (
-          plot.localToGlobal(Offset.zero) & plot.size,
-          Offset.zero & MediaQuery.sizeOf(context),
-        ),
-      };
-      final visibleTop = math.max(viewportBounds.top, widget.topClearance);
-      final visible =
-          TickerMode.valuesOf(context).enabled &&
-          viewportBounds.bottom > visibleTop &&
-          bounds.bottom > visibleTop &&
-          bounds.top < viewportBounds.bottom;
-      if (visible == _visible) return;
-      _visible = visible;
-      if (visible) {
-        _start(entering: true);
-      } else {
-        _motion.stop();
-      }
-    });
   }
 
   @override
   void dispose() {
-    _position?.removeListener(_scheduleVisibilityCheck);
-    _overhang?.removeListener(_scheduleVisibilityCheck);
-    widget.viewportChanges?.removeListener(_scheduleVisibilityCheck);
     _motion.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    _scheduleVisibilityCheck();
     final scheme = context.colorScheme;
     final point = _points[_selected];
     final label = _hourly
@@ -272,11 +193,14 @@ class _TrafficHistoryChartState extends State<TrafficHistoryChart>
           const SizedBox(height: 4),
           RepaintBoundary(
             child: SizedBox(
-              key: _plotKey,
               height: 158,
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final height = constraints.maxHeight - 16;
+                  final barWidth = math.min(
+                    12.0,
+                    constraints.maxWidth / _points.length * .56,
+                  );
                   return CustomPaint(
                     painter: _TrafficGridPainter(
                       color: scheme.onSurface.withValues(alpha: .08),
@@ -290,7 +214,9 @@ class _TrafficHistoryChartState extends State<TrafficHistoryChart>
                             child: _TrafficBar(
                               point: point,
                               height: height,
+                              width: barWidth,
                               selected: index == _selected,
+                              growing: _entering,
                               motion: _motion,
                               heightFactor: () => _valueAt(index),
                               onSelected: () =>
@@ -354,7 +280,9 @@ class _TrafficBar extends StatelessWidget {
   const _TrafficBar({
     required this.point,
     required this.height,
+    required this.width,
     required this.selected,
+    required this.growing,
     required this.motion,
     required this.heightFactor,
     required this.onSelected,
@@ -362,15 +290,15 @@ class _TrafficBar extends StatelessWidget {
 
   final TrafficPoint point;
   final double height;
+  final double width;
   final bool selected;
+  final bool growing;
   final Animation<double> motion;
   final double Function() heightFactor;
   final VoidCallback onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
-    final empty = point.upload + point.download == 0;
     return Semantics(
       button: true,
       selected: selected,
@@ -381,44 +309,93 @@ class _TrafficBar extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         excludeFromSemantics: true,
         onTap: onSelected,
-        child: DecoratedBox(
-          decoration: ShapeDecoration(
-            color: selected ? scheme.primary.withValues(alpha: .07) : null,
-            shape: AppShape.md,
-          ),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: SizedBox(
-              width: 12,
+        child: Tooltip(
+          message:
+              '${point.label}: ${point.download.traffic.show} ↓ · ${point.upload.traffic.show} ↑',
+          child: CustomPaint(
+            painter: _TrafficBarPainter(
+              motion: motion,
+              heightFactor: heightFactor,
               height: height,
-              child: Tooltip(
-                message:
-                    '${point.label}: ${point.download.traffic.show} ↓ · ${point.upload.traffic.show} ↑',
-                child: AnimatedBuilder(
-                  animation: motion,
-                  builder: (_, child) => Transform.scale(
-                    alignment: Alignment.bottomCenter,
-                    scaleY: empty ? 2 / height : heightFactor(),
-                    child: child,
-                  ),
-                  child: Container(
-                    decoration: ShapeDecoration(
-                      color: empty
-                          ? scheme.primary.withValues(alpha: .3)
-                          : scheme.primary.withValues(
-                              alpha: selected ? 1 : .65,
-                            ),
-                      shape: AppShape.full,
-                    ),
-                  ),
-                ),
-              ),
+              width: width,
+              empty: point.upload + point.download == 0,
+              selected: selected,
+              growing: growing,
+              color: context.colorScheme.primary,
             ),
+            child: const SizedBox.expand(),
           ),
         ),
       ),
     );
   }
+}
+
+class _TrafficBarPainter extends CustomPainter {
+  _TrafficBarPainter({
+    required Animation<double> motion,
+    required this.heightFactor,
+    required this.height,
+    required this.width,
+    required this.empty,
+    required this.selected,
+    required this.growing,
+    required this.color,
+  }) : super(repaint: motion);
+
+  final double Function() heightFactor;
+  final double height;
+  final double width;
+  final bool empty;
+  final bool selected;
+  final bool growing;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final valueHeight = height * heightFactor();
+    final dotSize = math.min(3.0, width);
+    final fromZero = growing && !empty;
+    final morph = fromZero ? 1.0 : (valueHeight / dotSize).clamp(0.0, 1.0);
+    final barHeight = fromZero ? valueHeight : math.max(dotSize, valueHeight);
+    if (barHeight <= 0) return;
+    final barWidth = dotSize + (width - dotSize) * morph;
+    final rect = Rect.fromLTWH(
+      (size.width - barWidth) / 2,
+      size.height - barHeight,
+      barWidth,
+      barHeight,
+    );
+    final paint = Paint();
+    final dotAlpha = selected ? .85 : .22;
+    if (morph == 0) {
+      paint.color = color.withValues(alpha: dotAlpha);
+    } else {
+      paint.shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withValues(
+            alpha: dotAlpha + ((selected ? .78 : .42) - dotAlpha) * morph,
+          ),
+          color.withValues(
+            alpha: dotAlpha + ((selected ? 1 : .65) - dotAlpha) * morph,
+          ),
+        ],
+      ).createShader(rect);
+    }
+    canvas.drawPath(AppShape.full.getOuterPath(rect), paint);
+  }
+
+  @override
+  bool shouldRepaint(_TrafficBarPainter oldDelegate) =>
+      heightFactor != oldDelegate.heightFactor ||
+      height != oldDelegate.height ||
+      width != oldDelegate.width ||
+      empty != oldDelegate.empty ||
+      growing != oldDelegate.growing ||
+      selected != oldDelegate.selected ||
+      color != oldDelegate.color;
 }
 
 class _TrafficGridPainter extends CustomPainter {

@@ -287,7 +287,7 @@ void main() {
     await tester.runAsync(() => dir.delete(recursive: true));
   });
 
-  testWidgets('trend bars share one width and a single solid segment', (
+  testWidgets('trend slots keep gaps around a single capsule or zero dot', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -328,25 +328,34 @@ void main() {
     Finder barTooltip() => find.byWidgetPredicate(
       (widget) => widget is Tooltip && widget.message.contains('↓'),
     );
-    final widths = <double>[];
     for (final period in ['Day', 'Week', 'Month']) {
       if (period != 'Day') {
         await tester.tap(find.text(period));
-        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
       }
       final tooltips = barTooltip();
       expect(tooltips, findsWidgets);
       for (var index = 0; index < tooltips.evaluate().length; index++) {
         final bar = tooltips.at(index);
-        widths.add(tester.getSize(bar).width);
+        final paths = <Path>[];
         expect(
-          find.descendant(of: bar, matching: find.byType(Container)),
-          findsOneWidget,
+          tester.renderObject(
+            find.descendant(of: bar, matching: find.byType(CustomPaint)),
+          ),
+          paints..everything((method, arguments) {
+            if (method == #drawPath) paths.add(arguments[0] as Path);
+            return true;
+          }),
+        );
+        expect(paths, hasLength(1));
+        expect(
+          paths.single.getBounds().width,
+          lessThanOrEqualTo(tester.getSize(bar).width * .57),
         );
       }
       expect(tester.takeException(), isNull);
     }
-    expect(widths.toSet(), {12.0});
     final chartCard = find
         .ancestor(of: find.text('Traffic trend'), matching: find.byType(Card))
         .first;
