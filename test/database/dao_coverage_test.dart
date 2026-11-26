@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:fl_clash/database/database.dart';
 import 'package:fl_clash/enum/enum.dart';
@@ -35,6 +35,7 @@ void main() {
         autoUpdate: false,
         selectedMap: const {'Selector': 'Proxy'},
         unfoldSet: const {'Selector'},
+        hiddenGroupNames: const {'Select', 'select', ' Select ', '日本 🐱'},
         type: ProfileType.url,
         scriptId: 7,
         order: 1,
@@ -68,6 +69,70 @@ void main() {
       expect(await database.profiles.count.getSingle(), 0);
     },
   );
+
+  test('saving visibility updates only that profile column', () async {
+    const draft = Profile(
+      id: 1,
+      autoUpdateDuration: Duration.zero,
+      currentGroupName: 'Old',
+      selectedMap: {'Old': 'DIRECT'},
+    );
+    final latest = draft.copyWith(
+      currentGroupName: 'New',
+      selectedMap: {'New': 'Proxy'},
+      unfoldSet: {'New'},
+      label: 'Latest',
+    );
+    const other = Profile(id: 2, autoUpdateDuration: Duration.zero);
+    await database.profilesDao.putAll([
+      latest.toCompanion(),
+      other.toCompanion(),
+    ]);
+
+    await database.profilesDao.updateHiddenGroupNames(draft.id, {'Old'});
+    await database.profilesDao.updateHiddenGroupNames(99, {'Absent'});
+
+    expect(
+      await database.profilesDao.get(1),
+      latest.copyWith(hiddenGroupNames: {'Old'}),
+    );
+    expect(await database.profilesDao.get(2), other);
+    expect(await database.profilesDao.get(99), isNull);
+    await database.profilesDao.updateHiddenGroupNames(1, {});
+    expect(await database.profilesDao.get(1), latest);
+  });
+
+  for (final isOverride in [false, true]) {
+    test(
+      'profile visibility survives restore with override=$isOverride',
+      () async {
+        const profile = Profile(
+          id: 1,
+          autoUpdateDuration: Duration.zero,
+          order: 0,
+          hiddenGroupNames: {'Select', 'Stale'},
+          selectedMap: {'Select': 'Proxy'},
+        );
+        const other = Profile(id: 2, autoUpdateDuration: Duration.zero);
+        await database.profilesDao.putAll([
+          profile.copyWith(hiddenGroupNames: {'Previous'}).toCompanion(),
+          other.toCompanion(),
+        ]);
+
+        await database.restore(
+          [profile],
+          const [],
+          const [],
+          const [],
+          const [],
+          isOverride: isOverride,
+        );
+
+        expect(await database.profilesDao.get(1), profile);
+        expect(await database.profilesDao.get(2), isOverride ? isNull : other);
+      },
+    );
+  }
 
   test('profiles query skips a row it cannot read and keeps it', () async {
     const readable = Profile(
@@ -118,14 +183,16 @@ void main() {
     await database.customStatement(
       'INSERT INTO profiles (id, type, label, url, extend_type, '
       'auto_update_duration_millis, auto_update, selected_map, unfold_set, '
-      'subscription_info, overrides) '
-      "VALUES (1, 'url', 'Damaged', '', 'standard', 0, 1, 'x', '{}', '[', '{')",
+      'subscription_info, overrides, hidden_group_names) '
+      "VALUES (1, 'url', 'Damaged', '', 'standard', 0, 1, 'x', '{}', '[', "
+      "'{', '{')",
     );
 
     final profile = (await database.profilesDao.query().get()).single;
     expect(profile.label, 'Damaged');
     expect(profile.selectedMap, isEmpty);
     expect(profile.unfoldSet, isEmpty);
+    expect(profile.hiddenGroupNames, isEmpty);
     expect(profile.subscriptionInfo, null);
     expect(profile.overrides, const ProfileOverrides());
   });
@@ -205,6 +272,7 @@ void main() {
           .orderBy((row) => row.label.asc())
           .get();
       expect(profiles.single.label, 'Managed profile');
+      expect(profiles.single.hiddenGroupNames, isEmpty);
 
       await database.managers.profiles
           .filter((row) => row.id.equals(profiles.single.id))

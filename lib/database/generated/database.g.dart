@@ -173,6 +173,16 @@ class $ProfilesTable extends Profiles
         type: DriftSqlType.string,
         requiredDuringInsert: true,
       ).withConverter<Set<String>>($ProfilesTable.$converterunfoldSet);
+  @override
+  late final GeneratedColumnWithTypeConverter<Set<String>, String>
+  hiddenGroupNames = GeneratedColumn<String>(
+    'hidden_group_names',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  ).withConverter<Set<String>>($ProfilesTable.$converterhiddenGroupNames);
   static const VerificationMeta _orderMeta = const VerificationMeta('order');
   @override
   late final GeneratedColumn<int> order = GeneratedColumn<int>(
@@ -209,6 +219,7 @@ class $ProfilesTable extends Profiles
     autoUpdate,
     selectedMap,
     unfoldSet,
+    hiddenGroupNames,
     order,
     overrides,
   ];
@@ -401,6 +412,12 @@ class $ProfilesTable extends Profiles
           data['${effectivePrefix}unfold_set'],
         )!,
       ),
+      hiddenGroupNames: $ProfilesTable.$converterhiddenGroupNames.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hidden_group_names'],
+        )!,
+      ),
       order: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}order'],
@@ -431,6 +448,8 @@ class $ProfilesTable extends Profiles
       const StringMapConverter();
   static TypeConverter<Set<String>, String> $converterunfoldSet =
       const StringSetConverter();
+  static TypeConverter<Set<String>, String> $converterhiddenGroupNames =
+      const StringSetConverter();
   static TypeConverter<ProfileOverrides?, String?> $converteroverrides =
       const ProfileOverridesConverter();
 }
@@ -456,6 +475,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
   final bool autoUpdate;
   final Map<String, String> selectedMap;
   final Set<String> unfoldSet;
+  final Set<String> hiddenGroupNames;
   final int? order;
   final ProfileOverrides? overrides;
   const RawProfile({
@@ -475,6 +495,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     required this.autoUpdate,
     required this.selectedMap,
     required this.unfoldSet,
+    required this.hiddenGroupNames,
     this.order,
     this.overrides,
   });
@@ -527,6 +548,11 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
         $ProfilesTable.$converterunfoldSet.toSql(unfoldSet),
       );
     }
+    {
+      map['hidden_group_names'] = Variable<String>(
+        $ProfilesTable.$converterhiddenGroupNames.toSql(hiddenGroupNames),
+      );
+    }
     if (!nullToAbsent || order != null) {
       map['order'] = Variable<int>(order);
     }
@@ -570,6 +596,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       autoUpdate: Value(autoUpdate),
       selectedMap: Value(selectedMap),
       unfoldSet: Value(unfoldSet),
+      hiddenGroupNames: Value(hiddenGroupNames),
       order: order == null && nullToAbsent
           ? const Value.absent()
           : Value(order),
@@ -611,6 +638,9 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
         json['selectedMap'],
       ),
       unfoldSet: serializer.fromJson<Set<String>>(json['unfoldSet']),
+      hiddenGroupNames: serializer.fromJson<Set<String>>(
+        json['hiddenGroupNames'],
+      ),
       order: serializer.fromJson<int?>(json['order']),
       overrides: serializer.fromJson<ProfileOverrides?>(json['overrides']),
     );
@@ -641,6 +671,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
       'autoUpdate': serializer.toJson<bool>(autoUpdate),
       'selectedMap': serializer.toJson<Map<String, String>>(selectedMap),
       'unfoldSet': serializer.toJson<Set<String>>(unfoldSet),
+      'hiddenGroupNames': serializer.toJson<Set<String>>(hiddenGroupNames),
       'order': serializer.toJson<int?>(order),
       'overrides': serializer.toJson<ProfileOverrides?>(overrides),
     };
@@ -663,6 +694,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     bool? autoUpdate,
     Map<String, String>? selectedMap,
     Set<String>? unfoldSet,
+    Set<String>? hiddenGroupNames,
     Value<int?> order = const Value.absent(),
     Value<ProfileOverrides?> overrides = const Value.absent(),
   }) => RawProfile(
@@ -689,6 +721,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     autoUpdate: autoUpdate ?? this.autoUpdate,
     selectedMap: selectedMap ?? this.selectedMap,
     unfoldSet: unfoldSet ?? this.unfoldSet,
+    hiddenGroupNames: hiddenGroupNames ?? this.hiddenGroupNames,
     order: order.present ? order.value : this.order,
     overrides: overrides.present ? overrides.value : this.overrides,
   );
@@ -730,6 +763,9 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           ? data.selectedMap.value
           : this.selectedMap,
       unfoldSet: data.unfoldSet.present ? data.unfoldSet.value : this.unfoldSet,
+      hiddenGroupNames: data.hiddenGroupNames.present
+          ? data.hiddenGroupNames.value
+          : this.hiddenGroupNames,
       order: data.order.present ? data.order.value : this.order,
       overrides: data.overrides.present ? data.overrides.value : this.overrides,
     );
@@ -754,6 +790,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           ..write('autoUpdate: $autoUpdate, ')
           ..write('selectedMap: $selectedMap, ')
           ..write('unfoldSet: $unfoldSet, ')
+          ..write('hiddenGroupNames: $hiddenGroupNames, ')
           ..write('order: $order, ')
           ..write('overrides: $overrides')
           ..write(')'))
@@ -778,6 +815,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
     autoUpdate,
     selectedMap,
     unfoldSet,
+    hiddenGroupNames,
     order,
     overrides,
   );
@@ -801,6 +839,7 @@ class RawProfile extends DataClass implements Insertable<RawProfile> {
           other.autoUpdate == this.autoUpdate &&
           other.selectedMap == this.selectedMap &&
           other.unfoldSet == this.unfoldSet &&
+          other.hiddenGroupNames == this.hiddenGroupNames &&
           other.order == this.order &&
           other.overrides == this.overrides);
 }
@@ -822,6 +861,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
   final Value<bool> autoUpdate;
   final Value<Map<String, String>> selectedMap;
   final Value<Set<String>> unfoldSet;
+  final Value<Set<String>> hiddenGroupNames;
   final Value<int?> order;
   final Value<ProfileOverrides?> overrides;
   const ProfilesCompanion({
@@ -841,6 +881,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     this.autoUpdate = const Value.absent(),
     this.selectedMap = const Value.absent(),
     this.unfoldSet = const Value.absent(),
+    this.hiddenGroupNames = const Value.absent(),
     this.order = const Value.absent(),
     this.overrides = const Value.absent(),
   });
@@ -861,6 +902,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     required bool autoUpdate,
     required Map<String, String> selectedMap,
     required Set<String> unfoldSet,
+    this.hiddenGroupNames = const Value.absent(),
     this.order = const Value.absent(),
     this.overrides = const Value.absent(),
   }) : type = Value(type),
@@ -888,6 +930,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     Expression<bool>? autoUpdate,
     Expression<String>? selectedMap,
     Expression<String>? unfoldSet,
+    Expression<String>? hiddenGroupNames,
     Expression<int>? order,
     Expression<String>? overrides,
   }) {
@@ -909,6 +952,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
       if (autoUpdate != null) 'auto_update': autoUpdate,
       if (selectedMap != null) 'selected_map': selectedMap,
       if (unfoldSet != null) 'unfold_set': unfoldSet,
+      if (hiddenGroupNames != null) 'hidden_group_names': hiddenGroupNames,
       if (order != null) 'order': order,
       if (overrides != null) 'overrides': overrides,
     });
@@ -931,6 +975,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
     Value<bool>? autoUpdate,
     Value<Map<String, String>>? selectedMap,
     Value<Set<String>>? unfoldSet,
+    Value<Set<String>>? hiddenGroupNames,
     Value<int?>? order,
     Value<ProfileOverrides?>? overrides,
   }) {
@@ -952,6 +997,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
       autoUpdate: autoUpdate ?? this.autoUpdate,
       selectedMap: selectedMap ?? this.selectedMap,
       unfoldSet: unfoldSet ?? this.unfoldSet,
+      hiddenGroupNames: hiddenGroupNames ?? this.hiddenGroupNames,
       order: order ?? this.order,
       overrides: overrides ?? this.overrides,
     );
@@ -1020,6 +1066,11 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
         $ProfilesTable.$converterunfoldSet.toSql(unfoldSet.value),
       );
     }
+    if (hiddenGroupNames.present) {
+      map['hidden_group_names'] = Variable<String>(
+        $ProfilesTable.$converterhiddenGroupNames.toSql(hiddenGroupNames.value),
+      );
+    }
     if (order.present) {
       map['order'] = Variable<int>(order.value);
     }
@@ -1050,6 +1101,7 @@ class ProfilesCompanion extends UpdateCompanion<RawProfile> {
           ..write('autoUpdate: $autoUpdate, ')
           ..write('selectedMap: $selectedMap, ')
           ..write('unfoldSet: $unfoldSet, ')
+          ..write('hiddenGroupNames: $hiddenGroupNames, ')
           ..write('order: $order, ')
           ..write('overrides: $overrides')
           ..write(')'))
@@ -5588,6 +5640,7 @@ typedef $$ProfilesTableCreateCompanionBuilder =
       required bool autoUpdate,
       required Map<String, String> selectedMap,
       required Set<String> unfoldSet,
+      Value<Set<String>> hiddenGroupNames,
       Value<int?> order,
       Value<ProfileOverrides?> overrides,
     });
@@ -5609,6 +5662,7 @@ typedef $$ProfilesTableUpdateCompanionBuilder =
       Value<bool> autoUpdate,
       Value<Map<String, String>> selectedMap,
       Value<Set<String>> unfoldSet,
+      Value<Set<String>> hiddenGroupNames,
       Value<int?> order,
       Value<ProfileOverrides?> overrides,
     });
@@ -5790,6 +5844,12 @@ class $$ProfilesTableFilterComposer
   ColumnWithTypeConverterFilters<Set<String>, Set<String>, String>
   get unfoldSet => $composableBuilder(
     column: $table.unfoldSet,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Set<String>, Set<String>, String>
+  get hiddenGroupNames => $composableBuilder(
+    column: $table.hiddenGroupNames,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
@@ -5994,6 +6054,11 @@ class $$ProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get hiddenGroupNames => $composableBuilder(
+    column: $table.hiddenGroupNames,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get order => $composableBuilder(
     column: $table.order,
     builder: (column) => ColumnOrderings(column),
@@ -6084,6 +6149,12 @@ class $$ProfilesTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<Set<String>, String> get unfoldSet =>
       $composableBuilder(column: $table.unfoldSet, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Set<String>, String> get hiddenGroupNames =>
+      $composableBuilder(
+        column: $table.hiddenGroupNames,
+        builder: (column) => column,
+      );
 
   GeneratedColumn<int> get order =>
       $composableBuilder(column: $table.order, builder: (column) => column);
@@ -6242,6 +6313,7 @@ class $$ProfilesTableTableManager
                 Value<bool> autoUpdate = const Value.absent(),
                 Value<Map<String, String>> selectedMap = const Value.absent(),
                 Value<Set<String>> unfoldSet = const Value.absent(),
+                Value<Set<String>> hiddenGroupNames = const Value.absent(),
                 Value<int?> order = const Value.absent(),
                 Value<ProfileOverrides?> overrides = const Value.absent(),
               }) => ProfilesCompanion(
@@ -6261,6 +6333,7 @@ class $$ProfilesTableTableManager
                 autoUpdate: autoUpdate,
                 selectedMap: selectedMap,
                 unfoldSet: unfoldSet,
+                hiddenGroupNames: hiddenGroupNames,
                 order: order,
                 overrides: overrides,
               ),
@@ -6283,6 +6356,7 @@ class $$ProfilesTableTableManager
                 required bool autoUpdate,
                 required Map<String, String> selectedMap,
                 required Set<String> unfoldSet,
+                Value<Set<String>> hiddenGroupNames = const Value.absent(),
                 Value<int?> order = const Value.absent(),
                 Value<ProfileOverrides?> overrides = const Value.absent(),
               }) => ProfilesCompanion.insert(
@@ -6302,6 +6376,7 @@ class $$ProfilesTableTableManager
                 autoUpdate: autoUpdate,
                 selectedMap: selectedMap,
                 unfoldSet: unfoldSet,
+                hiddenGroupNames: hiddenGroupNames,
                 order: order,
                 overrides: overrides,
               ),

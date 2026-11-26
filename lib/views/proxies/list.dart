@@ -21,13 +21,20 @@ const _groupMaxColumns = 3;
 const _lastRowGrowth = _headerInset - proxyGridSpacing;
 
 class ProxiesListView extends ConsumerStatefulWidget {
-  const ProxiesListView({super.key});
+  const ProxiesListView({super.key, this.applyGroupVisibility = false});
+
+  final bool applyGroupVisibility;
 
   @override
   ConsumerState<ProxiesListView> createState() => _ProxiesListViewState();
 }
 
 class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
+  ProviderListenable<ProxiesListState> get _stateProvider =>
+      widget.applyGroupVisibility
+      ? proxyPageListStateProvider
+      : proxiesListStateProvider;
+
   late final ScrollController _controller;
   int _columns = 1;
   int _groupColumns = 1;
@@ -57,7 +64,7 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   }
 
   GroupOffsets _getGroupOffsets() {
-    final state = ref.read(proxiesListStateProvider);
+    final state = ref.read(_stateProvider);
     final offsets = <double>[];
     final rowExtent = getRowExtent(state.proxyCardType);
     final columnOffsets = List.filled(_groupColumns, 0.0);
@@ -134,12 +141,8 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
   }
 
   void _scrollToGroupSelected(String groupName) {
-    final cardType = ref.read(proxiesListStateProvider).proxyCardType;
-    final proxies = ref
-        .read(proxiesListStateProvider)
-        .groups
-        .getGroup(groupName)
-        ?.all;
+    final cardType = ref.read(_stateProvider).proxyCardType;
+    final proxies = ref.read(_stateProvider).groups.getGroup(groupName)?.all;
     if (proxies == null) {
       return;
     }
@@ -161,10 +164,10 @@ class _ProxiesListViewState extends ConsumerState<ProxiesListView> {
     return Consumer(
       builder: (_, ref, _) {
         final groups = ref.watch(
-          proxiesListStateProvider.select((state) => state.groups),
+          _stateProvider.select((state) => state.groups),
         );
         final cardType = ref.watch(
-          proxiesListStateProvider.select((state) => state.proxyCardType),
+          _stateProvider.select((state) => state.proxyCardType),
         );
         ref.watch(themeSettingProvider.select((state) => state.textScale));
         final viewMode = ref.watch(viewModeProvider);

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/models.dart';
@@ -66,6 +68,58 @@ void main() {
       expect(profile.type, ProfileType.custom);
       expect(profile.url, isEmpty);
       expect(profile.realAutoUpdate, false);
+    });
+  });
+
+  group('Profile group visibility', () {
+    test('new profiles and older JSON default to no hidden groups', () {
+      expect(Profile.normal().hiddenGroupNames, isEmpty);
+      expect(Profile.custom().hiddenGroupNames, isEmpty);
+      expect(
+        Profile.fromJson({'id': 1, 'autoUpdateDuration': 0}).hiddenGroupNames,
+        isEmpty,
+      );
+      expect(
+        Profile.fromJson({
+          'id': 1,
+          'autoUpdateDuration': 0,
+          'hiddenGroupNames': null,
+        }).hiddenGroupNames,
+        isEmpty,
+      );
+    });
+
+    test('JSON round-trips exact group names as a set', () {
+      final profile = Profile.fromJson({
+        'id': 1,
+        'autoUpdateDuration': 0,
+        'hiddenGroupNames': ['Select', 'select', ' Select ', '日本 🐱', 'Select'],
+      });
+
+      expect(profile.hiddenGroupNames, {
+        'Select',
+        'select',
+        ' Select ',
+        '日本 🐱',
+      });
+      expect(
+        profile.toJson()['hiddenGroupNames'],
+        unorderedEquals(profile.hiddenGroupNames),
+      );
+      expect(Profile.fromJson(json.decode(json.encode(profile))), profile);
+      expect(profile.overrides, const ProfileOverrides());
+    });
+
+    test('copies retain visibility unless explicitly replaced', () {
+      const profile = Profile(
+        id: 1,
+        autoUpdateDuration: Duration.zero,
+        hiddenGroupNames: {'Select'},
+      );
+
+      expect(profile.copyWith(label: 'Renamed').hiddenGroupNames, {'Select'});
+      expect(profile.copyWith(hiddenGroupNames: {}).hiddenGroupNames, isEmpty);
+      expect(profile.hiddenGroupNames, {'Select'});
     });
   });
 

@@ -1,4 +1,22 @@
 {
+  "groupVisibilityTitle": "Visible groups",
+  "groupVisibilityDescription": "Choose which proxy groups appear for this profile. This only changes the display, not routing. Save to apply your changes.",
+  "groupVisibilityCount": "{visible} of {total} groups visible",
+  "@groupVisibilityCount": {
+    "description": "Visible count and total count of eligible proxy groups in the current profile.",
+    "placeholders": {
+      "visible": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "groupVisibilityNoGroups": "No proxy groups available",
+  "groupVisibilityAllHidden": "All proxy groups are hidden",
+  "groupVisibilityRestore": "Show all groups",
+  "groupVisibilityProfileChanged": "The active profile changed. Close this form and reopen it for the current profile.",
   "rule": "Rule",
   "rules": "Rules",
   "global": "Global",

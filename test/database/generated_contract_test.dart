@@ -29,14 +29,15 @@ void main() {
       autoUpdate: true,
       selectedMap: const {'Select': 'DIRECT'},
       unfoldSet: const {'Select'},
+      hiddenGroupNames: const {'Hidden'},
       order: 3,
       overrides: const ProfileOverrides(
         dnsOverrideKeys: {DnsOverrideKey.nameserver},
       ),
     );
 
-    expect(profile.toColumns(true), hasLength(18));
-    expect(profile.toCompanion(true).toColumns(true), hasLength(18));
+    expect(profile.toColumns(true), hasLength(19));
+    expect(profile.toCompanion(true).toColumns(true), hasLength(19));
     expect(RawProfile.fromJson(profile.toJson()).toJson(), profile.toJson());
     expect(profile.copyWith(label: 'Next').label, 'Next');
     expect(
@@ -65,10 +66,11 @@ void main() {
       autoUpdate: false,
       selectedMap: {},
       unfoldSet: {},
+      hiddenGroupNames: {},
     );
-    expect(emptyProfile.toColumns(true), hasLength(9));
-    expect(emptyProfile.toColumns(false), hasLength(18));
-    expect(emptyProfile.toCompanion(true).toColumns(true), hasLength(9));
+    expect(emptyProfile.toColumns(true), hasLength(10));
+    expect(emptyProfile.toColumns(false), hasLength(19));
+    expect(emptyProfile.toCompanion(true).toColumns(true), hasLength(10));
 
     final insertedProfile = ProfilesCompanion.insert(
       type: ProfileType.file,
@@ -99,10 +101,11 @@ void main() {
         autoUpdate: const Variable(true),
         selectedMap: const Variable('{}'),
         unfoldSet: const Variable('[]'),
+        hiddenGroupNames: const Variable('["Hidden"]'),
         order: const Variable(1),
         overrides: const Variable('{}'),
       ).toColumns(false),
-      hasLength(17),
+      hasLength(18),
     );
 
     final script = RawScript(id: 2, label: 'Script', lastUpdateTime: date);

@@ -9,6 +9,30 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get groupVisibilityTitle => '可见策略组';
+
+  @override
+  String get groupVisibilityDescription =>
+      '选择此配置中显示的策略组。仅影响界面显示，不改变流量路由。保存后生效。';
+
+  @override
+  String groupVisibilityCount(int visible, int total) {
+    return '已显示 $visible / $total 个策略组';
+  }
+
+  @override
+  String get groupVisibilityNoGroups => '暂无可用策略组';
+
+  @override
+  String get groupVisibilityAllHidden => '所有策略组均已隐藏';
+
+  @override
+  String get groupVisibilityRestore => '显示全部策略组';
+
+  @override
+  String get groupVisibilityProfileChanged => '当前配置已切换，请关闭此面板后为当前配置重新打开。';
+
+  @override
   String get rule => '规则';
 
   @override

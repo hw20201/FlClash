@@ -9,6 +9,31 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get groupVisibilityTitle => 'Visible groups';
+
+  @override
+  String get groupVisibilityDescription =>
+      'Choose which proxy groups appear for this profile. This only changes the display, not routing. Save to apply your changes.';
+
+  @override
+  String groupVisibilityCount(int visible, int total) {
+    return '$visible of $total groups visible';
+  }
+
+  @override
+  String get groupVisibilityNoGroups => 'No proxy groups available';
+
+  @override
+  String get groupVisibilityAllHidden => 'All proxy groups are hidden';
+
+  @override
+  String get groupVisibilityRestore => 'Show all groups';
+
+  @override
+  String get groupVisibilityProfileChanged =>
+      'The active profile changed. Close this form and reopen it for the current profile.';
+
+  @override
   String get rule => 'Rule';
 
   @override

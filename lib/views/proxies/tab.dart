@@ -4,17 +4,21 @@ import 'dart:math';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 import 'package:fl_clash/models/common.dart';
+import 'package:fl_clash/models/state.dart';
 import 'package:fl_clash/providers/providers.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:prism_ui/inherited.dart';
 
 import 'card.dart';
 import 'common.dart';
 import 'group_tabs.dart';
 
 class ProxiesTabView extends ConsumerStatefulWidget {
-  const ProxiesTabView({super.key});
+  const ProxiesTabView({super.key, this.applyGroupVisibility = false});
+
+  final bool applyGroupVisibility;
 
   static Map<String, PageStorageKey> pageListStoreMap = {};
 
@@ -24,6 +28,11 @@ class ProxiesTabView extends ConsumerStatefulWidget {
 
 class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     with TickerProviderStateMixin {
+  ProviderListenable<ProxiesTabState> get _stateProvider =>
+      widget.applyGroupVisibility
+      ? proxyPageTabStateProvider
+      : proxiesTabStateProvider;
+
   TabController? _tabController;
   final Map<String, ScrollController> _scrollControllers = {};
   int _columns = 1;
@@ -31,17 +40,27 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   @override
   void initState() {
     super.initState();
-    ref.listenManual(proxiesTabControllerStateProvider, (prev, next) {
-      if (prev == next) {
-        return;
-      }
-      if (!stringListEquality.equals(prev?.groupNames, next.groupNames)) {
+    ref.listenManual(
+      widget.applyGroupVisibility
+          ? proxyPageTabControllerStateProvider
+          : proxiesTabControllerStateProvider,
+      (prev, next) {
+        if (prev == next) return;
         final groupNames = next.groupNames;
-        final currentGroupName = next.currentGroupName;
-        final index = groupNames.indexWhere((item) => item == currentGroupName);
-        _updateTabController(groupNames.length, index);
-      }
-    }, fireImmediately: true);
+        final index = groupNames.indexOf(next.currentGroupName ?? '');
+        if (!stringListEquality.equals(prev?.groupNames, groupNames)) {
+          _updateTabController(groupNames.length, index);
+        } else if (widget.applyGroupVisibility && groupNames.isNotEmpty) {
+          final visibleIndex = index < 0 ? 0 : index;
+          if (_tabController?.index != visibleIndex) {
+            _tabController?.index = visibleIndex;
+          } else if (index < 0) {
+            _tabControllerListener(visibleIndex);
+          }
+        }
+      },
+      fireImmediately: true,
+    );
   }
 
   @override
@@ -82,7 +101,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     if (group == null || controller == null) {
       return;
     }
-    final cardType = ref.read(proxiesTabStateProvider).proxyCardType;
+    final cardType = ref.read(_stateProvider).proxyCardType;
     final rowOffset = selectedRowOffset(
       proxies: group.all,
       selectedProxyName: ref.read(selectedProxyNameProvider(group.name)),
@@ -110,7 +129,7 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   }
 
   Group? _getGroup(int? index) {
-    final groups = ref.read(proxiesTabStateProvider).groups;
+    final groups = ref.read(_stateProvider).groups;
     if (index == null || index < 0 || index >= groups.length) {
       return null;
     }
@@ -122,8 +141,13 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
     if (group == null) {
       return;
     }
+    final profileId = ref.read(currentProfileProvider)?.id;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
+      if (!mounted ||
+          (widget.applyGroupVisibility &&
+              !PageActivityScope.isActiveOf(context)) ||
+          ref.read(currentProfileProvider)?.id != profileId ||
+          _getGroup(_tabController?.index)?.name != group.name) {
         return;
       }
       ref
@@ -160,11 +184,9 @@ class ProxiesTabViewState extends ConsumerState<ProxiesTabView>
   Widget build(BuildContext context) {
     final appLocalizations = context.appLocalizations;
     ref.watch(themeSettingProvider.select((state) => state.textScale));
-    final groups = ref.watch(
-      proxiesTabStateProvider.select((state) => state.groups),
-    );
+    final groups = ref.watch(_stateProvider.select((state) => state.groups));
     final cardType = ref.watch(
-      proxiesTabStateProvider.select((state) => state.proxyCardType),
+      _stateProvider.select((state) => state.proxyCardType),
     );
     final proxiesLayout = ref.watch(
       proxiesStyleSettingProvider.select((state) => state.layout),

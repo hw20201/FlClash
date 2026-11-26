@@ -51,6 +51,11 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   unfoldSet:
       (json['unfoldSet'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
       const {},
+  hiddenGroupNames:
+      (json['hiddenGroupNames'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toSet() ??
+      const {},
   scriptId: (json['scriptId'] as num?)?.toInt(),
   exitTargets:
       (json['exitTargets'] as Map<String, dynamic>?)?.map(
@@ -78,6 +83,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'autoUpdate': instance.autoUpdate,
   'selectedMap': instance.selectedMap,
   'unfoldSet': instance.unfoldSet.toList(),
+  'hiddenGroupNames': instance.hiddenGroupNames.toList(),
   'scriptId': instance.scriptId,
   'exitTargets': instance.exitTargets,
   'order': instance.order,

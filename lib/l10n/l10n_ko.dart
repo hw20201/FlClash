@@ -9,6 +9,31 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get groupVisibilityTitle => '표시할 그룹';
+
+  @override
+  String get groupVisibilityDescription =>
+      '이 프로필에 표시할 프록시 그룹을 선택하세요. 화면 표시에만 영향을 주며 라우팅은 바뀌지 않습니다. 저장하면 적용됩니다.';
+
+  @override
+  String groupVisibilityCount(int visible, int total) {
+    return '전체 $total개 그룹 중 $visible개 표시';
+  }
+
+  @override
+  String get groupVisibilityNoGroups => '사용 가능한 프록시 그룹이 없습니다';
+
+  @override
+  String get groupVisibilityAllHidden => '모든 프록시 그룹이 숨겨져 있습니다';
+
+  @override
+  String get groupVisibilityRestore => '모든 그룹 표시';
+
+  @override
+  String get groupVisibilityProfileChanged =>
+      '활성 프로필이 변경되었습니다. 이 양식을 닫고 현재 프로필에서 다시 열어 주세요.';
+
+  @override
   String get rule => '규칙';
 
   @override

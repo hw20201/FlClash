@@ -211,6 +211,30 @@ class Profiles extends _$Profiles {
     );
   }
 
+  Future<void> setHiddenGroupNames(int profileId, Set<String> names) {
+    final profile = state.getProfile(profileId);
+    if (profile == null) {
+      throw StateError('Profile is no longer available');
+    }
+    final next = state.copyAndPut(
+      profile.copyWith(hiddenGroupNames: Set.of(names)),
+      (item) => item.id == profileId,
+    );
+    return _optimisticAsync(
+      next,
+      () => _serial(() async {
+        final latest = state.getProfile(profileId);
+        if (latest == null) {
+          throw StateError('Profile is no longer available');
+        }
+        await database.profilesDao.updateHiddenGroupNames(
+          profileId,
+          latest.hiddenGroupNames,
+        );
+      }),
+    );
+  }
+
   Profile labeled(Profile profile) => state.optimizeLabel(profile);
 
   /// A new provider label follows into custom profiles whatever path set it.

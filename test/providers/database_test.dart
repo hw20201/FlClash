@@ -117,6 +117,58 @@ void main() {
 
     List<Profile> read() => container.read(profilesProvider);
 
+    test(
+      'visibility save preserves concurrent selection and other profiles',
+      () async {
+        notifier.put(profile(1, label: 'First'));
+        notifier.put(profile(2, label: 'Second'));
+        await pumpEventQueue();
+        final locked = Completer<void>();
+        final release = Completer<void>();
+        final transaction = testDatabase.transaction(() async {
+          locked.complete();
+          await release.future;
+        });
+        await locked.future;
+        notifier.put(
+          read()
+              .firstWhere((item) => item.id == 1)
+              .copyWith(
+                currentGroupName: 'New group',
+                selectedMap: {'New group': 'New node'},
+              ),
+        );
+        final saved = notifier.setHiddenGroupNames(1, {'Old group'});
+        expect(read().firstWhere((item) => item.id == 1).hiddenGroupNames, {
+          'Old group',
+        });
+        release.complete();
+        await transaction;
+        await saved;
+        await pumpEventQueue();
+        final rows = await testDatabase.profilesDao.query().get();
+        final first = rows.firstWhere((item) => item.id == 1);
+        expect(first.hiddenGroupNames, {'Old group'});
+        expect(first.currentGroupName, 'New group');
+        expect(first.selectedMap, {'New group': 'New node'});
+        expect(
+          rows.firstWhere((item) => item.id == 2).hiddenGroupNames,
+          isEmpty,
+        );
+      },
+    );
+
+    test('failed visibility save rolls back and reaches the caller', () async {
+      notifier.put(profile(1));
+      await pumpEventQueue();
+      await breakTable('profiles');
+      await expectLater(
+        notifier.setHiddenGroupNames(1, {'Hidden'}),
+        throwsException,
+      );
+      expect(read().single.hiddenGroupNames, isEmpty);
+    });
+
     test('put persists the row and the stream echoes it back', () async {
       notifier.put(profile(1, label: 'First'));
 

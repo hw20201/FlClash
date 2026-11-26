@@ -9,6 +9,31 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get groupVisibilityTitle => '表示するグループ';
+
+  @override
+  String get groupVisibilityDescription =>
+      'このプロファイルで表示するプロキシグループを選びます。表示のみが変わり、ルーティングには影響しません。保存すると適用されます。';
+
+  @override
+  String groupVisibilityCount(int visible, int total) {
+    return '$total グループ中 $visible グループを表示';
+  }
+
+  @override
+  String get groupVisibilityNoGroups => '利用できるプロキシグループがありません';
+
+  @override
+  String get groupVisibilityAllHidden => 'すべてのプロキシグループが非表示です';
+
+  @override
+  String get groupVisibilityRestore => 'すべてのグループを表示';
+
+  @override
+  String get groupVisibilityProfileChanged =>
+      '使用中のプロファイルが変更されました。このフォームを閉じ、現在のプロファイルで開き直してください。';
+
+  @override
   String get rule => 'ルール';
 
   @override

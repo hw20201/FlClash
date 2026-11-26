@@ -1,4 +1,11 @@
 {
+  "groupVisibilityTitle": "Grupos visibles",
+  "groupVisibilityDescription": "Elige los grupos de proxies que se mostrarán para este perfil. Esto solo cambia la visualización, no el enrutamiento. Guarda para aplicar los cambios.",
+  "groupVisibilityCount": "{visible} de {total} grupos visibles",
+  "groupVisibilityNoGroups": "No hay grupos de proxies disponibles",
+  "groupVisibilityAllHidden": "Todos los grupos de proxies están ocultos",
+  "groupVisibilityRestore": "Mostrar todos los grupos",
+  "groupVisibilityProfileChanged": "El perfil activo ha cambiado. Cierra este formulario y vuelve a abrirlo para el perfil actual.",
   "rule": "Regla",
   "rules": "Reglas",
   "global": "Global",

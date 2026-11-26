@@ -41,6 +41,10 @@ class Profiles extends Table {
 
   TextColumn get unfoldSet => text().map(const StringSetConverter())();
 
+  TextColumn get hiddenGroupNames => text()
+      .map(const StringSetConverter())
+      .withDefault(const Constant('[]'))();
+
   IntColumn get order => integer().nullable()();
 
   TextColumn get overrides =>
@@ -151,6 +155,15 @@ class ProfilesDao extends DatabaseAccessor<Database> with _$ProfilesDaoMixin {
       .readable((row) => row.toProfile(), where: (t) => t.id.equals(id))
       .getSingleOrNull();
 
+  Future<void> updateHiddenGroupNames(
+    int profileId,
+    Set<String> hiddenGroupNames,
+  ) async {
+    await (update(profiles)..where((t) => t.id.equals(profileId))).write(
+      ProfilesCompanion(hiddenGroupNames: Value(hiddenGroupNames)),
+    );
+  }
+
   Selectable<String> fileNames() => ids().map((id) => '$id.yaml');
 
   void setAllWithBatch(Batch batch, Iterable<Profile> profiles) {
@@ -180,6 +193,7 @@ extension RawProfilExt on RawProfile {
       autoUpdate: autoUpdate,
       selectedMap: selectedMap,
       unfoldSet: unfoldSet,
+      hiddenGroupNames: hiddenGroupNames,
       scriptId: scriptId,
       exitTargets: exitTargets ?? const {},
       order: order,
@@ -203,6 +217,7 @@ extension ProfilesCompanionExt on Profile {
       autoUpdate: autoUpdate,
       selectedMap: selectedMap,
       unfoldSet: unfoldSet,
+      hiddenGroupNames: Value(hiddenGroupNames),
       extendType: scriptId == null ? 'standard' : 'script',
       scriptId: Value(scriptId),
       exitTargets: Value(exitTargets),

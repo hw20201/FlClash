@@ -1,4 +1,11 @@
 {
+  "groupVisibilityTitle": "表示するグループ",
+  "groupVisibilityDescription": "このプロファイルで表示するプロキシグループを選びます。表示のみが変わり、ルーティングには影響しません。保存すると適用されます。",
+  "groupVisibilityCount": "{total} グループ中 {visible} グループを表示",
+  "groupVisibilityNoGroups": "利用できるプロキシグループがありません",
+  "groupVisibilityAllHidden": "すべてのプロキシグループが非表示です",
+  "groupVisibilityRestore": "すべてのグループを表示",
+  "groupVisibilityProfileChanged": "使用中のプロファイルが変更されました。このフォームを閉じ、現在のプロファイルで開き直してください。",
   "rule": "ルール",
   "rules": "ルール",
   "global": "グローバル",

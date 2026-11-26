@@ -1,4 +1,11 @@
 {
+  "groupVisibilityTitle": "可见策略组",
+  "groupVisibilityDescription": "选择此配置中显示的策略组。仅影响界面显示，不改变流量路由。保存后生效。",
+  "groupVisibilityCount": "已显示 {visible} / {total} 个策略组",
+  "groupVisibilityNoGroups": "暂无可用策略组",
+  "groupVisibilityAllHidden": "所有策略组均已隐藏",
+  "groupVisibilityRestore": "显示全部策略组",
+  "groupVisibilityProfileChanged": "当前配置已切换，请关闭此面板后为当前配置重新打开。",
   "rule": "规则",
   "rules": "规则",
   "global": "全局",

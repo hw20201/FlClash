@@ -108,6 +108,48 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @groupVisibilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Visible groups'**
+  String get groupVisibilityTitle;
+
+  /// No description provided for @groupVisibilityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which proxy groups appear for this profile. This only changes the display, not routing. Save to apply your changes.'**
+  String get groupVisibilityDescription;
+
+  /// Visible count and total count of eligible proxy groups in the current profile.
+  ///
+  /// In en, this message translates to:
+  /// **'{visible} of {total} groups visible'**
+  String groupVisibilityCount(int visible, int total);
+
+  /// No description provided for @groupVisibilityNoGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'No proxy groups available'**
+  String get groupVisibilityNoGroups;
+
+  /// No description provided for @groupVisibilityAllHidden.
+  ///
+  /// In en, this message translates to:
+  /// **'All proxy groups are hidden'**
+  String get groupVisibilityAllHidden;
+
+  /// No description provided for @groupVisibilityRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all groups'**
+  String get groupVisibilityRestore;
+
+  /// No description provided for @groupVisibilityProfileChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The active profile changed. Close this form and reopen it for the current profile.'**
+  String get groupVisibilityProfileChanged;
+
   /// No description provided for @rule.
   ///
   /// In en, this message translates to:

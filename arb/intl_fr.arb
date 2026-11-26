@@ -1,4 +1,11 @@
 {
+  "groupVisibilityTitle": "Groupes visibles",
+  "groupVisibilityDescription": "Choisissez les groupes de proxys à afficher pour ce profil. Cela modifie uniquement l’affichage, pas le routage. Enregistrez pour appliquer les modifications.",
+  "groupVisibilityCount": "{visible} groupes visibles sur {total}",
+  "groupVisibilityNoGroups": "Aucun groupe de proxys disponible",
+  "groupVisibilityAllHidden": "Tous les groupes de proxys sont masqués",
+  "groupVisibilityRestore": "Afficher tous les groupes",
+  "groupVisibilityProfileChanged": "Le profil actif a changé. Fermez ce formulaire et rouvrez-le pour le profil actuel.",
   "rule": "Règle",
   "rules": "Règles",
   "global": "Global",

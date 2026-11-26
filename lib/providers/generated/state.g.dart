@@ -2246,6 +2246,265 @@ final class ProxiesTabStateProvider
 
 String _$proxiesTabStateHash() => r'e4eccd77c3848489c8ec620f4e515cec7cdd5a31';
 
+@ProviderFor(proxyPageGroups)
+final proxyPageGroupsProvider = ProxyPageGroupsFamily._();
+
+final class ProxyPageGroupsProvider
+    extends $FunctionalProvider<List<Group>, List<Group>, List<Group>>
+    with $Provider<List<Group>> {
+  ProxyPageGroupsProvider._({
+    required ProxyPageGroupsFamily super.from,
+    required bool super.argument,
+  }) : super(
+         retry: null,
+         name: r'proxyPageGroupsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$proxyPageGroupsHash();
+
+  @override
+  String toString() {
+    return r'proxyPageGroupsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $ProviderElement<List<Group>> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  List<Group> create(Ref ref) {
+    final argument = this.argument as bool;
+    return proxyPageGroups(ref, tab: argument);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<Group> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<Group>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is ProxyPageGroupsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$proxyPageGroupsHash() => r'828c07ee3e3dc49704d98cd1cdf72a71e99d6416';
+
+final class ProxyPageGroupsFamily extends $Family
+    with $FunctionalFamilyOverride<List<Group>, bool> {
+  ProxyPageGroupsFamily._()
+    : super(
+        retry: null,
+        name: r'proxyPageGroupsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  ProxyPageGroupsProvider call({required bool tab}) =>
+      ProxyPageGroupsProvider._(argument: tab, from: this);
+
+  @override
+  String toString() => r'proxyPageGroupsProvider';
+}
+
+@ProviderFor(proxyPageListState)
+final proxyPageListStateProvider = ProxyPageListStateProvider._();
+
+final class ProxyPageListStateProvider
+    extends
+        $FunctionalProvider<
+          ProxiesListState,
+          ProxiesListState,
+          ProxiesListState
+        >
+    with $Provider<ProxiesListState> {
+  ProxyPageListStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'proxyPageListStateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$proxyPageListStateHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProxiesListState> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ProxiesListState create(Ref ref) {
+    return proxyPageListState(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProxiesListState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProxiesListState>(value),
+    );
+  }
+}
+
+String _$proxyPageListStateHash() =>
+    r'66d7fd5ee26a4f6d529a9438cbef66ffaf7786fb';
+
+@ProviderFor(proxyPageTabState)
+final proxyPageTabStateProvider = ProxyPageTabStateProvider._();
+
+final class ProxyPageTabStateProvider
+    extends
+        $FunctionalProvider<ProxiesTabState, ProxiesTabState, ProxiesTabState>
+    with $Provider<ProxiesTabState> {
+  ProxyPageTabStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'proxyPageTabStateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$proxyPageTabStateHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProxiesTabState> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ProxiesTabState create(Ref ref) {
+    return proxyPageTabState(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProxiesTabState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProxiesTabState>(value),
+    );
+  }
+}
+
+String _$proxyPageTabStateHash() => r'e588f1539e94be2e8e1afb82f056defae846db97';
+
+@ProviderFor(proxyPageTabControllerState)
+final proxyPageTabControllerStateProvider =
+    ProxyPageTabControllerStateProvider._();
+
+final class ProxyPageTabControllerStateProvider
+    extends
+        $FunctionalProvider<
+          ProxiesTabControllerState,
+          ProxiesTabControllerState,
+          ProxiesTabControllerState
+        >
+    with $Provider<ProxiesTabControllerState> {
+  ProxyPageTabControllerStateProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'proxyPageTabControllerStateProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$proxyPageTabControllerStateHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProxiesTabControllerState> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ProxiesTabControllerState create(Ref ref) {
+    return proxyPageTabControllerState(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProxiesTabControllerState value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProxiesTabControllerState>(value),
+    );
+  }
+}
+
+String _$proxyPageTabControllerStateHash() =>
+    r'1c5674addf3f8cea3d625ae708a2b2f23e896315';
+
+@ProviderFor(proxyPageCurrentGroupDelayTesting)
+final proxyPageCurrentGroupDelayTestingProvider =
+    ProxyPageCurrentGroupDelayTestingProvider._();
+
+final class ProxyPageCurrentGroupDelayTestingProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
+  ProxyPageCurrentGroupDelayTestingProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'proxyPageCurrentGroupDelayTestingProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$proxyPageCurrentGroupDelayTestingHash();
+
+  @$internal
+  @override
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  bool create(Ref ref) {
+    return proxyPageCurrentGroupDelayTesting(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$proxyPageCurrentGroupDelayTestingHash() =>
+    r'bb852367da9a3b635e04dc413e94d738ae754b5d';
+
 @ProviderFor(isStart)
 final isStartProvider = IsStartProvider._();
 

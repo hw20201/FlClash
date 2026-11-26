@@ -9,6 +9,31 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get groupVisibilityTitle => 'Видимые группы';
+
+  @override
+  String get groupVisibilityDescription =>
+      'Выберите группы прокси для отображения в этом профиле. Это влияет только на отображение, а не на маршрутизацию. Сохраните изменения, чтобы применить их.';
+
+  @override
+  String groupVisibilityCount(int visible, int total) {
+    return 'Видимых групп: $visible из $total';
+  }
+
+  @override
+  String get groupVisibilityNoGroups => 'Нет доступных групп прокси';
+
+  @override
+  String get groupVisibilityAllHidden => 'Все группы прокси скрыты';
+
+  @override
+  String get groupVisibilityRestore => 'Показать все группы';
+
+  @override
+  String get groupVisibilityProfileChanged =>
+      'Активный профиль изменился. Закройте эту форму и откройте её снова для текущего профиля.';
+
+  @override
   String get rule => 'Правило';
 
   @override

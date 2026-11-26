@@ -93,6 +93,7 @@ void _downgradeToV7(Database raw) {
 
 /// Schema version 21 had no `mitm_modules`.
 void _downgradeToV21(Database raw) {
+  raw.execute('ALTER TABLE profiles DROP COLUMN hidden_group_names');
   raw.execute('DROP TABLE IF EXISTS mitm_modules');
   raw.execute('PRAGMA user_version = 21');
 }
@@ -252,6 +253,7 @@ void _insertV10Profile(
 
 /// The shape v0.9.4-rs.1+3 shipped at schema version 24.
 void _downgradeToRs13(Database raw) {
+  raw.execute('ALTER TABLE profiles DROP COLUMN hidden_group_names');
   raw.execute('ALTER TABLE mitm_modules DROP COLUMN accepted');
   raw.execute('ALTER TABLE mitm_modules DROP COLUMN asks_consent');
   raw.execute('ALTER TABLE rules DROP COLUMN custom_exit');
@@ -306,7 +308,7 @@ void main() {
 
     await openAndMigrate();
 
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
   });
 
   test('the v3 upgrade adds match_target to profiles', () async {
@@ -316,7 +318,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
   });
 
   test('the v4 upgrade adds url to scripts', () async {
@@ -330,7 +332,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'scripts'), contains('url'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     final scripts = await database.scriptsDao.query().get();
     expect(scripts.single.label, 'Local');
     expect(scripts.single.url, isNull);
@@ -347,7 +349,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'scripts'), contains('order'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     final scripts = await database.scriptsDao.query().get();
     expect(scripts.map((item) => item.label), ['First', 'Second']);
     expect(scripts.map((item) => item.order), [null, null]);
@@ -362,7 +364,7 @@ void main() {
       await openAndMigrate();
 
       expect(_columnsOf(raw, 'profiles'), contains('match_target'));
-      expect(_userVersion(raw), 26);
+      expect(_userVersion(raw), 27);
     },
   );
 
@@ -373,7 +375,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'clash_providers'), isTrue);
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(await database.clashProvidersDao.query().get(), isEmpty);
   });
 
@@ -386,7 +388,7 @@ void main() {
       await openAndMigrate();
 
       expect(_hasTable(raw, 'clash_providers'), isTrue);
-      expect(_userVersion(raw), 26);
+      expect(_userVersion(raw), 27);
     },
   );
 
@@ -397,7 +399,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
   });
 
   test('a v6 user_version on the current proxy_groups still opens', () async {
@@ -407,7 +409,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
   });
 
   test(
@@ -431,7 +433,7 @@ void main() {
         _columnsOf(raw, 'clash_providers'),
         isNot(anyOf(contains('interval'), contains('filter'))),
       );
-      expect(_userVersion(raw), 26);
+      expect(_userVersion(raw), 27);
       expect(
         (await database.clashProvidersDao.query().get()).single.label,
         'Kept',
@@ -538,7 +540,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'custom_proxies'), isTrue);
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(await database.customProxiesDao.query().get(), isEmpty);
   });
 
@@ -549,7 +551,7 @@ void main() {
 
     expect(_columnsOf(raw, 'proxy_groups'), contains('definition'));
     expect(_columnsOf(raw, 'proxy_groups'), isNot(contains('url')));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
   });
 
   test('the v17 upgrade renames overwrite_type and adds overrides', () async {
@@ -598,7 +600,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(
       {
         for (final profile in await database.profilesDao.query().get())
@@ -672,7 +674,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(_hasTable(raw, 'profile_rule_mapping'), isFalse);
     expect(
       {
@@ -833,7 +835,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'proxy_dialers'), isTrue);
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(await database.proxyDialersDao.query(1).get(), isEmpty);
   });
 
@@ -845,7 +847,7 @@ void main() {
 
     expect(_hasTable(raw, 'icon_sets'), isTrue);
     expect(_columnsOf(raw, 'icon_sets'), contains('last_update_time'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(await database.iconSetsDao.query().get(), isEmpty);
   });
 
@@ -858,7 +860,7 @@ void main() {
       final database = await openAndMigrate();
 
       expect(_columnsOf(raw, 'icon_sets'), contains('last_update_time'));
-      expect(_userVersion(raw), 26);
+      expect(_userVersion(raw), 27);
       expect(await database.iconSetsDao.query().get(), isEmpty);
     },
   );
@@ -939,7 +941,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'profiles'), contains('age_secret_key'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(
       (await database.profilesDao.query().get()).single.ageSecretKey,
       isEmpty,
@@ -957,7 +959,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_columnsOf(raw, 'custom_proxies'), contains('empty_options'));
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(
       (await database.customProxiesDao.query().get()).single.emptyOptions,
       isEmpty,
@@ -971,7 +973,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'ip_qualities'), isTrue);
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(await database.ipQualities.count.getSingle(), 0);
   });
 
@@ -982,7 +984,7 @@ void main() {
     final database = await openAndMigrate();
 
     expect(_hasTable(raw, 'mitm_modules'), isTrue);
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(await database.mitmModulesDao.query().get(), isEmpty);
   });
 
@@ -1028,7 +1030,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(
       {
         for (final module in await database.mitmModulesDao.query().get())
@@ -1068,10 +1070,11 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     final profile = (await database.profilesDao.query().get()).single;
     expect(profile.label, 'Sub');
     expect(profile.selectedMap, {'Select': 'HK'});
+    expect(profile.hiddenGroupNames, isEmpty);
     expect(await database.rulesDao.queryAddedRules(1).get(), hasLength(1));
     final modules = await database.mitmModulesDao.query().get();
     expect(
@@ -1088,29 +1091,80 @@ void main() {
     expect(modules.first.url, 'https://example.com/a.sgmodule');
   });
 
-  test('a v0.9.4-rs.2 database opens as it was', () async {
+  test(
+    'a v0.9.4-rs.2 database adds empty visibility and keeps its rows',
+    () async {
+      raw.execute('ALTER TABLE profiles DROP COLUMN hidden_group_names');
+      raw.execute('PRAGMA user_version = 26');
+      raw.execute(
+        'INSERT INTO profiles (id, type, label, current_group_name, url, '
+        'extend_type, auto_update_duration_millis, auto_update, selected_map, '
+        'unfold_set, "order") VALUES '
+        "(1, 'url', 'Sub', 'Select', 'https://example.com/sub', 'standard', "
+        "3600000, 1, '{\"Select\":\"HK\"}', '[\"Select\"]', 2)",
+      );
+      raw.execute(
+        'INSERT INTO mitm_modules (id, name, enabled, scripts, asks_consent, '
+        'accepted, last_update_time) VALUES '
+        "(1, 'Agreed', 1, 2, 1, 1, 0), (2, 'Plain', 1, 0, 0, NULL, 0), "
+        "(3, 'Declined', 0, 1, 1, 0, 0), (4, 'Waiting', 0, 0, 1, NULL, 0)",
+      );
+      expect(_userVersion(raw), 26);
+
+      final database = await openAndMigrate();
+
+      expect(_userVersion(raw), 27);
+      expect(
+        (await database.profilesDao.query().get()).single,
+        const Profile(
+          id: 1,
+          type: ProfileType.url,
+          label: 'Sub',
+          currentGroupName: 'Select',
+          url: 'https://example.com/sub',
+          autoUpdateDuration: Duration(hours: 1),
+          selectedMap: {'Select': 'HK'},
+          unfoldSet: {'Select'},
+          order: 2,
+        ),
+      );
+      final column = raw
+          .select('PRAGMA table_info(profiles)')
+          .singleWhere((row) => row['name'] == 'hidden_group_names');
+      expect(column['notnull'], 1);
+      expect(column['dflt_value'], "'[]'");
+      expect(
+        {
+          for (final module in await database.mitmModulesDao.query().get())
+            module.name: (module.enabled, module.asksConsent, module.accepted),
+        },
+        {
+          'Agreed': (true, true, true),
+          'Plain': (true, false, null),
+          'Declined': (false, true, false),
+          'Waiting': (false, true, null),
+        },
+      );
+    },
+  );
+
+  test('the visibility upgrade keeps a column left by a newer build', () async {
     raw.execute(
-      'INSERT INTO mitm_modules (id, name, enabled, scripts, asks_consent, '
-      'accepted, last_update_time) VALUES '
-      "(1, 'Agreed', 1, 2, 1, 1, 0), (2, 'Plain', 1, 0, 0, NULL, 0), "
-      "(3, 'Declined', 0, 1, 1, 0, 0), (4, 'Waiting', 0, 0, 1, NULL, 0)",
+      'INSERT INTO profiles (id, type, label, url, extend_type, '
+      'auto_update_duration_millis, auto_update, selected_map, unfold_set, '
+      'hidden_group_names) VALUES '
+      "(1, 'file', 'Kept', '', 'standard', 0, 1, '{}', '[]', ?)",
+      ['["Select","Stale"]'],
     );
-    expect(_userVersion(raw), 26);
+    raw.execute('PRAGMA user_version = 26');
 
     final database = await openAndMigrate();
 
-    expect(
-      {
-        for (final module in await database.mitmModulesDao.query().get())
-          module.name: (module.enabled, module.asksConsent, module.accepted),
-      },
-      {
-        'Agreed': (true, true, true),
-        'Plain': (true, false, null),
-        'Declined': (false, true, false),
-        'Waiting': (false, true, null),
-      },
-    );
+    expect(_userVersion(raw), 27);
+    expect((await database.profilesDao.get(1))?.hiddenGroupNames, {
+      'Select',
+      'Stale',
+    });
   });
 
   test('the v25 upgrade turns the MATCH placeholder into a custom exit '
@@ -1136,7 +1190,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     final profiles = {
       for (final profile in await database.profilesDao.query().get())
         profile.id: profile.exitTargets,
@@ -1200,7 +1254,7 @@ void main() {
 
       final database = await openAndMigrate();
 
-      expect(_userVersion(raw), 26);
+      expect(_userVersion(raw), 27);
       expect(
         (await database.proxyGroupsDao.query(3).get()).single.hidden,
         isTrue,
@@ -1213,7 +1267,7 @@ void main() {
 
     final database = await openAndMigrate();
 
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(await database.customSelect('SELECT * FROM rules').get(), isEmpty);
   });
 
@@ -1223,7 +1277,7 @@ void main() {
     await openAndMigrate();
 
     expect(_columnsOf(raw, 'rules'), before);
-    expect(_userVersion(raw), 26);
+    expect(_userVersion(raw), 27);
     expect(_hasTable(raw, 'proxy_groups'), isTrue);
   });
 }

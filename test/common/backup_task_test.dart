@@ -528,6 +528,7 @@ void main() {
           id: 1,
           label: 'Backed up',
           autoUpdateDuration: Duration.zero,
+          hiddenGroupNames: {'Select', 'Removed'},
         ).toCompanion(),
       ]);
       await database.scriptsDao.setAll([
@@ -621,6 +622,7 @@ void main() {
       final data = await restore(archivePath);
 
       expect(data.profiles.single.label, 'Backed up');
+      expect(data.profiles.single.hiddenGroupNames, {'Select', 'Removed'});
       expect(data.scripts.single.label, 'Script');
       expect(data.rules.single.content, 'example.com');
       expect(data.rules.single.profileId, 1);
@@ -634,6 +636,23 @@ void main() {
         ),
         ['proxies: []', 'body', 'payload: []'],
       );
+    });
+
+    test('a schema 26 backup restores with no hidden groups', () async {
+      await seedDatabase();
+      final old = db.Database(NativeDatabase(File(databasePath)));
+      await old.customStatement(
+        'ALTER TABLE profiles DROP COLUMN hidden_group_names',
+      );
+      await old.customStatement('PRAGMA user_version = 26');
+      await old.close();
+
+      final data = await restore(await backup());
+
+      expect(data.profiles.single.label, 'Backed up');
+      expect(data.profiles.single.hiddenGroupNames, isEmpty);
+      expect(data.scripts.single.label, 'Script');
+      expect(data.rules.single.profileId, 1);
     });
 
     test('local modules and their attachments are kept, '
@@ -705,6 +724,7 @@ void main() {
 
       final profile = data.profiles.single;
       expect(profile.label, 'Old');
+      expect(profile.hiddenGroupNames, isEmpty);
       expect(
         profile.id,
         isNot(0),

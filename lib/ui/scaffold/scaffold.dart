@@ -49,6 +49,7 @@ class Scaffold extends StatefulWidget {
   final List<Widget> statusActions;
 
   final IconButtonData? primaryAction;
+  final Widget Function(IconButtonData data)? primaryActionBuilder;
 
   /// Folded into the overflow menu once the bar would hold more than three
   /// buttons, as [primaryAction] and [menuItems] are; [actions] never fold.
@@ -99,6 +100,7 @@ class Scaffold extends StatefulWidget {
     this.searchInBar = false,
     this.selectionActions = const [],
     this.primaryAction,
+    this.primaryActionBuilder,
     this.iconActions = const [],
     this.menuItems = const [],
     this.confirmationAction,
@@ -224,6 +226,7 @@ class ScaffoldState extends State<Scaffold>
   // field does on macOS; one across the bar waits for its cancel button.
   void _handleSearchFocusChange() {
     if (_searchFocusNode.hasFocus ||
+        !_isFrontmost ||
         _searchFillsBar ||
         _textController.text.isNotEmpty) {
       return;
@@ -581,6 +584,20 @@ class ScaffoldState extends State<Scaffold>
     );
   }
 
+  Widget _buildActionButton(IconButtonData data, {Widget? icon}) {
+    final builder = widget.primaryActionBuilder;
+    if (builder != null && identical(data, widget.primaryAction)) {
+      return builder(data);
+    }
+    return AppBarActionButton(data: data, icon: icon);
+  }
+
+  Widget _buildBarButton(IconButtonData data, {Widget? icon}) => ElasticPress(
+    enabled:
+        !data.isLoading && (data.onPressed != null || data.menuItems != null),
+    child: _buildActionButton(data, icon: icon),
+  );
+
   List<Widget> _buildActions(
     bool hasSearch,
     IconButtonData? primaryAction,
@@ -636,11 +653,11 @@ class ScaffoldState extends State<Scaffold>
                       motion: _searchMotion,
                       child: AppBarActionButton(data: data),
                     )
-                  : AppBarActionButton(data: data),
+                  : _buildActionButton(data),
           ],
         ),
       for (final data in shown.skip(grouped?.length ?? 0))
-        _barButton(
+        _buildBarButton(
           data,
           icon: identical(data, lead)
               ? _SearchGlyph(
@@ -683,7 +700,7 @@ class ScaffoldState extends State<Scaffold>
     final colorScheme = context.colorScheme;
     final actions = [
       ...selection.build(),
-      for (final data in fold.shown) _barButton(data),
+      for (final data in fold.shown) _buildBarButton(data),
       if (fold.overflow.isNotEmpty)
         ElasticPress(child: _OverflowMenuButton(items: fold.overflow)),
     ];

@@ -1,4 +1,11 @@
 {
+  "groupVisibilityTitle": "Видимые группы",
+  "groupVisibilityDescription": "Выберите группы прокси для отображения в этом профиле. Это влияет только на отображение, а не на маршрутизацию. Сохраните изменения, чтобы применить их.",
+  "groupVisibilityCount": "Видимых групп: {visible} из {total}",
+  "groupVisibilityNoGroups": "Нет доступных групп прокси",
+  "groupVisibilityAllHidden": "Все группы прокси скрыты",
+  "groupVisibilityRestore": "Показать все группы",
+  "groupVisibilityProfileChanged": "Активный профиль изменился. Закройте эту форму и откройте её снова для текущего профиля.",
   "rule": "Правило",
   "rules": "Правила",
   "global": "Глобальный",

@@ -154,6 +154,57 @@ ProxiesTabState proxiesTabState(Ref ref) {
 }
 
 @riverpod
+List<Group> proxyPageGroups(Ref ref, {required bool tab}) {
+  final groups = ref.watch(
+    tab
+        ? proxiesTabStateProvider.select((state) => state.groups)
+        : proxiesListStateProvider.select((state) => state.groups),
+  );
+  final hidden = ref.watch(
+    currentProfileProvider.select(
+      (profile) => profile?.hiddenGroupNames ?? const <String>{},
+    ),
+  );
+  if (hidden.isEmpty) return groups;
+  return groups.where((group) => !hidden.contains(group.name)).toList();
+}
+
+@riverpod
+ProxiesListState proxyPageListState(Ref ref) {
+  final state = ref.watch(proxiesListStateProvider);
+  return state.copyWith(groups: ref.watch(proxyPageGroupsProvider(tab: false)));
+}
+
+@riverpod
+ProxiesTabState proxyPageTabState(Ref ref) {
+  final state = ref.watch(proxiesTabStateProvider);
+  return state.copyWith(groups: ref.watch(proxyPageGroupsProvider(tab: true)));
+}
+
+@riverpod
+ProxiesTabControllerState proxyPageTabControllerState(Ref ref) {
+  return ref.watch(
+    proxyPageTabStateProvider.select(
+      (state) => ProxiesTabControllerState(
+        groupNames: state.groups.map((group) => group.name).toList(),
+        currentGroupName: state.currentGroupName,
+      ),
+    ),
+  );
+}
+
+@riverpod
+bool proxyPageCurrentGroupDelayTesting(Ref ref) {
+  final state = ref.watch(proxyPageTabControllerStateProvider);
+  final groupName = state.groupNames.contains(state.currentGroupName)
+      ? state.currentGroupName
+      : state.groupNames.firstOrNull;
+  return ref.watch(
+    delayTestingGroupsProvider.select((groups) => groups.contains(groupName)),
+  );
+}
+
+@riverpod
 bool isStart(Ref ref) {
   return ref.watch(runTimeProvider.select((state) => state != null));
 }
