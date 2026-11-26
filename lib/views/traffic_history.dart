@@ -6,6 +6,7 @@ import 'package:fl_clash/models/common.dart' show TrafficShowExt;
 import 'package:fl_clash/models/traffic_history.dart';
 import 'package:fl_clash/providers/traffic_history.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
+import 'package:fl_clash/widgets/traffic_history_chart.dart';
 import 'package:fl_clash/widgets/traffic_share_gauge.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,7 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
   var _offset = 0;
   var _busy = false;
   ScrollController? _scrollController;
+  final _viewportMetrics = ValueNotifier<ScrollMetrics?>(null);
 
   @override
   void didChangeDependencies() {
@@ -41,6 +43,7 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
   @override
   void dispose() {
     _scrollController?.dispose();
+    _viewportMetrics.dispose();
     super.dispose();
   }
 
@@ -137,89 +140,105 @@ class _TrafficHistorySheetState extends ConsumerState<TrafficHistorySheet> {
               onPressed: _busy ? null : () => _run(store.refresh),
             ),
           ],
-          body: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  context.contentTopPadding,
-                  16,
-                  12,
-                ),
-                child: Column(
-                  spacing: 12,
-                  children: [
-                    SegmentedControl<TrafficHistoryPeriod>(
-                      segments: [
-                        for (final period in TrafficHistoryPeriod.values)
-                          (period, _periodLabel(context, period)),
-                      ],
-                      value: _period,
-                      onChanged: (value) => setState(() {
-                        _period = value;
-                        _offset = 0;
-                      }),
-                    ),
-                    _PeriodNavigator(
-                      label: _rangeLabel(snapshot),
-                      canPrevious: canPrevious,
-                      canNext: !_busy && _offset > 0,
-                      previousLabel: l10n.trafficHistoryPrevious,
-                      nextLabel: l10n.trafficHistoryNext,
-                      onPrevious: () => setState(() => _offset++),
-                      onNext: () => setState(() => _offset--),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: _scrollController,
+          body: Builder(
+            builder: (context) {
+              final controlsHeight =
+                  context.contentTopPadding + viewSwitcherHeight + 12 + 48 + 12;
+              return FloatingHeaderBody(
+                backgroundColor: context.colorScheme.surface,
+                header: Padding(
                   padding: EdgeInsets.fromLTRB(
                     16,
-                    0,
+                    context.contentTopPadding,
                     16,
-                    20 + context.bottomInset,
+                    12,
                   ),
-                  children: [
-                    const SizedBox(height: 4),
-                    if (!store.ready)
-                      const Padding(
-                        padding: EdgeInsets.all(36),
-                        child: Center(child: ActivityIndicator(size: 24)),
-                      )
-                    else ...[
-                      if (store.error)
-                        _StorageError(
-                          message: l10n.trafficHistoryStorageError,
-                          onRetry: () => _run(store.refresh),
+                  child: Column(
+                    spacing: 12,
+                    children: [
+                      ConnectedButtonBar<TrafficHistoryPeriod>(
+                        segments: [
+                          for (final period in TrafficHistoryPeriod.values)
+                            (period, _periodLabel(context, period)),
+                        ],
+                        value: _period,
+                        onChanged: (value) => setState(() {
+                          _period = value;
+                          _offset = 0;
+                        }),
+                      ),
+                      SizedBox(
+                        height: 48,
+                        child: _PeriodNavigator(
+                          label: _rangeLabel(snapshot),
+                          canPrevious: canPrevious,
+                          canNext: !_busy && _offset > 0,
+                          previousLabel: l10n.trafficHistoryPrevious,
+                          nextLabel: l10n.trafficHistoryNext,
+                          onPrevious: () => setState(() => _offset++),
+                          onNext: () => setState(() => _offset--),
                         ),
-                      if (store.earliest == null)
-                        _EmptyHistory(
-                          recording: store.recording,
-                          onRecordingChanged: (value) =>
-                              _run(() => store.setRecording(value)),
+                      ),
+                    ],
+                  ),
+                ),
+                body: NotificationListener<ScrollMetricsNotification>(
+                  onNotification: (notification) {
+                    _viewportMetrics.value = notification.metrics;
+                    return false;
+                  },
+                  child: ListView(
+                    controller: _scrollController,
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      controlsHeight + 4,
+                      16,
+                      20 + context.bottomInset,
+                    ),
+                    children: [
+                      if (!store.ready)
+                        const Padding(
+                          padding: EdgeInsets.all(36),
+                          child: Center(child: ActivityIndicator(size: 24)),
                         )
                       else ...[
-                        _RecordingControl(
-                          recording: store.recording,
-                          onChanged: (value) =>
-                              _run(() => store.setRecording(value)),
-                        ),
-                        const SizedBox(height: 12),
-                        _OverviewCard(snapshot: snapshot),
-                        const SizedBox(height: 12),
-                        _TrafficChart(snapshot: snapshot, period: _period),
-                        const SizedBox(height: 20),
-                        _RuleHitSection(snapshot: snapshot),
-                        const SizedBox(height: 20),
-                        _RankingsSection(snapshot: snapshot),
+                        if (store.error)
+                          _StorageError(
+                            message: l10n.trafficHistoryStorageError,
+                            onRetry: () => _run(store.refresh),
+                          ),
+                        if (store.earliest == null)
+                          _EmptyHistory(
+                            recording: store.recording,
+                            onRecordingChanged: (value) =>
+                                _run(() => store.setRecording(value)),
+                          )
+                        else ...[
+                          _RecordingControl(
+                            recording: store.recording,
+                            onChanged: (value) =>
+                                _run(() => store.setRecording(value)),
+                          ),
+                          const SizedBox(height: 12),
+                          _OverviewCard(snapshot: snapshot),
+                          const SizedBox(height: 12),
+                          TrafficHistoryChart(
+                            snapshot: snapshot,
+                            period: _period,
+                            topClearance: controlsHeight,
+                            viewportChanges: _viewportMetrics,
+                          ),
+                          const SizedBox(height: 20),
+                          _RuleHitSection(snapshot: snapshot),
+                          const SizedBox(height: 20),
+                          _RankingsSection(snapshot: snapshot),
+                        ],
                       ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
@@ -542,184 +561,6 @@ class _SplitValue extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _TrafficChart extends StatelessWidget {
-  const _TrafficChart({required this.snapshot, required this.period});
-
-  final TrafficHistorySnapshot snapshot;
-  final TrafficHistoryPeriod period;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.appLocalizations;
-    final points = snapshot.points(hourly: period == TrafficHistoryPeriod.day);
-    final maxValue = points.fold<int>(
-      0,
-      (value, point) => math.max(value, point.upload + point.download),
-    );
-    return Card(
-      shape: AppShape.xl,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InfoHeader(
-            info: Info(label: l10n.trafficHistoryTrend),
-            padding: EdgeInsets.zero,
-          ),
-          const SizedBox(height: 8),
-          if (maxValue > 0) ...[
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: Text(
-                maxValue.traffic.show,
-                style: AppTextStyle.caption2
-                    .of(context)
-                    .copyWith(color: context.colorScheme.onSurfaceVariant),
-              ),
-            ),
-            const SizedBox(height: 4),
-          ],
-          SizedBox(
-            height: 142,
-            child: _TrafficBars(
-              points: points,
-              hourly: period == TrafficHistoryPeriod.day,
-              maxValue: maxValue,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-const _trafficBarWidth = 12.0;
-const _trafficBarZeroHeight = 2.0;
-
-class _TrafficBars extends StatelessWidget {
-  const _TrafficBars({
-    required this.points,
-    required this.hourly,
-    required this.maxValue,
-  });
-
-  final List<TrafficPoint> points;
-  final bool hourly;
-  final int maxValue;
-
-  @override
-  Widget build(BuildContext context) {
-    final labelIndexes = hourly
-        ? const {0, 6, 12, 18}
-        : points.length <= 7
-        ? {for (var index = 0; index < points.length; index++) index}
-        : {
-            0,
-            points.length ~/ 4,
-            points.length ~/ 2,
-            points.length * 3 ~/ 4,
-            points.length - 1,
-          };
-    return Column(
-      children: [
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final barHeight = constraints.maxHeight;
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  for (final point in points)
-                    Expanded(
-                      child: _TrafficBar(
-                        point: point,
-                        maxValue: maxValue,
-                        maxHeight: barHeight,
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
-        SizedBox(
-          height: 1,
-          width: double.infinity,
-          child: ColoredBox(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.3),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            for (var index = 0; index < points.length; index++)
-              Expanded(
-                child: labelIndexes.contains(index)
-                    ? Text(
-                        points[index].label,
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        softWrap: false,
-                        overflow: TextOverflow.visible,
-                        style: AppTextStyle.caption2
-                            .of(context)
-                            .copyWith(
-                              color: context.colorScheme.onSurfaceVariant,
-                            ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _TrafficBar extends StatelessWidget {
-  const _TrafficBar({
-    required this.point,
-    required this.maxValue,
-    required this.maxHeight,
-  });
-
-  final TrafficPoint point;
-  final int maxValue;
-  final double maxHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    final total = point.upload + point.download;
-    final height = maxValue == 0 || maxHeight <= 0
-        ? _trafficBarZeroHeight
-        : (maxHeight * total / maxValue).clamp(
-            _trafficBarZeroHeight,
-            maxHeight,
-          );
-    final color = total == 0
-        ? context.colorScheme.primary.withValues(alpha: 0.45)
-        : context.colorScheme.primary;
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: SizedBox(
-        width: _trafficBarWidth,
-        child: Tooltip(
-          message:
-              '${point.label}: ${point.download.traffic.show} ↓ · ${point.upload.traffic.show} ↑',
-          child: Semantics(
-            label:
-                '${point.label}, ${context.appLocalizations.download} ${point.download.traffic.show}, ${context.appLocalizations.upload} ${point.upload.traffic.show}',
-            child: Container(
-              height: height,
-              decoration: ShapeDecoration(color: color, shape: AppShape.full),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

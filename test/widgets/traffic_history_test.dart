@@ -4,7 +4,8 @@ import 'package:fl_clash/core/api/core_api.dart';
 import 'package:fl_clash/core/api/dto.dart';
 import 'package:fl_clash/providers/traffic_history.dart';
 import 'package:fl_clash/state.dart';
-import 'package:fl_clash/ui/ui.dart' show Card, Tooltip;
+import 'package:fl_clash/ui/ui.dart'
+    show Card, ConnectedButtonGroup, ElasticPress, Tooltip;
 import 'package:fl_clash/views/traffic_history.dart';
 import 'package:fl_clash/widgets/traffic_share_gauge.dart';
 import 'package:flutter/widgets.dart';
@@ -155,6 +156,43 @@ void main() {
     expect(runtimeBounds.right, lessThan(splitBounds.left));
     expect(tester.takeException(), isNull);
     final scroll = find.byType(Scrollable).first;
+    expect(
+      find.ancestor(
+        of: find.text('Day'),
+        matching: find.byType(ConnectedButtonGroup),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(scroll).dy,
+      lessThan(tester.getBottomLeft(find.text('Day')).dy),
+    );
+    final dayBox = tester.renderObject<RenderBox>(find.text('Day'));
+    final restingBounds = ElasticPress.paintBoundsOf(dayBox);
+    final press = await tester.startGesture(tester.getCenter(find.text('Day')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(
+      ElasticPress.paintBoundsOf(dayBox).width,
+      greaterThan(restingBounds.width),
+    );
+    await press.moveBy(const Offset(24, 8));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(
+      ElasticPress.paintBoundsOf(dayBox).center.dx,
+      greaterThan(restingBounds.center.dx + 1),
+    );
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(
+      ElasticPress.paintBoundsOf(dayBox).center.dx,
+      closeTo(restingBounds.center.dx, .01),
+    );
+    expect(
+      ElasticPress.paintBoundsOf(dayBox).width,
+      closeTo(restingBounds.width, .01),
+    );
     for (final (rule, share) in [('RuleSet(video)', 1.0), ('GeoIP(CN)', 0.5)]) {
       await tester.scrollUntilVisible(find.text(rule), 200, scrollable: scroll);
       final card = find
