@@ -299,6 +299,14 @@ void main() {
       lessThan(tester.getRect(find.widgetWithText(ListHeader, l10n.more)).top),
     );
     expect(find.text(l10n.updateChannel), findsNothing);
+    expect(find.byGlyph(AppGlyphs.autoCheckUpdate), findsOneWidget);
+    expect(find.byGlyph(AppGlyphs.updateChannel), findsNothing);
+    final titleStart = tester.getRect(find.text(l10n.project)).left;
+    expect(tester.getRect(find.text(l10n.autoCheckUpdate)).left, titleStart);
+    final linkRowHeight = tester
+        .getSize(find.widgetWithText(ListItem, l10n.project))
+        .height;
+    expect(tester.getSize(find.byType(ConfigToggleItem)).height, linkRowHeight);
 
     expect(container.read(appSettingProvider).autoCheckUpdate, isTrue);
     await tester.tap(

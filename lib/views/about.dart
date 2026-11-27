@@ -47,7 +47,7 @@ class AboutView extends ConsumerWidget {
     required String label,
   }) {
     return ListItem(
-      leading: _LinkBadge(glyph: glyph),
+      leading: _GlyphBadge(glyph: glyph),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: const GlyphIcon(AppGlyphs.openExternal),
@@ -61,6 +61,7 @@ class AboutView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appLocalizations = context.appLocalizations;
     final isLoading = ref.watch(loadingProvider(LoadingTag.checkUpdate));
+    final badgeRowHeight = _GlyphBadge.rowHeightOf(context);
     return Scaffold(
       isLoading: isLoading,
       title: appLocalizations.about,
@@ -90,6 +91,8 @@ class AboutView extends ConsumerWidget {
             title: appLocalizations.update,
             items: [
               ConfigToggleItem(
+                leading: const _GlyphBadge(glyph: AppGlyphs.autoCheckUpdate),
+                minHeight: badgeRowHeight,
                 title: (l) => l.autoCheckUpdate,
                 selector: appSettingProvider.select(
                   (state) => state.autoCheckUpdate,
@@ -258,10 +261,15 @@ class _Pill extends StatelessWidget {
   }
 }
 
-class _LinkBadge extends StatelessWidget {
+class _GlyphBadge extends StatelessWidget {
   final Glyph glyph;
 
-  const _LinkBadge({required this.glyph});
+  const _GlyphBadge({required this.glyph});
+
+  /// A row with a subtitle stands this tall around the badge, so a row
+  /// without one takes the height too to keep the same margins.
+  static double rowHeightOf(BuildContext context) =>
+      MeasureScope.of(context).listTwoLineRowHeight(ListTextScope.of(context));
 
   @override
   Widget build(BuildContext context) {
