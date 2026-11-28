@@ -70,10 +70,58 @@ class AppLocalizationsJa extends AppLocalizations {
   String get networkToolbox => 'ツールボックス';
 
   @override
-  String get networkToolboxDesc => 'DNS、診断、トラフィック統計をひとつに';
+  String get networkToolboxDesc => '出口 IP、DNS クエリ、トラフィック統計';
 
   @override
   String get toolboxTrafficDesc => '使用量、推移、アプリ別ランキング';
+
+  @override
+  String get toolboxExitIp => '出口 IP';
+
+  @override
+  String get toolboxExitIpDesc => '現在の IPv4 と IPv6 の出口アドレス';
+
+  @override
+  String get toolboxNodeDelay => 'ノード遅延テスト';
+
+  @override
+  String get toolboxObservedDns => 'コアが観測した DNS';
+
+  @override
+  String get toolboxTrafficStatistics => 'トラフィック統計';
+
+  @override
+  String get toolboxEditLayout => 'レイアウトを調整';
+
+  @override
+  String get toolboxFinishLayout => '調整を完了';
+
+  @override
+  String get toolboxResetLayout => 'サイズを初期状態に戻す';
+
+  @override
+  String get toolboxCardSize => 'カードサイズ';
+
+  @override
+  String get toolboxSizeSmall => '1 × 1';
+
+  @override
+  String get toolboxSizeWide => '2 × 1 横長';
+
+  @override
+  String get toolboxSizeTall => '1 × 2 縦長';
+
+  @override
+  String get toolboxSizeLarge => '2 × 2';
+
+  @override
+  String get toolboxSummaryStale => 'ルートまたは設定が変更されました。再度確認してください。';
+
+  @override
+  String get toolboxAdditionalChecks => 'その他のテスト';
+
+  @override
+  String get toolboxTopApps => 'アプリ別トラフィック';
 
   @override
   String get dnsLookup => 'DNS 検索';

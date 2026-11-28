@@ -123,6 +123,8 @@ HotKeyAction _defaultHotKeyAction(HotAction action, PhysicalKeyboardKey key) {
   );
 }
 
+String _readToolboxLayoutJson(Object? value) => value is String ? value : '';
+
 // Windows reports AltGr as Ctrl+Alt, and every letter is an AltGr character
 // on some layout (@ on German Q, ś on Polish S), so a default there would fire
 // while the user types.
@@ -305,6 +307,9 @@ abstract class AppSettingProps with _$AppSettingProps {
     @Default([]) List<String> serviceOrder,
     @Default([]) List<String> disabledServices,
     @Default({}) Map<String, Map<String, double>> tableColumnWidths,
+    @Default('')
+    @JsonKey(fromJson: _readToolboxLayoutJson)
+    String toolboxLayoutJson,
   }) = _AppSettingProps;
 
   factory AppSettingProps.fromJson(Map<String, Object?> json) =>

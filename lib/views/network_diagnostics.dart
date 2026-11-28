@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/core/api/dto.dart' show DelayResult;
-import 'package:fl_clash/features/network_diagnostics/exit_card.dart';
+import 'package:fl_clash/features/network_diagnostics/exit_card.dart'
+    show DiagnosticFact, DiagnosticStatus;
 import 'package:fl_clash/models/models.dart';
 import 'package:fl_clash/models/network_diagnostics.dart';
 import 'package:fl_clash/providers/network_diagnostics.dart';
@@ -13,13 +14,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'network_diagnostics_traffic.dart';
-
-enum NetworkDiagnosticTab { exit, traffic, policy }
-
 typedef _DelayTarget = ({String group, String proxy, String url});
 
-String _diagnosticEndpoint(String value) {
+String diagnosticEndpoint(String value) {
   final uri = Uri.tryParse(value);
   if (uri == null) return '—';
   if (!uri.hasAuthority) {
@@ -33,29 +30,20 @@ String _diagnosticEndpoint(String value) {
   ).toString();
 }
 
-class NetworkDiagnosticsView extends ConsumerStatefulWidget {
-  const NetworkDiagnosticsView({
-    super.key,
-    this.initialTab = NetworkDiagnosticTab.exit,
-  });
-
-  final NetworkDiagnosticTab initialTab;
+class NodeDelayTestView extends ConsumerStatefulWidget {
+  const NodeDelayTestView({super.key});
 
   @override
-  ConsumerState<NetworkDiagnosticsView> createState() =>
-      _NetworkDiagnosticsViewState();
+  ConsumerState<NodeDelayTestView> createState() => _NodeDelayTestViewState();
 }
 
-class _NetworkDiagnosticsViewState
-    extends ConsumerState<NetworkDiagnosticsView> {
-  late NetworkDiagnosticTab _tab;
+class _NodeDelayTestViewState extends ConsumerState<NodeDelayTestView> {
   ScrollController? _controller;
   late RouteTracker _routes;
 
   @override
   void initState() {
     super.initState();
-    _tab = widget.initialTab;
     _routes = ref.read(routeTrackerProvider.notifier)..attach();
   }
 
@@ -73,74 +61,28 @@ class _NetworkDiagnosticsViewState
   }
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = context.appLocalizations;
-    return Scaffold(
-      title: l10n.networkDiagnostics,
-      body: Builder(
-        builder: (context) {
-          final headerHeight =
-              context.contentTopPadding + viewSwitcherHeight + 24;
-          return FloatingHeaderBody(
-            backgroundColor: context.colorScheme.surface,
-            header: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 960),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    context.contentTopPadding,
-                    16,
-                    12,
-                  ),
-                  child: ConnectedButtonBar<NetworkDiagnosticTab>(
-                    segments: [
-                      (NetworkDiagnosticTab.exit, l10n.diagnosticsExit),
-                      (NetworkDiagnosticTab.traffic, l10n.traffic),
-                      (NetworkDiagnosticTab.policy, l10n.diagnosticsPolicy),
-                    ],
-                    value: _tab,
-                    onChanged: (value) {
-                      setState(() => _tab = value);
-                      if (_controller?.hasClients ?? false) {
-                        _controller!.jumpTo(0);
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ),
-            body: PrismListView(
-              key: const ValueKey('network-diagnostics-list'),
-              controller: _controller,
-              padding: EdgeInsets.fromLTRB(
-                16,
-                headerHeight,
-                16,
-                24 + context.bottomInset,
-              ),
-              itemCount: 1,
-              itemBuilder: (_, _) => Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 928),
-                  child: switch (_tab) {
-                    NetworkDiagnosticTab.exit => const _ExitPane(),
-                    NetworkDiagnosticTab.traffic =>
-                      const DiagnosticTrafficPane(),
-                    NetworkDiagnosticTab.policy => const _PolicyPane(),
-                  },
-                ),
-              ),
-            ),
-          );
-        },
+  Widget build(BuildContext context) => Scaffold(
+    title: context.appLocalizations.toolboxNodeDelay,
+    body: PrismListView(
+      key: const ValueKey('network-diagnostics-list'),
+      controller: _controller,
+      padding: context.listInsets.page(
+        top: context.sectionsTopPadding,
+        bottom: 24 + context.bottomInset,
       ),
-    );
-  }
+      itemCount: 1,
+      itemBuilder: (_, _) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 928),
+          child: const _PolicyPane(),
+        ),
+      ),
+    ),
+  );
 }
 
-class _RuntimeHeading extends ConsumerWidget {
-  const _RuntimeHeading({this.action});
+class DiagnosticRuntimeHeading extends ConsumerWidget {
+  const DiagnosticRuntimeHeading({super.key, this.action});
 
   final Widget? action;
 
@@ -194,154 +136,6 @@ class _RuntimeHeading extends ConsumerWidget {
           if (action != null) Flexible(child: action!),
         ],
       ),
-    );
-  }
-}
-
-class _ExitPane extends ConsumerStatefulWidget {
-  const _ExitPane();
-
-  @override
-  ConsumerState<_ExitPane> createState() => _ExitPaneState();
-}
-
-class _ExitPaneState extends ConsumerState<_ExitPane> {
-  late NetworkDiagnostics _probe;
-
-  @override
-  void initState() {
-    super.initState();
-    _probe = ref.read(networkDiagnosticsProvider.notifier);
-    for (final family in DiagnosticFamily.values) {
-      _probe.watch(family);
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final family in DiagnosticFamily.values) {
-      _probe.unwatch(family);
-    }
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(networkDiagnosticsProvider);
-    final live = ref.watch(routeTrackerProvider.select((state) => state.live));
-    final busy = DiagnosticFamily.values.any(state.isLoading);
-    final l10n = context.appLocalizations;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _RuntimeHeading(
-          action: TonalButton(
-            key: const ValueKey('diagnostics-run'),
-            glyph: AppGlyphs.refresh,
-            label: busy ? l10n.diagnosticsChecking : l10n.diagnosticsRun,
-            onPressed: !live || busy
-                ? null
-                : () => _probe.refresh(DiagnosticFamily.values),
-          ),
-        ),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final cards = [
-              for (final family in DiagnosticFamily.values)
-                DiagnosticExitCard(
-                  family: family,
-                  entry: state.entryOf(family),
-                ),
-            ];
-            return constraints.maxWidth >= 680
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 16,
-                    children: [for (final card in cards) Expanded(child: card)],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    spacing: 12,
-                    children: cards,
-                  );
-          },
-        ),
-        const SizedBox(height: 8),
-        const _DnsObservation(),
-      ],
-    );
-  }
-}
-
-class _DnsObservation extends ConsumerWidget {
-  const _DnsObservation();
-
-  Future<void> _explain(BuildContext context) => showNestedSheet<void>(
-    context,
-    builder: (context) => Scaffold(
-      title: context.appLocalizations.diagnosticsObservedDns,
-      body: Padding(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          context.contentTopPadding + 24,
-          24,
-          24,
-        ),
-        child: Text(
-          context.appLocalizations.diagnosticsDnsNote,
-          style: AppTextStyle.body.of(context),
-        ),
-      ),
-    ),
-  );
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final queries = ref.watch(dnsQueriesProvider.select((state) => state.list));
-    final l10n = context.appLocalizations;
-    final recent = queries.reversed.take(3).toList();
-    return generateSection(
-      title: l10n.diagnosticsObservedDns,
-      actions: [
-        IconButtonData(
-          glyph: AppGlyphs.info,
-          tooltip: l10n.diagnosticsDetails,
-          onPressed: () => _explain(context),
-        ),
-      ],
-      footer: l10n.diagnosticsDnsUnverified,
-      items: recent.isEmpty
-          ? [
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.dns),
-                title: Text(l10n.diagnosticsNoDns),
-              ),
-            ]
-          : [
-              for (final query in recent)
-                ListItem(
-                  title: Text(
-                    query.domain,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    '${query.type} · ${query.cached ? l10n.cache : _diagnosticEndpoint(query.upstream)}',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Text(
-                    query.isFailed ? l10n.error : '${query.delay} ms',
-                    style: AppTextStyle.footnote
-                        .of(context)
-                        .copyWith(
-                          color: query.isFailed
-                              ? context.colorScheme.error
-                              : context.colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ),
-            ],
     );
   }
 }
@@ -484,7 +278,7 @@ class _PolicyPaneState extends ConsumerState<_PolicyPane> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _RuntimeHeading(),
+        const DiagnosticRuntimeHeading(),
         generateSection(
           atTop: true,
           title: l10n.diagnosticsTestObject,
@@ -587,7 +381,7 @@ class _PolicyPaneState extends ConsumerState<_PolicyPane> {
                 ),
                 DiagnosticFact(
                   label: l10n.source,
-                  value: _diagnosticEndpoint(result.url),
+                  value: diagnosticEndpoint(result.url),
                 ),
               ],
               if (_checkedAt case final time?)

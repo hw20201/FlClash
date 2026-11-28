@@ -70,10 +70,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get networkToolbox => 'Toolbox';
 
   @override
-  String get networkToolboxDesc => 'DNS, diagnostics and traffic in one place';
+  String get networkToolboxDesc =>
+      'Exit IP, DNS queries and traffic statistics';
 
   @override
   String get toolboxTrafficDesc => 'Usage, trends and application rankings';
+
+  @override
+  String get toolboxExitIp => 'Exit IP';
+
+  @override
+  String get toolboxExitIpDesc => 'Current IPv4 and IPv6 egress addresses';
+
+  @override
+  String get toolboxNodeDelay => 'Node delay test';
+
+  @override
+  String get toolboxObservedDns => 'Observed DNS';
+
+  @override
+  String get toolboxTrafficStatistics => 'Traffic statistics';
+
+  @override
+  String get toolboxEditLayout => 'Adjust layout';
+
+  @override
+  String get toolboxFinishLayout => 'Finish adjustment';
+
+  @override
+  String get toolboxResetLayout => 'Restore default sizes';
+
+  @override
+  String get toolboxCardSize => 'Card size';
+
+  @override
+  String get toolboxSizeSmall => '1 × 1';
+
+  @override
+  String get toolboxSizeWide => '2 × 1';
+
+  @override
+  String get toolboxSizeTall => '1 × 2';
+
+  @override
+  String get toolboxSizeLarge => '2 × 2';
+
+  @override
+  String get toolboxSummaryStale =>
+      'The route or configuration changed. Run the check again.';
+
+  @override
+  String get toolboxAdditionalChecks => 'Additional checks';
+
+  @override
+  String get toolboxTopApps => 'Top applications';
 
   @override
   String get dnsLookup => 'DNS lookup';

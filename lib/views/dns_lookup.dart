@@ -6,6 +6,7 @@ import 'package:fl_clash/features/dns_lookup/controller.dart';
 import 'package:fl_clash/features/form/form_row.dart';
 import 'package:fl_clash/features/network_diagnostics/exit_card.dart';
 import 'package:fl_clash/providers/providers.dart';
+import 'package:fl_clash/providers/toolbox_dns_summary.dart';
 import 'package:fl_clash/ui/icons/icons.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/services.dart';
@@ -48,6 +49,7 @@ class _DnsLookupViewState extends ConsumerState<DnsLookupView> {
           previous.routeVersion != next.routeVersion ||
           previous.hostEpoch != next.hostEpoch ||
           previous.proxied != next.proxied ||
+          previous.picks != next.picks ||
           previous.synced != next.synced ||
           previous.live != next.live) {
         _lookup.invalidate();
@@ -91,7 +93,50 @@ class _DnsLookupViewState extends ConsumerState<DnsLookupView> {
 
   Future<void> _run() async {
     FocusManager.instance.primaryFocus?.unfocus();
+    final route = ref.read(routeTrackerProvider);
+    final stamp = RouteStamp(
+      coreEpoch: route.coreEpoch,
+      routeVersion: route.routeVersion,
+      hostEpoch: route.hostEpoch,
+      proxied: route.proxied,
+      picks: route.picks,
+    );
+    ref.read(toolboxDnsSummaryProvider.notifier).clear();
     await _lookup.query(_name.text, _type, available: _available);
+    if (!mounted) return;
+    final state = _lookup.state;
+    final currentRoute = ref.read(routeTrackerProvider);
+    if (state.phase == DnsLookupPhase.idle ||
+        state.phase == DnsLookupPhase.loading ||
+        (state.phase == DnsLookupPhase.cancelled && !_available) ||
+        (state.phase == DnsLookupPhase.complete && state.result == null)) {
+      return;
+    }
+    final sameRoute =
+        currentRoute.coreEpoch == stamp.coreEpoch &&
+        currentRoute.routeVersion == stamp.routeVersion &&
+        currentRoute.hostEpoch == stamp.hostEpoch &&
+        currentRoute.proxied == stamp.proxied &&
+        currentRoute.picks == stamp.picks &&
+        currentRoute.live == route.live &&
+        currentRoute.synced == route.synced;
+    final phase = state.phase == DnsLookupPhase.stale || !sameRoute
+        ? DnsLookupPhase.stale
+        : state.phase;
+    final summary = ToolboxDnsQuerySummary(
+      domain: state.name,
+      type: state.type,
+      phase: phase,
+      result: state.result,
+      checkedAt:
+          state.checkedAt ??
+          (phase == DnsLookupPhase.stale ? null : DateTime.now()),
+      elapsed: state.elapsed,
+      stamp: stamp,
+      routeLive: route.live,
+      routeSynced: route.synced,
+    );
+    ref.read(toolboxDnsSummaryProvider.notifier).publish(summary);
   }
 
   Future<void> _copy() async {

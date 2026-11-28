@@ -69,10 +69,58 @@ class AppLocalizationsZh extends AppLocalizations {
   String get networkToolbox => '工具箱';
 
   @override
-  String get networkToolboxDesc => '查询、诊断与流量统计';
+  String get networkToolboxDesc => '出口 IP、DNS 查询与流量统计';
 
   @override
   String get toolboxTrafficDesc => '用量、趋势与应用排行';
+
+  @override
+  String get toolboxExitIp => '出口 IP';
+
+  @override
+  String get toolboxExitIpDesc => '查看当前 IPv4 与 IPv6 出口地址';
+
+  @override
+  String get toolboxNodeDelay => '节点/策略延迟测试';
+
+  @override
+  String get toolboxObservedDns => '内核观察到的 DNS';
+
+  @override
+  String get toolboxTrafficStatistics => '流量统计';
+
+  @override
+  String get toolboxEditLayout => '调整布局';
+
+  @override
+  String get toolboxFinishLayout => '完成调整';
+
+  @override
+  String get toolboxResetLayout => '恢复默认尺寸';
+
+  @override
+  String get toolboxCardSize => '卡片尺寸';
+
+  @override
+  String get toolboxSizeSmall => '1 × 1';
+
+  @override
+  String get toolboxSizeWide => '2 × 1 横向';
+
+  @override
+  String get toolboxSizeTall => '1 × 2 纵向';
+
+  @override
+  String get toolboxSizeLarge => '2 × 2';
+
+  @override
+  String get toolboxSummaryStale => '路由或配置已变化，请重新运行检测。';
+
+  @override
+  String get toolboxAdditionalChecks => '其他检测';
+
+  @override
+  String get toolboxTopApps => '应用流量排行';
 
   @override
   String get dnsLookup => 'DNS 查询';

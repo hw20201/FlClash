@@ -72,11 +72,60 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get networkToolboxDesc =>
-      'DNS, diagnóstico y tráfico en un solo lugar';
+      'IP de salida, consultas DNS y estadísticas de tráfico';
 
   @override
   String get toolboxTrafficDesc =>
       'Uso, tendencias y clasificación de aplicaciones';
+
+  @override
+  String get toolboxExitIp => 'IP de salida';
+
+  @override
+  String get toolboxExitIpDesc => 'Direcciones de salida IPv4 e IPv6 actuales';
+
+  @override
+  String get toolboxNodeDelay => 'Prueba de latencia de nodos';
+
+  @override
+  String get toolboxObservedDns => 'DNS observado';
+
+  @override
+  String get toolboxTrafficStatistics => 'Estadísticas de tráfico';
+
+  @override
+  String get toolboxEditLayout => 'Ajustar diseño';
+
+  @override
+  String get toolboxFinishLayout => 'Finalizar ajuste';
+
+  @override
+  String get toolboxResetLayout => 'Restaurar tamaños predeterminados';
+
+  @override
+  String get toolboxCardSize => 'Tamaño de tarjeta';
+
+  @override
+  String get toolboxSizeSmall => '1 × 1';
+
+  @override
+  String get toolboxSizeWide => '2 × 1 horizontal';
+
+  @override
+  String get toolboxSizeTall => '1 × 2 vertical';
+
+  @override
+  String get toolboxSizeLarge => '2 × 2';
+
+  @override
+  String get toolboxSummaryStale =>
+      'La ruta o la configuración cambió. Vuelve a ejecutar la comprobación.';
+
+  @override
+  String get toolboxAdditionalChecks => 'Otras comprobaciones';
+
+  @override
+  String get toolboxTopApps => 'Aplicaciones principales';
 
   @override
   String get dnsLookup => 'Consulta DNS';

@@ -98,6 +98,7 @@ class NetworkDiagnostics
       routeVersion: exit.routeVersion,
       hostEpoch: route.hostEpoch,
       proxied: route.proxied,
+      picks: route.picks,
       hits: exit.hits,
     );
     if (ref.mounted && ref.read(routeTrackerProvider).isFresh(stamp)) {

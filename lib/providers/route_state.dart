@@ -105,6 +105,7 @@ class RouteStamp {
     required this.routeVersion,
     required this.hostEpoch,
     required this.proxied,
+    this.picks = 0,
     this.hits = const [],
   });
 
@@ -112,6 +113,7 @@ class RouteStamp {
   final int routeVersion;
   final int hostEpoch;
   final bool proxied;
+  final int picks;
   final List<RouteHit> hits;
 
   RouteStamp verifiedAt(int routeVersion) => RouteStamp(
@@ -119,6 +121,7 @@ class RouteStamp {
     routeVersion: routeVersion,
     hostEpoch: hostEpoch,
     proxied: proxied,
+    picks: picks,
     hits: hits,
   );
 
@@ -129,6 +132,7 @@ class RouteStamp {
       other.routeVersion == routeVersion &&
       other.hostEpoch == hostEpoch &&
       other.proxied == proxied &&
+      other.picks == picks &&
       listEquals(other.hits, hits);
 
   @override
@@ -137,6 +141,7 @@ class RouteStamp {
     routeVersion,
     hostEpoch,
     proxied,
+    picks,
     Object.hashAll(hits),
   );
 }

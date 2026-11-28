@@ -225,7 +225,7 @@ abstract class AppLocalizations {
   /// No description provided for @networkToolboxDesc.
   ///
   /// In en, this message translates to:
-  /// **'DNS, diagnostics and traffic in one place'**
+  /// **'Exit IP, DNS queries and traffic statistics'**
   String get networkToolboxDesc;
 
   /// No description provided for @toolboxTrafficDesc.
@@ -233,6 +233,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Usage, trends and application rankings'**
   String get toolboxTrafficDesc;
+
+  /// No description provided for @toolboxExitIp.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit IP'**
+  String get toolboxExitIp;
+
+  /// No description provided for @toolboxExitIpDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Current IPv4 and IPv6 egress addresses'**
+  String get toolboxExitIpDesc;
+
+  /// No description provided for @toolboxNodeDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Node delay test'**
+  String get toolboxNodeDelay;
+
+  /// No description provided for @toolboxObservedDns.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed DNS'**
+  String get toolboxObservedDns;
+
+  /// No description provided for @toolboxTrafficStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Traffic statistics'**
+  String get toolboxTrafficStatistics;
+
+  /// No description provided for @toolboxEditLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust layout'**
+  String get toolboxEditLayout;
+
+  /// No description provided for @toolboxFinishLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish adjustment'**
+  String get toolboxFinishLayout;
+
+  /// No description provided for @toolboxResetLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore default sizes'**
+  String get toolboxResetLayout;
+
+  /// No description provided for @toolboxCardSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Card size'**
+  String get toolboxCardSize;
+
+  /// No description provided for @toolboxSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'1 × 1'**
+  String get toolboxSizeSmall;
+
+  /// No description provided for @toolboxSizeWide.
+  ///
+  /// In en, this message translates to:
+  /// **'2 × 1'**
+  String get toolboxSizeWide;
+
+  /// No description provided for @toolboxSizeTall.
+  ///
+  /// In en, this message translates to:
+  /// **'1 × 2'**
+  String get toolboxSizeTall;
+
+  /// No description provided for @toolboxSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'2 × 2'**
+  String get toolboxSizeLarge;
+
+  /// No description provided for @toolboxSummaryStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The route or configuration changed. Run the check again.'**
+  String get toolboxSummaryStale;
+
+  /// No description provided for @toolboxAdditionalChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional checks'**
+  String get toolboxAdditionalChecks;
+
+  /// No description provided for @toolboxTopApps.
+  ///
+  /// In en, this message translates to:
+  /// **'Top applications'**
+  String get toolboxTopApps;
 
   /// No description provided for @dnsLookup.
   ///

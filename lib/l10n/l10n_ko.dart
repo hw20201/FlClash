@@ -70,10 +70,58 @@ class AppLocalizationsKo extends AppLocalizations {
   String get networkToolbox => '도구 모음';
 
   @override
-  String get networkToolboxDesc => 'DNS, 진단, 트래픽을 한곳에서 확인';
+  String get networkToolboxDesc => '출구 IP, DNS 조회, 트래픽 통계';
 
   @override
   String get toolboxTrafficDesc => '사용량, 추이 및 앱별 순위';
+
+  @override
+  String get toolboxExitIp => '출구 IP';
+
+  @override
+  String get toolboxExitIpDesc => '현재 IPv4 및 IPv6 출구 주소';
+
+  @override
+  String get toolboxNodeDelay => '노드 지연 테스트';
+
+  @override
+  String get toolboxObservedDns => '코어에서 관찰된 DNS';
+
+  @override
+  String get toolboxTrafficStatistics => '트래픽 통계';
+
+  @override
+  String get toolboxEditLayout => '레이아웃 조정';
+
+  @override
+  String get toolboxFinishLayout => '조정 완료';
+
+  @override
+  String get toolboxResetLayout => '기본 크기로 복원';
+
+  @override
+  String get toolboxCardSize => '카드 크기';
+
+  @override
+  String get toolboxSizeSmall => '1 × 1';
+
+  @override
+  String get toolboxSizeWide => '2 × 1 가로형';
+
+  @override
+  String get toolboxSizeTall => '1 × 2 세로형';
+
+  @override
+  String get toolboxSizeLarge => '2 × 2';
+
+  @override
+  String get toolboxSummaryStale => '경로 또는 설정이 변경되었습니다. 다시 확인하세요.';
+
+  @override
+  String get toolboxAdditionalChecks => '추가 테스트';
+
+  @override
+  String get toolboxTopApps => '앱별 트래픽 순위';
 
   @override
   String get dnsLookup => 'DNS 조회';

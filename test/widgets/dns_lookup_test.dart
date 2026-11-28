@@ -506,6 +506,7 @@ void main() {
     ),
     ('host epoch', (route) => route.copyWith(hostEpoch: route.hostEpoch + 1)),
     ('proxy mode', (route) => route.copyWith(proxied: !route.proxied)),
+    ('local pick', (route) => route.copyWith(picks: route.picks + 1)),
     ('sync state', (route) => route.copyWith(synced: false)),
     ('live state', (route) => route.copyWith(live: false)),
   ]) {
@@ -530,6 +531,20 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('a local pick invalidates a completed answer', (tester) async {
+    final fixture = await _pump(tester);
+    await _query(tester, 'picked.example.test');
+    expect(find.byKey(const ValueKey('dns-lookup-result')), findsOneWidget);
+
+    fixture.routes.replace(_liveRoute.copyWith(picks: _liveRoute.picks + 1));
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('dns-lookup-stale')), findsOneWidget);
+    expect(find.byKey(const ValueKey('dns-lookup-result')), findsNothing);
+    expect(fixture.calls, hasLength(1));
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('hiding the app cancels a pending query', (tester) async {
     final reply = Completer<DnsQueryResult>();

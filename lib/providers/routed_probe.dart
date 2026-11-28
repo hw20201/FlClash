@@ -492,6 +492,7 @@ mixin RoutedProbe<K, V>
     routeVersion: answer.routeVersion ?? route.routeVersion,
     hostEpoch: route.hostEpoch,
     proxied: route.proxied,
+    picks: route.picks,
     hits: answer.hits,
   );
 

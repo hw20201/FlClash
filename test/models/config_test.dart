@@ -178,6 +178,29 @@ void main() {
       expect(restored.restoreStrategy, RestoreStrategy.compatible);
       expect(restored.userAgents, defaultUserAgents);
       expect(restored.filters, defaultFilters);
+      expect(restored.toolboxLayoutJson, '');
+    });
+
+    test(
+      'invalid toolbox layout setting type falls back without losing other settings',
+      () {
+        final restored = AppSettingProps.fromJson({
+          'autoRun': true,
+          'toolboxLayoutJson': 1,
+        });
+
+        expect(restored.autoRun, isTrue);
+        expect(restored.toolboxLayoutJson, '');
+      },
+    );
+
+    test('preserves toolbox layout in config JSON', () {
+      const layout =
+          '{"schemaVersion":1,"modules":{"exitIp":"2x1","dnsLookup":"1x2","trafficStatistics":"2x2"}}';
+      final restored = AppSettingProps.fromJson({'toolboxLayoutJson': layout});
+
+      expect(restored.toolboxLayoutJson, layout);
+      expect(restored.toJson()['toolboxLayoutJson'], layout);
     });
 
     test('a saved outboundModeV2 card folds into outboundMode', () {

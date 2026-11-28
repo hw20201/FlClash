@@ -70,11 +70,61 @@ class AppLocalizationsRu extends AppLocalizations {
   String get networkToolbox => 'Набор инструментов';
 
   @override
-  String get networkToolboxDesc => 'DNS, диагностика и трафик в одном месте';
+  String get networkToolboxDesc =>
+      'Внешний IP, DNS-запросы и статистика трафика';
 
   @override
   String get toolboxTrafficDesc =>
       'Использование, динамика и рейтинг приложений';
+
+  @override
+  String get toolboxExitIp => 'Внешний IP';
+
+  @override
+  String get toolboxExitIpDesc => 'Текущие внешние адреса IPv4 и IPv6';
+
+  @override
+  String get toolboxNodeDelay => 'Проверка задержки узлов';
+
+  @override
+  String get toolboxObservedDns => 'DNS, замеченный ядром';
+
+  @override
+  String get toolboxTrafficStatistics => 'Статистика трафика';
+
+  @override
+  String get toolboxEditLayout => 'Настроить расположение';
+
+  @override
+  String get toolboxFinishLayout => 'Завершить настройку';
+
+  @override
+  String get toolboxResetLayout => 'Вернуть размеры по умолчанию';
+
+  @override
+  String get toolboxCardSize => 'Размер карточки';
+
+  @override
+  String get toolboxSizeSmall => '1 × 1';
+
+  @override
+  String get toolboxSizeWide => '2 × 1 по горизонтали';
+
+  @override
+  String get toolboxSizeTall => '1 × 2 по вертикали';
+
+  @override
+  String get toolboxSizeLarge => '2 × 2';
+
+  @override
+  String get toolboxSummaryStale =>
+      'Маршрут или конфигурация изменились. Запустите проверку ещё раз.';
+
+  @override
+  String get toolboxAdditionalChecks => 'Другие проверки';
+
+  @override
+  String get toolboxTopApps => 'Трафик приложений';
 
   @override
   String get dnsLookup => 'DNS-запрос';

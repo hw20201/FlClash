@@ -16,8 +16,10 @@ import 'package:fl_clash/providers/routed_probe.dart';
 import 'package:fl_clash/providers/traffic_history.dart';
 import 'package:fl_clash/state.dart';
 import 'package:fl_clash/ui/ui.dart';
+import 'package:fl_clash/views/exit_ip.dart';
 import 'package:fl_clash/views/network_diagnostics.dart';
-import 'package:fl_clash/views/network_diagnostics_traffic.dart';
+import 'package:fl_clash/views/observed_dns.dart';
+import 'package:fl_clash/views/traffic_statistics.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -133,6 +135,8 @@ DnsQuery _query({bool cached = false}) => DnsQuery(
   time: _clock,
 );
 
+enum _DiagnosticsPage { exit, dns, delay, traffic }
+
 void _size(WidgetTester tester, Size size) {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -146,6 +150,7 @@ Future<({ProviderContainer container, GlobalKey shot})> _pump(
   Brightness brightness = Brightness.light,
   bool live = false,
   bool populated = false,
+  _DiagnosticsPage page = _DiagnosticsPage.exit,
   List<DnsQuery> queries = const [],
   TrafficHistoryStore? traffic,
   CoreMocks? core,
@@ -153,6 +158,7 @@ Future<({ProviderContainer container, GlobalKey shot})> _pump(
   List<Profile> profiles = const [_appliedProfile],
   CoreStateSync? sync,
   List<Group> groups = const [_group],
+  bool includeNavigatorKey = true,
 }) async {
   _size(tester, size);
   final routes = _FixtureRoutes(live ? _liveRoute : const RouteState());
@@ -184,6 +190,7 @@ Future<({ProviderContainer container, GlobalKey shot})> _pump(
       child: RepaintBoundary(
         key: shot,
         child: TestApp(
+          includeNavigatorKey: includeNavigatorKey,
           locale: const Locale('en'),
           theme: ThemeData(
             brightness: brightness,
@@ -193,7 +200,12 @@ Future<({ProviderContainer container, GlobalKey shot})> _pump(
             fontFamily: 'DiagnosticsFixture',
           ),
           themeMode: ThemeMode.light,
-          child: const NetworkDiagnosticsView(),
+          child: switch (page) {
+            _DiagnosticsPage.exit => const ExitIpView(),
+            _DiagnosticsPage.dns => const ObservedDnsView(),
+            _DiagnosticsPage.delay => const NodeDelayTestView(),
+            _DiagnosticsPage.traffic => const TrafficStatisticsView(),
+          },
         ),
       ),
     ),
@@ -208,16 +220,6 @@ Future<({ProviderContainer container, GlobalKey shot})> _pump(
 }
 
 Finder _button(String key) => find.byKey(ValueKey(key));
-
-Future<void> _tab(WidgetTester tester, String label) async {
-  final tab = find.descendant(
-    of: find.byWidgetPredicate((widget) => widget is ConnectedButtonBar).first,
-    matching: find.text(label),
-  );
-  await tester.tap(tab);
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 500));
-}
 
 Future<TrafficHistoryStore> _traffic(WidgetTester tester) async {
   final result = (await tester.runAsync(() async {
@@ -312,18 +314,13 @@ void main() {
     await font.load();
   });
 
-  testWidgets('offline exit stays idle and DNS stays explicitly unverified', (
-    tester,
-  ) async {
+  testWidgets('offline exit stays idle', (tester) async {
     final app = await _pump(tester);
-    expect(find.text('Network diagnostics'), findsOneWidget);
     expect(find.text('Ready to check'), findsNWidgets(2));
     expect(
       find.text('Start the connection to inspect its route'),
       findsOneWidget,
     );
-    expect(find.text('No DNS requests observed yet'), findsOneWidget);
-    expect(find.text('Not externally verified'), findsOneWidget);
     expect(
       tester.widget<TonalButton>(_button('diagnostics-run')).onPressed,
       isNull,
@@ -341,7 +338,7 @@ void main() {
   testWidgets('observed DNS redacts credentials and never claims leak safety', (
     tester,
   ) async {
-    await _pump(tester, queries: [_query()]);
+    await _pump(tester, page: _DiagnosticsPage.dns, queries: [_query()]);
     expect(find.text('fixture.example.test'), findsOneWidget);
     expect(
       find.text('AAAA · https://dns.example.test/dns-query'),
@@ -369,8 +366,6 @@ void main() {
             brightness: brightness,
             live: true,
             populated: true,
-            queries: [_query()],
-            traffic: store,
           );
           final ipv4 = _button('diagnostics-exit-ipv4');
           final ipv6 = _button('diagnostics-exit-ipv6');
@@ -401,8 +396,16 @@ void main() {
             app.shot,
             'diagnostics-$device-${brightness.name}-exit-injected-fixture',
           );
-          await _tab(tester, 'Traffic');
-          expect(find.byType(DiagnosticTrafficPane), findsOneWidget);
+
+          final trafficApp = await _pump(
+            tester,
+            size: size,
+            brightness: brightness,
+            page: _DiagnosticsPage.traffic,
+            traffic: store,
+            includeNavigatorKey: false,
+          );
+          expect(find.byType(TrafficStatisticsView), findsOneWidget);
           expect(
             find.byKey(const ValueKey('diagnostics-exit-ipv4')),
             findsNothing,
@@ -411,15 +414,9 @@ void main() {
           expect(tester.takeException(), isNull);
           await _export(
             tester,
-            app.shot,
+            trafficApp.shot,
             'diagnostics-$device-${brightness.name}-traffic-injected-fixture',
           );
-          await _tab(tester, 'Exit');
-          expect(
-            find.byKey(const ValueKey('diagnostics-exit-ipv6')),
-            findsOneWidget,
-          );
-          expect(tester.takeException(), isNull);
         },
       );
     }
@@ -429,8 +426,12 @@ void main() {
     'sample rankings switch dimensions and clear cancellation preserves data',
     (tester) async {
       final store = await _traffic(tester);
-      await _pump(tester, size: const Size(1280, 1200), traffic: store);
-      await _tab(tester, 'Traffic');
+      await _pump(
+        tester,
+        size: const Size(1280, 1200),
+        page: _DiagnosticsPage.traffic,
+        traffic: store,
+      );
       final browser = _button('diagnostics-rank-application-Browser');
       final chat = _button('diagnostics-rank-application-Chat');
       await tester.ensureVisible(browser);
@@ -517,8 +518,8 @@ void main() {
         size: const Size(1280, 1000),
         live: true,
         core: core,
+        page: _DiagnosticsPage.delay,
       );
-      await _tab(tester, 'Routing');
       final run = _button('diagnostics-delay-run');
       await tester.tap(run);
       await tester.pump();
@@ -614,8 +615,8 @@ void main() {
         size: const Size(1280, 1000),
         live: true,
         core: core,
+        page: _DiagnosticsPage.delay,
       );
-      await _tab(tester, 'Routing');
       final run = _button('diagnostics-delay-run');
       await tester.tap(run);
       await tester.pump();
@@ -688,8 +689,8 @@ void main() {
         size: const Size(1280, 1000),
         live: true,
         core: core,
+        page: _DiagnosticsPage.delay,
       );
-      await _tab(tester, 'Routing');
       final run = _button('diagnostics-delay-run');
       await tester.tap(run);
       await tester.pump();
@@ -736,8 +737,8 @@ void main() {
           size: const Size(1280, 1000),
           live: true,
           populated: true,
+          page: _DiagnosticsPage.delay,
         );
-        await _tab(tester, 'Routing');
         const chain = 'Fixture selector → Fixture node';
         expect(find.text(chain), findsNWidgets(2));
         final routes =
@@ -779,9 +780,9 @@ void main() {
         size: const Size(1280, 1000),
         live: true,
         core: core,
+        page: _DiagnosticsPage.delay,
         groups: [_group.copyWith(testUrl: url)],
       );
-      await _tab(tester, 'Routing');
       await tester.tap(_button('diagnostics-delay-run'));
       await tester.pump();
       expect(find.text('47 ms'), findsOneWidget);
@@ -819,8 +820,13 @@ void main() {
           value: -1,
         );
       });
-      await _pump(tester, size: const Size(1280, 1000), live: true, core: core);
-      await _tab(tester, 'Routing');
+      await _pump(
+        tester,
+        size: const Size(1280, 1000),
+        live: true,
+        core: core,
+        page: _DiagnosticsPage.delay,
+      );
       final run = _button('diagnostics-delay-run');
       await tester.tap(run);
       await tester.pump();
