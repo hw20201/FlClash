@@ -66,6 +66,205 @@ class AppLocalizationsZh extends AppLocalizations {
   String get resources => '资源';
 
   @override
+  String get networkToolbox => '工具箱';
+
+  @override
+  String get networkToolboxDesc => '查询、诊断与流量统计';
+
+  @override
+  String get toolboxTrafficDesc => '用量、趋势与应用排行';
+
+  @override
+  String get dnsLookup => 'DNS 查询';
+
+  @override
+  String get dnsLookupDesc => '通过当前内核解析器查询记录';
+
+  @override
+  String get dnsLookupName => '域名';
+
+  @override
+  String get dnsLookupNameHint => 'example.com';
+
+  @override
+  String get dnsLookupRecordType => '记录类型';
+
+  @override
+  String get dnsLookupRun => '查询';
+
+  @override
+  String get dnsLookupQuerying => '正在查询…';
+
+  @override
+  String get dnsLookupResolver => '当前内核解析器';
+
+  @override
+  String get dnsLookupResolverDesc =>
+      '使用当前 DNS 上游、策略与缓存；不经过客户端 hosts 和 Fake-IP。';
+
+  @override
+  String get dnsLookupMetadataUnavailable => '此接口不提供本次查询的上游与缓存命中信息。';
+
+  @override
+  String get dnsLookupCancelNote => '取消会停止等待；内核中的共享解析可能继续。';
+
+  @override
+  String get dnsLookupEmptyTitle => '从一个域名开始';
+
+  @override
+  String get dnsLookupEmptyDesc => '查询 DNS 记录、TTL 与响应状态。';
+
+  @override
+  String get dnsLookupInvalidName => '请输入 ASCII 或 Punycode 域名，不含 URL、端口或路径。';
+
+  @override
+  String get dnsLookupTimedOut => 'DNS 查询超时，可以重试。';
+
+  @override
+  String get dnsLookupFailed => '解析器未能完成本次查询。';
+
+  @override
+  String get dnsLookupUnavailable => '请应用配置并等待内核连接。';
+
+  @override
+  String get dnsLookupCancelled => '已取消查询';
+
+  @override
+  String get dnsLookupStale => '配置或网络已变化，请重新查询。';
+
+  @override
+  String get dnsLookupNoRecords => '未返回此类型的记录。';
+
+  @override
+  String get dnsLookupNameNotFound => '域名不存在（NXDOMAIN）。';
+
+  @override
+  String get dnsLookupResponseError => 'DNS 响应报告错误。';
+
+  @override
+  String get dnsLookupAuthorities => '权威记录';
+
+  @override
+  String get dnsLookupAdditionals => '附加记录';
+
+  @override
+  String get dnsLookupFlags => '响应标志';
+
+  @override
+  String get dnsLookupTtl => 'TTL（秒）';
+
+  @override
+  String get dnsLookupCopy => '复制报告';
+
+  @override
+  String get networkDiagnostics => '网络诊断';
+
+  @override
+  String get networkDiagnosticsDesc => '出口、DNS、流量与策略路径';
+
+  @override
+  String get diagnosticsExit => '出口';
+
+  @override
+  String get diagnosticsPolicy => '策略路径';
+
+  @override
+  String get diagnosticsRun => '开始诊断';
+
+  @override
+  String get diagnosticsNotRun => '等待诊断';
+
+  @override
+  String get diagnosticsOffline => '连接后查看当前网络路径';
+
+  @override
+  String get diagnosticsCurrentRoute => '当前路径';
+
+  @override
+  String get diagnosticsObservedDns => 'DNS 观察';
+
+  @override
+  String get diagnosticsDnsUnverified => '尚未外部验证';
+
+  @override
+  String get diagnosticsDnsNote => '这里展示核心观察到的 DNS 请求及上游，不能据此证明没有 DNS 泄漏。';
+
+  @override
+  String get diagnosticsNoDns => '还没有观察到 DNS 请求';
+
+  @override
+  String get diagnosticsAsn => 'ASN';
+
+  @override
+  String get diagnosticsOrganization => '网络运营商';
+
+  @override
+  String get diagnosticsCheckedAt => '检测时间';
+
+  @override
+  String get diagnosticsDetails => '详细信息';
+
+  @override
+  String get diagnosticsPartial => '部分结果';
+
+  @override
+  String get diagnosticsAvailable => '可用';
+
+  @override
+  String get diagnosticsUnavailable => '不可用';
+
+  @override
+  String get diagnosticsInvalidResponse => '响应无效';
+
+  @override
+  String get diagnosticsFamilyMismatch => '地址类型不匹配';
+
+  @override
+  String get diagnosticsUnknownError => '请求失败';
+
+  @override
+  String get diagnosticsConnectError => '连接失败';
+
+  @override
+  String get diagnosticsDnsError => 'DNS 解析失败';
+
+  @override
+  String get diagnosticsTlsError => 'TLS 握手失败';
+
+  @override
+  String get diagnosticsHttpError => 'HTTP 请求失败';
+
+  @override
+  String get diagnosticsTestObject => '测试对象';
+
+  @override
+  String get diagnosticsChooseGroup => '选择策略组';
+
+  @override
+  String get diagnosticsChooseNode => '选择节点';
+
+  @override
+  String get diagnosticsTestDelay => '测试延迟';
+
+  @override
+  String get diagnosticsDelayNote => '使用核心即时 URL 测试，不改变当前选择。';
+
+  @override
+  String get diagnosticsRouteNote => '下方路径来自最近一次出口诊断请求，遵循当前规则。';
+
+  @override
+  String get diagnosticsAttributionNote => '连接明细为采样数据；进程信息缺失或短连接可能使部分流量无法归类。';
+
+  @override
+  String get diagnosticsNoProfile => '暂无运行配置';
+
+  @override
+  String get diagnosticsChecking => '正在检测';
+
+  @override
+  String get diagnosticsCancelled => '已取消';
+
+  @override
   String get trafficUsage => '流量统计';
 
   @override

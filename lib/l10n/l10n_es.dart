@@ -68,6 +68,222 @@ class AppLocalizationsEs extends AppLocalizations {
   String get resources => 'Recursos';
 
   @override
+  String get networkToolbox => 'Caja de herramientas';
+
+  @override
+  String get networkToolboxDesc =>
+      'DNS, diagnóstico y tráfico en un solo lugar';
+
+  @override
+  String get toolboxTrafficDesc =>
+      'Uso, tendencias y clasificación de aplicaciones';
+
+  @override
+  String get dnsLookup => 'Consulta DNS';
+
+  @override
+  String get dnsLookupDesc =>
+      'Consulta registros con el resolvedor actual del núcleo';
+
+  @override
+  String get dnsLookupName => 'Dominio';
+
+  @override
+  String get dnsLookupNameHint => 'example.com';
+
+  @override
+  String get dnsLookupRecordType => 'Tipo de registro';
+
+  @override
+  String get dnsLookupRun => 'Consultar';
+
+  @override
+  String get dnsLookupQuerying => 'Consultando…';
+
+  @override
+  String get dnsLookupResolver => 'Resolvedor actual del núcleo';
+
+  @override
+  String get dnsLookupResolverDesc =>
+      'Usa los servidores DNS, las políticas y la caché actuales; omite los hosts del cliente y Fake-IP.';
+
+  @override
+  String get dnsLookupMetadataUnavailable =>
+      'Esta API no indica el servidor ascendente ni si el resultado proviene de la caché para esta consulta.';
+
+  @override
+  String get dnsLookupCancelNote =>
+      'Cancelar detiene la espera; el trabajo DNS compartido puede continuar en el núcleo.';
+
+  @override
+  String get dnsLookupEmptyTitle => 'Empieza con un dominio';
+
+  @override
+  String get dnsLookupEmptyDesc =>
+      'Consulta registros DNS, TTL y estado de respuesta.';
+
+  @override
+  String get dnsLookupInvalidName =>
+      'Introduce un dominio ASCII o Punycode, sin URL, puerto ni ruta.';
+
+  @override
+  String get dnsLookupTimedOut =>
+      'La consulta DNS agotó el tiempo de espera. Puedes volver a intentarlo.';
+
+  @override
+  String get dnsLookupFailed =>
+      'El resolvedor no pudo completar esta consulta.';
+
+  @override
+  String get dnsLookupUnavailable =>
+      'Aplica un perfil y espera a que se conecte el núcleo.';
+
+  @override
+  String get dnsLookupCancelled => 'Consulta cancelada';
+
+  @override
+  String get dnsLookupStale =>
+      'La configuración o la red ha cambiado. Vuelve a consultar para obtener resultados actuales.';
+
+  @override
+  String get dnsLookupNoRecords => 'No se devolvieron registros de este tipo.';
+
+  @override
+  String get dnsLookupNameNotFound => 'El dominio no existe (NXDOMAIN).';
+
+  @override
+  String get dnsLookupResponseError => 'La respuesta DNS indica un error.';
+
+  @override
+  String get dnsLookupAuthorities => 'Registros de autoridad';
+
+  @override
+  String get dnsLookupAdditionals => 'Registros adicionales';
+
+  @override
+  String get dnsLookupFlags => 'Indicadores de respuesta';
+
+  @override
+  String get dnsLookupTtl => 'TTL (segundos)';
+
+  @override
+  String get dnsLookupCopy => 'Copiar informe';
+
+  @override
+  String get networkDiagnostics => 'Diagnóstico de red';
+
+  @override
+  String get networkDiagnosticsDesc =>
+      'Direcciones de salida, DNS, tráfico y enrutamiento';
+
+  @override
+  String get diagnosticsExit => 'Salida';
+
+  @override
+  String get diagnosticsPolicy => 'Enrutamiento';
+
+  @override
+  String get diagnosticsRun => 'Iniciar diagnóstico';
+
+  @override
+  String get diagnosticsNotRun => 'Listo para comprobar';
+
+  @override
+  String get diagnosticsOffline => 'Inicia la conexión para examinar su ruta';
+
+  @override
+  String get diagnosticsCurrentRoute => 'Ruta actual';
+
+  @override
+  String get diagnosticsObservedDns => 'DNS observado';
+
+  @override
+  String get diagnosticsDnsUnverified => 'Sin verificación externa';
+
+  @override
+  String get diagnosticsDnsNote =>
+      'Estas son las solicitudes DNS observadas por el núcleo. Muestran el servidor DNS ascendente utilizado, pero no demuestran la ausencia de fugas de DNS.';
+
+  @override
+  String get diagnosticsNoDns => 'Aún no se han observado solicitudes DNS';
+
+  @override
+  String get diagnosticsAsn => 'ASN';
+
+  @override
+  String get diagnosticsOrganization => 'Operador de red';
+
+  @override
+  String get diagnosticsCheckedAt => 'Hora de comprobación';
+
+  @override
+  String get diagnosticsDetails => 'Detalles';
+
+  @override
+  String get diagnosticsPartial => 'Resultado parcial';
+
+  @override
+  String get diagnosticsAvailable => 'Disponible';
+
+  @override
+  String get diagnosticsUnavailable => 'No disponible';
+
+  @override
+  String get diagnosticsInvalidResponse => 'Respuesta no válida';
+
+  @override
+  String get diagnosticsFamilyMismatch =>
+      'La familia de direcciones no coincide';
+
+  @override
+  String get diagnosticsUnknownError => 'Error en la solicitud';
+
+  @override
+  String get diagnosticsConnectError => 'Error de conexión';
+
+  @override
+  String get diagnosticsDnsError => 'Error de resolución DNS';
+
+  @override
+  String get diagnosticsTlsError => 'Error de negociación TLS';
+
+  @override
+  String get diagnosticsHttpError => 'Error en la solicitud HTTP';
+
+  @override
+  String get diagnosticsTestObject => 'Destino de la prueba';
+
+  @override
+  String get diagnosticsChooseGroup => 'Elegir un grupo';
+
+  @override
+  String get diagnosticsChooseNode => 'Elegir un nodo';
+
+  @override
+  String get diagnosticsTestDelay => 'Probar latencia';
+
+  @override
+  String get diagnosticsDelayNote =>
+      'Realiza una nueva prueba de URL a través del núcleo sin cambiar tu selección.';
+
+  @override
+  String get diagnosticsRouteNote =>
+      'La ruta siguiente corresponde a la última comprobación de salida y sigue las reglas activas.';
+
+  @override
+  String get diagnosticsAttributionNote =>
+      'Los detalles de conexión se obtienen por muestreo. La falta de datos de procesos y las conexiones breves pueden dejar parte del tráfico sin atribuir.';
+
+  @override
+  String get diagnosticsNoProfile => 'No hay un perfil activo';
+
+  @override
+  String get diagnosticsChecking => 'Comprobando';
+
+  @override
+  String get diagnosticsCancelled => 'Cancelado';
+
+  @override
   String get trafficUsage => 'Uso de tráfico';
 
   @override

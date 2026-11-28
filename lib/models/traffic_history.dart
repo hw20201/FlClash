@@ -58,6 +58,7 @@ class TrafficDay {
         ..runtimeMs = _integer(json['runtimeMs'])
         ..ruleHits = _integer(json['ruleHits'])
         ..hours.addAll(_readSeries(json['hours']))
+        ..applications.addAll(_readRanks(json['applications']))
         ..domains.addAll(_readRanks(json['domains']))
         ..nodes.addAll(_readRanks(json['nodes']))
         ..rules.addAll(_readRanks(json['rules']))
@@ -71,6 +72,7 @@ class TrafficDay {
   int runtimeMs = 0;
   int ruleHits = 0;
   final hours = <int, ({int upload, int download})>{};
+  final applications = <String, TrafficRank>{};
   final domains = <String, TrafficRank>{};
   final nodes = <String, TrafficRank>{};
   final rules = <String, TrafficRank>{};
@@ -97,6 +99,7 @@ class TrafficDay {
       for (final entry in hours.entries)
         '${entry.key}': [entry.value.upload, entry.value.download],
     },
+    'applications': applications,
     'domains': domains,
     'nodes': nodes,
     'rules': rules,
@@ -155,6 +158,7 @@ class TrafficHistorySnapshot {
     var total = 0;
     for (final day in days) {
       final items = switch (category) {
+        'application' => day.applications,
         'node' => day.nodes,
         'rule' => day.rules,
         'profile' => day.profiles,
@@ -207,6 +211,7 @@ class TrafficHistorySnapshot {
     final totals = <String, TrafficRank>{};
     for (final day in days) {
       final items = switch (category) {
+        'application' => day.applications,
         'node' => day.nodes,
         'rule' => day.rules,
         'profile' => day.profiles,

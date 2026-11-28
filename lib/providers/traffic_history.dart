@@ -305,6 +305,7 @@ class TrafficHistoryStore extends ChangeNotifier {
       );
     }
 
+    add(day.applications, entry.application);
     add(day.domains, entry.domain);
     add(day.rules, entry.rule, ruleType: entry.ruleType);
     add(day.nodes, entry.node);
@@ -386,6 +387,7 @@ class TrafficHistoryStore extends ChangeNotifier {
 class _Connection {
   _Connection(ConnectionInfo info, String? profile)
     : start = info.start,
+      application = _application(info),
       domain = _domain(info),
       node = _label(info.chains.firstOrNull),
       profile = _label(profile),
@@ -401,8 +403,23 @@ class _Connection {
       download = info.download;
 
   final int start;
-  final String domain, node, profile, rule, ruleType;
+  final String application, domain, node, profile, rule, ruleType;
   int upload, download;
+
+  static String _application(ConnectionInfo info) {
+    String name(String? value) {
+      final label = value?.trim() ?? '';
+      if (label.contains('://')) return '';
+      return _label(label.replaceAll(r'\', '/').split('/').last);
+    }
+
+    final process = name(info.process);
+    if (process.isNotEmpty) return process;
+    final uid = info.uid;
+    if (uid != null && uid >= 0) return 'UID $uid';
+    final path = name(info.processPath);
+    return path.isEmpty ? 'unknown' : path;
+  }
 
   static String _domain(ConnectionInfo info) {
     for (final value in [info.host, info.sniffHost, info.destinationIp]) {

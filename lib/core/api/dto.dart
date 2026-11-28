@@ -994,6 +994,87 @@ class LogEntry {
 }
 
 @immutable
+class DnsQuestionDto {
+  final String name;
+  final int qtype;
+  final int qclass;
+
+  const DnsQuestionDto({
+    required this.name,
+    required this.qtype,
+    required this.qclass,
+  });
+
+  factory DnsQuestionDto.fromJson(JsonMap json) => DnsQuestionDto(
+    name: json['name'] as String,
+    qtype: json['qtype'] as int,
+    qclass: json['qclass'] as int,
+  );
+}
+
+@immutable
+class DnsRecordDto {
+  final String name;
+  final int rtype;
+  final int ttl;
+  final String data;
+
+  const DnsRecordDto({
+    required this.name,
+    required this.rtype,
+    required this.ttl,
+    required this.data,
+  });
+
+  factory DnsRecordDto.fromJson(JsonMap json) => DnsRecordDto(
+    name: json['name'] as String,
+    rtype: json['rtype'] as int,
+    ttl: json['ttl'] as int,
+    data: json['data'] as String,
+  );
+}
+
+@immutable
+class DnsQueryResult {
+  final int rcode;
+  final List<DnsQuestionDto> questions;
+  final bool truncated;
+  final bool recursionDesired;
+  final bool recursionAvailable;
+  final bool authenticData;
+  final bool checkingDisabled;
+  final List<DnsRecordDto> answers;
+  final List<DnsRecordDto> authorities;
+  final List<DnsRecordDto> additionals;
+
+  const DnsQueryResult({
+    required this.rcode,
+    required this.questions,
+    required this.truncated,
+    required this.recursionDesired,
+    required this.recursionAvailable,
+    required this.authenticData,
+    required this.checkingDisabled,
+    required this.answers,
+    required this.authorities,
+    required this.additionals,
+  });
+
+  factory DnsQueryResult.fromJson(JsonMap json) => DnsQueryResult(
+    rcode: json['rcode'] as int,
+    questions: _list(json['questions'] as List, DnsQuestionDto.fromJson),
+    truncated: json['truncated'] as bool,
+    recursionDesired: json['recursionDesired'] as bool,
+    recursionAvailable: json['recursionAvailable'] as bool,
+    authenticData: json['authenticData'] as bool,
+    checkingDisabled: json['checkingDisabled'] as bool,
+    answers: _list(json['answers'] as List, DnsRecordDto.fromJson),
+    authorities: _list(json['authorities'] as List, DnsRecordDto.fromJson),
+    additionals: _list(json['additionals'] as List, DnsRecordDto.fromJson),
+  );
+}
+
+@immutable
 class DnsEntry {
   final int? id;
   final String domain;

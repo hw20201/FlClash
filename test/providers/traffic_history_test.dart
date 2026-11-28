@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fl_clash/core/api/core_api.dart';
@@ -10,22 +11,32 @@ import 'package:path/path.dart' as p;
 TrafficSample _sample(int upload, int download) =>
     TrafficSample(up: 0, down: 0, totalUp: upload, totalDown: download);
 
-ConnectionInfo _connection(int id, {int bytes = 0, int start = 1}) =>
-    ConnectionInfo(
-      id: id,
-      start: start,
-      network: 'tcp',
-      sourceIp: '127.0.0.1',
-      sourcePort: 1111,
-      host: 'CDN.example.',
-      destinationPort: 443,
-      inboundType: 'mixed',
-      chains: const ['Example node', 'Group'],
-      rule: 'RuleSet',
-      rulePayload: 'video',
-      upload: 0,
-      download: bytes,
-    );
+ConnectionInfo _connection(
+  int id, {
+  int bytes = 0,
+  int start = 1,
+  int upload = 0,
+  String? process,
+  int? uid,
+  String? processPath,
+}) => ConnectionInfo(
+  id: id,
+  start: start,
+  network: 'tcp',
+  sourceIp: '127.0.0.1',
+  sourcePort: 1111,
+  host: 'CDN.example.',
+  destinationPort: 443,
+  inboundType: 'mixed',
+  process: process,
+  uid: uid,
+  processPath: processPath,
+  chains: const ['Example node', 'Group'],
+  rule: 'RuleSet',
+  rulePayload: 'video',
+  upload: upload,
+  download: bytes,
+);
 
 void main() {
   late Directory dir;
@@ -228,18 +239,131 @@ void main() {
     );
   });
 
+  test('application ranks support old JSON and aggregate persisted days', () {
+    final legacy = decodeTrafficDay(
+      '2026-11-18',
+      '{"up":3,"down":7,"domains":{"example":{"down":7}}}',
+    );
+    final current = decodeTrafficDay(
+      '2026-11-19',
+      '{"applications":{"Browser":{"up":10,"down":20,"hits":2}}}',
+    );
+    final restored = decodeTrafficDay('2026-11-20', jsonEncode(current));
+    final snapshot = TrafficHistorySnapshot(
+      start: DateTime.utc(2026, 11, 18),
+      end: DateTime.utc(2026, 11, 20),
+      days: [legacy, current, restored],
+    );
+    expect(legacy.applications, isEmpty);
+    expect(legacy.upload + legacy.download, 10);
+    final rank = snapshot.ranks('application', byHits: true).single;
+    expect(rank.name, 'Browser');
+    expect((rank.upload, rank.download, rank.hits), (20, 40, 4));
+    expect(snapshot.attributedTotal('application'), 60);
+  });
+
+  test('application labels use metadata safely and survive reload', () async {
+    final cases = <(String?, int?, String?, String)>[
+      (' com.example.app ', 42, '/private/ignored', 'com.example.app'),
+      (' ', 42, '/private/ignored', 'UID 42'),
+      (null, 0, null, 'UID 0'),
+      (null, null, r'C:\private\browser.exe', 'browser.exe'),
+      (null, -1, '/private/browser', 'browser'),
+      (r'C:\private\terminal.exe', null, null, 'terminal.exe'),
+      (null, null, null, 'unknown'),
+      (
+        'https://private/app?token=secret',
+        null,
+        'file:///private/app',
+        'unknown',
+      ),
+    ];
+    final update = ConnectionsChanged(
+      ConnectionDelta(
+        opened: [
+          for (final (id, (process, uid, path, _)) in cases.indexed)
+            _connection(
+              id,
+              upload: 1,
+              bytes: 2,
+              process: process,
+              uid: uid,
+              processPath: path,
+            ),
+        ],
+      ),
+    );
+    store.recordConnections(update);
+    expect(day().ranks('application'), isEmpty);
+    await store.setRecording(true);
+    store.recordConnections(update);
+    await store.flush();
+    final persisted = await File(
+      p.join(dir.path, '${trafficDayKey(now)}.json'),
+    ).readAsString();
+    expect(persisted, isNot(contains('private')));
+    expect(persisted, isNot(contains('://')));
+    expect(persisted, isNot(contains('token=')));
+    store.dispose();
+    store = open();
+    await store.refresh();
+    final ranks = day().ranks('application', byHits: true);
+    expect(
+      ranks.map((rank) => rank.name).toSet(),
+      cases.map((c) => c.$4).toSet(),
+    );
+    expect(ranks.first.name, 'unknown');
+    expect(
+      (ranks.first.upload, ranks.first.download, ranks.first.hits),
+      (2, 4, 2),
+    );
+    await store.clear();
+    expect(day().ranks('application'), isEmpty);
+  });
+
+  test(
+    'application recording and decoding retain the 128 rank bound',
+    () async {
+      await store.setRecording(true);
+      store.recordConnections(
+        ConnectionsChanged(
+          ConnectionDelta(
+            opened: [
+              for (var id = 0; id <= trafficRankLimit; id++)
+                _connection(id, bytes: id + 1, process: 'app.$id'),
+            ],
+          ),
+        ),
+      );
+      final ranks = day().ranks('application', limit: trafficRankLimit + 1);
+      expect(ranks, hasLength(trafficRankLimit));
+      expect(ranks.first.name, 'app.$trafficRankLimit');
+      expect(ranks.any((rank) => rank.name == 'app.0'), isFalse);
+      final json =
+          jsonDecode(jsonEncode(day().days.single)) as Map<String, dynamic>;
+      final applications = json['applications'] as Map<String, dynamic>;
+      applications['overflow'] = {'up': 1, 'down': 2, 'hits': 1};
+      expect(
+        TrafficDay.fromJson(trafficDayKey(now), json).applications,
+        hasLength(trafficRankLimit),
+      );
+    },
+  );
+
   test(
     'baselines existing connections and attributes new bytes once',
     () async {
       await store.setRecording(true);
       store.recordConnections(
-        ConnectionsReset(ConnectionSnapshot([_connection(1, bytes: 1000)])),
+        ConnectionsReset(
+          ConnectionSnapshot([_connection(1, bytes: 1000, process: 'Browser')]),
+        ),
         profile: 'Profile A',
       );
       store.recordConnections(
         ConnectionsChanged(
           ConnectionDelta(
-            opened: [_connection(2, bytes: 20)],
+            opened: [_connection(2, bytes: 20, process: 'Browser')],
             counters: const [
               ConnectionCounter(id: 1, upload: 10, download: 1050),
               ConnectionCounter(id: 2, upload: 5, download: 25),
@@ -250,7 +374,9 @@ void main() {
         profile: 'Profile B',
       );
       store.recordConnections(
-        ConnectionsReset(ConnectionSnapshot([_connection(1, bytes: 1050)])),
+        ConnectionsReset(
+          ConnectionSnapshot([_connection(1, bytes: 1050, process: 'Other')]),
+        ),
         profile: 'Profile C',
       );
       store.recordConnections(
@@ -273,6 +399,32 @@ void main() {
       expect(rule.ruleType, 'RuleSet');
       expect(rule.hits, 1);
       expect(snapshot.ruleHits, 1);
+      const counter = ConnectionsChanged(
+        ConnectionDelta(
+          counters: [ConnectionCounter(id: 1, upload: 10, download: 1075)],
+        ),
+      );
+      store.recordConnections(counter);
+      store.recordConnections(counter);
+      final application = day().ranks('application').single;
+      expect(application.name, 'Browser');
+      expect(
+        (application.upload, application.download, application.hits),
+        (25, 100, 1),
+      );
+      store.recordConnections(
+        ConnectionsChanged(
+          ConnectionDelta(
+            opened: [
+              _connection(1, start: 2, upload: 2, bytes: 3, process: 'Other'),
+            ],
+            counters: const [ConnectionCounter(id: 1, upload: 4, download: 7)],
+          ),
+        ),
+      );
+      final other = day().ranks('application').last;
+      expect(other.name, 'Other');
+      expect((other.upload, other.download, other.hits), (4, 7, 1));
     },
   );
 

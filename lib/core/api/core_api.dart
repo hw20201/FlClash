@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:fl_clash/enum/enum.dart';
 
+import 'cancellation.dart';
 import 'dto.dart';
+
+export 'cancellation.dart';
 
 /// The options `config.apply` and `config.patch` carry to the Core.
 final class CoreOptionsArg {
@@ -294,6 +297,13 @@ abstract interface class CoreApi {
   });
 
   Future<void> clearDnsCache();
+
+  Future<DnsQueryResult> queryDns(
+    String name, {
+    String type = 'A',
+    Duration? timeout,
+    CoreCancellationToken? cancellation,
+  });
 
   Stream<List<LogEntry>> watchLogs({LogLevel level = LogLevel.debug});
 

@@ -422,6 +422,20 @@ final class RpcCoreApi implements CoreApi {
   Future<void> clearDnsCache() => _command('dns.clearCache');
 
   @override
+  Future<DnsQueryResult> queryDns(
+    String name, {
+    String type = 'A',
+    Duration? timeout,
+    CoreCancellationToken? cancellation,
+  }) => client.call(
+    'dns.query',
+    params: {'name': name, 'qtype': type},
+    decode: (r) => DnsQueryResult.fromJson(_object(r)),
+    timeout: timeout,
+    cancellation: cancellation,
+  );
+
+  @override
   Stream<List<LogEntry>> watchLogs({LogLevel level = LogLevel.debug}) {
     return client
         .watch<Object?, LogEntry>(

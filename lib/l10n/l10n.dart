@@ -216,6 +216,402 @@ abstract class AppLocalizations {
   /// **'Resources'**
   String get resources;
 
+  /// No description provided for @networkToolbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Toolbox'**
+  String get networkToolbox;
+
+  /// No description provided for @networkToolboxDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS, diagnostics and traffic in one place'**
+  String get networkToolboxDesc;
+
+  /// No description provided for @toolboxTrafficDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage, trends and application rankings'**
+  String get toolboxTrafficDesc;
+
+  /// No description provided for @dnsLookup.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS lookup'**
+  String get dnsLookup;
+
+  /// No description provided for @dnsLookupDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Query records with the current Core resolver'**
+  String get dnsLookupDesc;
+
+  /// No description provided for @dnsLookupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Domain'**
+  String get dnsLookupName;
+
+  /// No description provided for @dnsLookupNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'example.com'**
+  String get dnsLookupNameHint;
+
+  /// No description provided for @dnsLookupRecordType.
+  ///
+  /// In en, this message translates to:
+  /// **'Record type'**
+  String get dnsLookupRecordType;
+
+  /// No description provided for @dnsLookupRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Query'**
+  String get dnsLookupRun;
+
+  /// No description provided for @dnsLookupQuerying.
+  ///
+  /// In en, this message translates to:
+  /// **'Querying…'**
+  String get dnsLookupQuerying;
+
+  /// No description provided for @dnsLookupResolver.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Core resolver'**
+  String get dnsLookupResolver;
+
+  /// No description provided for @dnsLookupResolverDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the current DNS servers, policies and cache; bypasses client hosts and Fake-IP.'**
+  String get dnsLookupResolverDesc;
+
+  /// No description provided for @dnsLookupMetadataUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This API does not identify the upstream or cache hit for this query.'**
+  String get dnsLookupMetadataUnavailable;
+
+  /// No description provided for @dnsLookupCancelNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling stops waiting; shared DNS work may continue in the Core.'**
+  String get dnsLookupCancelNote;
+
+  /// No description provided for @dnsLookupEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start with a domain'**
+  String get dnsLookupEmptyTitle;
+
+  /// No description provided for @dnsLookupEmptyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Query DNS records, TTL and response status.'**
+  String get dnsLookupEmptyDesc;
+
+  /// No description provided for @dnsLookupInvalidName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an ASCII or Punycode domain, without a URL, port or path.'**
+  String get dnsLookupInvalidName;
+
+  /// No description provided for @dnsLookupTimedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'The DNS query timed out. You can try again.'**
+  String get dnsLookupTimedOut;
+
+  /// No description provided for @dnsLookupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The resolver could not complete this query.'**
+  String get dnsLookupFailed;
+
+  /// No description provided for @dnsLookupUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply a profile and wait for the Core to connect.'**
+  String get dnsLookupUnavailable;
+
+  /// No description provided for @dnsLookupCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Query cancelled'**
+  String get dnsLookupCancelled;
+
+  /// No description provided for @dnsLookupStale.
+  ///
+  /// In en, this message translates to:
+  /// **'The configuration or network changed. Query again for current results.'**
+  String get dnsLookupStale;
+
+  /// No description provided for @dnsLookupNoRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records of this type were returned.'**
+  String get dnsLookupNoRecords;
+
+  /// No description provided for @dnsLookupNameNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'The domain does not exist (NXDOMAIN).'**
+  String get dnsLookupNameNotFound;
+
+  /// No description provided for @dnsLookupResponseError.
+  ///
+  /// In en, this message translates to:
+  /// **'The DNS response reports an error.'**
+  String get dnsLookupResponseError;
+
+  /// No description provided for @dnsLookupAuthorities.
+  ///
+  /// In en, this message translates to:
+  /// **'Authority records'**
+  String get dnsLookupAuthorities;
+
+  /// No description provided for @dnsLookupAdditionals.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional records'**
+  String get dnsLookupAdditionals;
+
+  /// No description provided for @dnsLookupFlags.
+  ///
+  /// In en, this message translates to:
+  /// **'Response flags'**
+  String get dnsLookupFlags;
+
+  /// No description provided for @dnsLookupTtl.
+  ///
+  /// In en, this message translates to:
+  /// **'TTL (seconds)'**
+  String get dnsLookupTtl;
+
+  /// No description provided for @dnsLookupCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy report'**
+  String get dnsLookupCopy;
+
+  /// No description provided for @networkDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Network diagnostics'**
+  String get networkDiagnostics;
+
+  /// No description provided for @networkDiagnosticsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit addresses, DNS, traffic and routing'**
+  String get networkDiagnosticsDesc;
+
+  /// No description provided for @diagnosticsExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get diagnosticsExit;
+
+  /// No description provided for @diagnosticsPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Routing'**
+  String get diagnosticsPolicy;
+
+  /// No description provided for @diagnosticsRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Run diagnostics'**
+  String get diagnosticsRun;
+
+  /// No description provided for @diagnosticsNotRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to check'**
+  String get diagnosticsNotRun;
+
+  /// No description provided for @diagnosticsOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Start the connection to inspect its route'**
+  String get diagnosticsOffline;
+
+  /// No description provided for @diagnosticsCurrentRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Current route'**
+  String get diagnosticsCurrentRoute;
+
+  /// No description provided for @diagnosticsObservedDns.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed DNS'**
+  String get diagnosticsObservedDns;
+
+  /// No description provided for @diagnosticsDnsUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not externally verified'**
+  String get diagnosticsDnsUnverified;
+
+  /// No description provided for @diagnosticsDnsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'These are DNS requests observed by the Core. They show the upstream used, but do not prove the absence of DNS leaks.'**
+  String get diagnosticsDnsNote;
+
+  /// No description provided for @diagnosticsNoDns.
+  ///
+  /// In en, this message translates to:
+  /// **'No DNS requests observed yet'**
+  String get diagnosticsNoDns;
+
+  /// No description provided for @diagnosticsAsn.
+  ///
+  /// In en, this message translates to:
+  /// **'ASN'**
+  String get diagnosticsAsn;
+
+  /// No description provided for @diagnosticsOrganization.
+  ///
+  /// In en, this message translates to:
+  /// **'Network operator'**
+  String get diagnosticsOrganization;
+
+  /// No description provided for @diagnosticsCheckedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked at'**
+  String get diagnosticsCheckedAt;
+
+  /// No description provided for @diagnosticsDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get diagnosticsDetails;
+
+  /// No description provided for @diagnosticsPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Partial result'**
+  String get diagnosticsPartial;
+
+  /// No description provided for @diagnosticsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get diagnosticsAvailable;
+
+  /// No description provided for @diagnosticsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get diagnosticsUnavailable;
+
+  /// No description provided for @diagnosticsInvalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid response'**
+  String get diagnosticsInvalidResponse;
+
+  /// No description provided for @diagnosticsFamilyMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Address family mismatch'**
+  String get diagnosticsFamilyMismatch;
+
+  /// No description provided for @diagnosticsUnknownError.
+  ///
+  /// In en, this message translates to:
+  /// **'Request failed'**
+  String get diagnosticsUnknownError;
+
+  /// No description provided for @diagnosticsConnectError.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection failed'**
+  String get diagnosticsConnectError;
+
+  /// No description provided for @diagnosticsDnsError.
+  ///
+  /// In en, this message translates to:
+  /// **'DNS failed'**
+  String get diagnosticsDnsError;
+
+  /// No description provided for @diagnosticsTlsError.
+  ///
+  /// In en, this message translates to:
+  /// **'TLS failed'**
+  String get diagnosticsTlsError;
+
+  /// No description provided for @diagnosticsHttpError.
+  ///
+  /// In en, this message translates to:
+  /// **'HTTP failed'**
+  String get diagnosticsHttpError;
+
+  /// No description provided for @diagnosticsTestObject.
+  ///
+  /// In en, this message translates to:
+  /// **'Test target'**
+  String get diagnosticsTestObject;
+
+  /// No description provided for @diagnosticsChooseGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a group'**
+  String get diagnosticsChooseGroup;
+
+  /// No description provided for @diagnosticsChooseNode.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a node'**
+  String get diagnosticsChooseNode;
+
+  /// No description provided for @diagnosticsTestDelay.
+  ///
+  /// In en, this message translates to:
+  /// **'Test delay'**
+  String get diagnosticsTestDelay;
+
+  /// No description provided for @diagnosticsDelayNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses a fresh Core URL test without changing your selection.'**
+  String get diagnosticsDelayNote;
+
+  /// No description provided for @diagnosticsRouteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The chain below belongs to the latest exit check and follows the active rules.'**
+  String get diagnosticsRouteNote;
+
+  /// No description provided for @diagnosticsAttributionNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection details are sampled. Missing process data and short connections can leave part of the traffic unattributed.'**
+  String get diagnosticsAttributionNote;
+
+  /// No description provided for @diagnosticsNoProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'No active profile'**
+  String get diagnosticsNoProfile;
+
+  /// No description provided for @diagnosticsChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking'**
+  String get diagnosticsChecking;
+
+  /// No description provided for @diagnosticsCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get diagnosticsCancelled;
+
   /// No description provided for @trafficUsage.
   ///
   /// In en, this message translates to:

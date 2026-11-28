@@ -67,6 +67,216 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resources => 'Resources';
 
   @override
+  String get networkToolbox => 'Toolbox';
+
+  @override
+  String get networkToolboxDesc => 'DNS, diagnostics and traffic in one place';
+
+  @override
+  String get toolboxTrafficDesc => 'Usage, trends and application rankings';
+
+  @override
+  String get dnsLookup => 'DNS lookup';
+
+  @override
+  String get dnsLookupDesc => 'Query records with the current Core resolver';
+
+  @override
+  String get dnsLookupName => 'Domain';
+
+  @override
+  String get dnsLookupNameHint => 'example.com';
+
+  @override
+  String get dnsLookupRecordType => 'Record type';
+
+  @override
+  String get dnsLookupRun => 'Query';
+
+  @override
+  String get dnsLookupQuerying => 'Querying…';
+
+  @override
+  String get dnsLookupResolver => 'Current Core resolver';
+
+  @override
+  String get dnsLookupResolverDesc =>
+      'Uses the current DNS servers, policies and cache; bypasses client hosts and Fake-IP.';
+
+  @override
+  String get dnsLookupMetadataUnavailable =>
+      'This API does not identify the upstream or cache hit for this query.';
+
+  @override
+  String get dnsLookupCancelNote =>
+      'Cancelling stops waiting; shared DNS work may continue in the Core.';
+
+  @override
+  String get dnsLookupEmptyTitle => 'Start with a domain';
+
+  @override
+  String get dnsLookupEmptyDesc =>
+      'Query DNS records, TTL and response status.';
+
+  @override
+  String get dnsLookupInvalidName =>
+      'Enter an ASCII or Punycode domain, without a URL, port or path.';
+
+  @override
+  String get dnsLookupTimedOut => 'The DNS query timed out. You can try again.';
+
+  @override
+  String get dnsLookupFailed => 'The resolver could not complete this query.';
+
+  @override
+  String get dnsLookupUnavailable =>
+      'Apply a profile and wait for the Core to connect.';
+
+  @override
+  String get dnsLookupCancelled => 'Query cancelled';
+
+  @override
+  String get dnsLookupStale =>
+      'The configuration or network changed. Query again for current results.';
+
+  @override
+  String get dnsLookupNoRecords => 'No records of this type were returned.';
+
+  @override
+  String get dnsLookupNameNotFound => 'The domain does not exist (NXDOMAIN).';
+
+  @override
+  String get dnsLookupResponseError => 'The DNS response reports an error.';
+
+  @override
+  String get dnsLookupAuthorities => 'Authority records';
+
+  @override
+  String get dnsLookupAdditionals => 'Additional records';
+
+  @override
+  String get dnsLookupFlags => 'Response flags';
+
+  @override
+  String get dnsLookupTtl => 'TTL (seconds)';
+
+  @override
+  String get dnsLookupCopy => 'Copy report';
+
+  @override
+  String get networkDiagnostics => 'Network diagnostics';
+
+  @override
+  String get networkDiagnosticsDesc =>
+      'Exit addresses, DNS, traffic and routing';
+
+  @override
+  String get diagnosticsExit => 'Exit';
+
+  @override
+  String get diagnosticsPolicy => 'Routing';
+
+  @override
+  String get diagnosticsRun => 'Run diagnostics';
+
+  @override
+  String get diagnosticsNotRun => 'Ready to check';
+
+  @override
+  String get diagnosticsOffline => 'Start the connection to inspect its route';
+
+  @override
+  String get diagnosticsCurrentRoute => 'Current route';
+
+  @override
+  String get diagnosticsObservedDns => 'Observed DNS';
+
+  @override
+  String get diagnosticsDnsUnverified => 'Not externally verified';
+
+  @override
+  String get diagnosticsDnsNote =>
+      'These are DNS requests observed by the Core. They show the upstream used, but do not prove the absence of DNS leaks.';
+
+  @override
+  String get diagnosticsNoDns => 'No DNS requests observed yet';
+
+  @override
+  String get diagnosticsAsn => 'ASN';
+
+  @override
+  String get diagnosticsOrganization => 'Network operator';
+
+  @override
+  String get diagnosticsCheckedAt => 'Checked at';
+
+  @override
+  String get diagnosticsDetails => 'Details';
+
+  @override
+  String get diagnosticsPartial => 'Partial result';
+
+  @override
+  String get diagnosticsAvailable => 'Available';
+
+  @override
+  String get diagnosticsUnavailable => 'Unavailable';
+
+  @override
+  String get diagnosticsInvalidResponse => 'Invalid response';
+
+  @override
+  String get diagnosticsFamilyMismatch => 'Address family mismatch';
+
+  @override
+  String get diagnosticsUnknownError => 'Request failed';
+
+  @override
+  String get diagnosticsConnectError => 'Connection failed';
+
+  @override
+  String get diagnosticsDnsError => 'DNS failed';
+
+  @override
+  String get diagnosticsTlsError => 'TLS failed';
+
+  @override
+  String get diagnosticsHttpError => 'HTTP failed';
+
+  @override
+  String get diagnosticsTestObject => 'Test target';
+
+  @override
+  String get diagnosticsChooseGroup => 'Choose a group';
+
+  @override
+  String get diagnosticsChooseNode => 'Choose a node';
+
+  @override
+  String get diagnosticsTestDelay => 'Test delay';
+
+  @override
+  String get diagnosticsDelayNote =>
+      'Uses a fresh Core URL test without changing your selection.';
+
+  @override
+  String get diagnosticsRouteNote =>
+      'The chain below belongs to the latest exit check and follows the active rules.';
+
+  @override
+  String get diagnosticsAttributionNote =>
+      'Connection details are sampled. Missing process data and short connections can leave part of the traffic unattributed.';
+
+  @override
+  String get diagnosticsNoProfile => 'No active profile';
+
+  @override
+  String get diagnosticsChecking => 'Checking';
+
+  @override
+  String get diagnosticsCancelled => 'Cancelled';
+
+  @override
   String get trafficUsage => 'Traffic usage';
 
   @override

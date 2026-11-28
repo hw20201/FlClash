@@ -135,7 +135,7 @@ class Bootstrap {
         );
     final profiles = await database.profilesDao.query().get();
     container.read(profilesProvider.notifier).reorder(profiles);
-    loadAppLocalizations(
+    await initializeAppLocalizations(
       getLocaleForString(config.appSettingProps.locale) ??
           WidgetsBinding.instance.platformDispatcher.locale,
     );

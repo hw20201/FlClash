@@ -67,6 +67,211 @@ class AppLocalizationsKo extends AppLocalizations {
   String get resources => '리소스';
 
   @override
+  String get networkToolbox => '도구 모음';
+
+  @override
+  String get networkToolboxDesc => 'DNS, 진단, 트래픽을 한곳에서 확인';
+
+  @override
+  String get toolboxTrafficDesc => '사용량, 추이 및 앱별 순위';
+
+  @override
+  String get dnsLookup => 'DNS 조회';
+
+  @override
+  String get dnsLookupDesc => '현재 코어 리졸버로 레코드 조회';
+
+  @override
+  String get dnsLookupName => '도메인';
+
+  @override
+  String get dnsLookupNameHint => 'example.com';
+
+  @override
+  String get dnsLookupRecordType => '레코드 유형';
+
+  @override
+  String get dnsLookupRun => '조회';
+
+  @override
+  String get dnsLookupQuerying => '조회 중…';
+
+  @override
+  String get dnsLookupResolver => '현재 코어 리졸버';
+
+  @override
+  String get dnsLookupResolverDesc =>
+      '현재 DNS 서버, 정책 및 캐시를 사용하며 클라이언트 hosts와 Fake-IP는 거치지 않습니다.';
+
+  @override
+  String get dnsLookupMetadataUnavailable =>
+      '이 API는 이번 조회의 업스트림 서버와 캐시 적중 여부를 제공하지 않습니다.';
+
+  @override
+  String get dnsLookupCancelNote =>
+      '취소하면 대기가 중단됩니다. 코어의 공유 DNS 작업은 계속될 수 있습니다.';
+
+  @override
+  String get dnsLookupEmptyTitle => '도메인을 입력해 시작하세요';
+
+  @override
+  String get dnsLookupEmptyDesc => 'DNS 레코드, TTL 및 응답 상태를 조회합니다.';
+
+  @override
+  String get dnsLookupInvalidName =>
+      'URL, 포트 또는 경로를 제외한 ASCII 또는 Punycode 도메인을 입력하세요.';
+
+  @override
+  String get dnsLookupTimedOut => 'DNS 조회 시간이 초과되었습니다. 다시 시도할 수 있습니다.';
+
+  @override
+  String get dnsLookupFailed => '리졸버가 이번 조회를 완료하지 못했습니다.';
+
+  @override
+  String get dnsLookupUnavailable => '프로필을 적용하고 코어가 연결될 때까지 기다려 주세요.';
+
+  @override
+  String get dnsLookupCancelled => '조회 취소됨';
+
+  @override
+  String get dnsLookupStale => '설정 또는 네트워크가 변경되었습니다. 최신 결과를 보려면 다시 조회하세요.';
+
+  @override
+  String get dnsLookupNoRecords => '이 유형의 레코드가 반환되지 않았습니다.';
+
+  @override
+  String get dnsLookupNameNotFound => '도메인이 존재하지 않습니다(NXDOMAIN).';
+
+  @override
+  String get dnsLookupResponseError => 'DNS 응답에 오류가 보고되었습니다.';
+
+  @override
+  String get dnsLookupAuthorities => '권한 레코드';
+
+  @override
+  String get dnsLookupAdditionals => '추가 레코드';
+
+  @override
+  String get dnsLookupFlags => '응답 플래그';
+
+  @override
+  String get dnsLookupTtl => 'TTL(초)';
+
+  @override
+  String get dnsLookupCopy => '보고서 복사';
+
+  @override
+  String get networkDiagnostics => '네트워크 진단';
+
+  @override
+  String get networkDiagnosticsDesc => '출구 주소, DNS, 트래픽 및 라우팅';
+
+  @override
+  String get diagnosticsExit => '출구';
+
+  @override
+  String get diagnosticsPolicy => '라우팅 경로';
+
+  @override
+  String get diagnosticsRun => '진단 시작';
+
+  @override
+  String get diagnosticsNotRun => '진단 대기 중';
+
+  @override
+  String get diagnosticsOffline => '연결을 시작하면 경로를 확인할 수 있습니다';
+
+  @override
+  String get diagnosticsCurrentRoute => '현재 경로';
+
+  @override
+  String get diagnosticsObservedDns => '관측된 DNS';
+
+  @override
+  String get diagnosticsDnsUnverified => '외부 검증 안 됨';
+
+  @override
+  String get diagnosticsDnsNote =>
+      '코어에서 관측한 DNS 요청입니다. 사용된 업스트림 DNS 서버를 보여 주지만, DNS 누출이 없다는 것을 증명하지는 않습니다.';
+
+  @override
+  String get diagnosticsNoDns => '아직 관측된 DNS 요청이 없습니다';
+
+  @override
+  String get diagnosticsAsn => 'ASN';
+
+  @override
+  String get diagnosticsOrganization => '네트워크 운영자';
+
+  @override
+  String get diagnosticsCheckedAt => '확인 시간';
+
+  @override
+  String get diagnosticsDetails => '세부 정보';
+
+  @override
+  String get diagnosticsPartial => '일부 결과';
+
+  @override
+  String get diagnosticsAvailable => '사용 가능';
+
+  @override
+  String get diagnosticsUnavailable => '사용 불가';
+
+  @override
+  String get diagnosticsInvalidResponse => '유효하지 않은 응답';
+
+  @override
+  String get diagnosticsFamilyMismatch => '주소 체계 불일치';
+
+  @override
+  String get diagnosticsUnknownError => '요청 실패';
+
+  @override
+  String get diagnosticsConnectError => '연결 실패';
+
+  @override
+  String get diagnosticsDnsError => 'DNS 조회 실패';
+
+  @override
+  String get diagnosticsTlsError => 'TLS 핸드셰이크 실패';
+
+  @override
+  String get diagnosticsHttpError => 'HTTP 요청 실패';
+
+  @override
+  String get diagnosticsTestObject => '테스트 대상';
+
+  @override
+  String get diagnosticsChooseGroup => '그룹 선택';
+
+  @override
+  String get diagnosticsChooseNode => '노드 선택';
+
+  @override
+  String get diagnosticsTestDelay => '지연 시간 테스트';
+
+  @override
+  String get diagnosticsDelayNote => '현재 선택을 바꾸지 않고 코어 URL 테스트를 새로 실행합니다.';
+
+  @override
+  String get diagnosticsRouteNote =>
+      '아래 경로는 가장 최근 출구 진단 요청의 경로이며 현재 활성화된 규칙을 따릅니다.';
+
+  @override
+  String get diagnosticsAttributionNote =>
+      '연결 세부 정보는 표본으로 수집됩니다. 프로세스 정보가 없거나 연결이 짧으면 일부 트래픽을 분류하지 못할 수 있습니다.';
+
+  @override
+  String get diagnosticsNoProfile => '활성 프로필 없음';
+
+  @override
+  String get diagnosticsChecking => '확인 중';
+
+  @override
+  String get diagnosticsCancelled => '취소됨';
+
+  @override
   String get trafficUsage => '트래픽 사용량';
 
   @override

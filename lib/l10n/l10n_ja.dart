@@ -67,6 +67,210 @@ class AppLocalizationsJa extends AppLocalizations {
   String get resources => 'リソース';
 
   @override
+  String get networkToolbox => 'ツールボックス';
+
+  @override
+  String get networkToolboxDesc => 'DNS、診断、トラフィック統計をひとつに';
+
+  @override
+  String get toolboxTrafficDesc => '使用量、推移、アプリ別ランキング';
+
+  @override
+  String get dnsLookup => 'DNS 検索';
+
+  @override
+  String get dnsLookupDesc => '現在のコアリゾルバーでレコードを照会';
+
+  @override
+  String get dnsLookupName => 'ドメイン';
+
+  @override
+  String get dnsLookupNameHint => 'example.com';
+
+  @override
+  String get dnsLookupRecordType => 'レコードの種類';
+
+  @override
+  String get dnsLookupRun => '照会';
+
+  @override
+  String get dnsLookupQuerying => '照会中…';
+
+  @override
+  String get dnsLookupResolver => '現在のコアリゾルバー';
+
+  @override
+  String get dnsLookupResolverDesc =>
+      '現在の DNS サーバー、ポリシー、キャッシュを使用します。クライアントの hosts と Fake-IP は経由しません。';
+
+  @override
+  String get dnsLookupMetadataUnavailable =>
+      'この API は、今回の照会で使用した上流 DNS やキャッシュヒットの有無を返しません。';
+
+  @override
+  String get dnsLookupCancelNote =>
+      'キャンセルすると待機を停止します。コア内の共有 DNS 処理は継続する場合があります。';
+
+  @override
+  String get dnsLookupEmptyTitle => 'ドメインを入力して開始';
+
+  @override
+  String get dnsLookupEmptyDesc => 'DNS レコード、TTL、応答ステータスを照会します。';
+
+  @override
+  String get dnsLookupInvalidName =>
+      'URL、ポート、パスを含まない ASCII または Punycode のドメインを入力してください。';
+
+  @override
+  String get dnsLookupTimedOut => 'DNS 照会がタイムアウトしました。再試行できます。';
+
+  @override
+  String get dnsLookupFailed => 'リゾルバーが今回の照会を完了できませんでした。';
+
+  @override
+  String get dnsLookupUnavailable => 'プロファイルを適用し、コアが接続されるまでお待ちください。';
+
+  @override
+  String get dnsLookupCancelled => '照会をキャンセルしました';
+
+  @override
+  String get dnsLookupStale => '設定またはネットワークが変更されました。最新の結果を取得するには再度照会してください。';
+
+  @override
+  String get dnsLookupNoRecords => 'この種類のレコードは返されませんでした。';
+
+  @override
+  String get dnsLookupNameNotFound => 'ドメインが存在しません（NXDOMAIN）。';
+
+  @override
+  String get dnsLookupResponseError => 'DNS 応答でエラーが報告されました。';
+
+  @override
+  String get dnsLookupAuthorities => '権威レコード';
+
+  @override
+  String get dnsLookupAdditionals => '追加レコード';
+
+  @override
+  String get dnsLookupFlags => '応答フラグ';
+
+  @override
+  String get dnsLookupTtl => 'TTL（秒）';
+
+  @override
+  String get dnsLookupCopy => 'レポートをコピー';
+
+  @override
+  String get networkDiagnostics => 'ネットワーク診断';
+
+  @override
+  String get networkDiagnosticsDesc => '出口アドレス、DNS、トラフィックとルーティング';
+
+  @override
+  String get diagnosticsExit => '出口';
+
+  @override
+  String get diagnosticsPolicy => 'ルーティング経路';
+
+  @override
+  String get diagnosticsRun => '診断を開始';
+
+  @override
+  String get diagnosticsNotRun => '診断待ち';
+
+  @override
+  String get diagnosticsOffline => '接続を開始すると経路を確認できます';
+
+  @override
+  String get diagnosticsCurrentRoute => '現在の経路';
+
+  @override
+  String get diagnosticsObservedDns => '観測された DNS';
+
+  @override
+  String get diagnosticsDnsUnverified => '外部からは未検証';
+
+  @override
+  String get diagnosticsDnsNote =>
+      'コアが観測した DNS リクエストです。使用された上流 DNS は確認できますが、DNS リークがないことを証明するものではありません。';
+
+  @override
+  String get diagnosticsNoDns => 'DNS リクエストはまだ観測されていません';
+
+  @override
+  String get diagnosticsAsn => 'ASN';
+
+  @override
+  String get diagnosticsOrganization => 'ネットワーク事業者';
+
+  @override
+  String get diagnosticsCheckedAt => '確認日時';
+
+  @override
+  String get diagnosticsDetails => '詳細情報';
+
+  @override
+  String get diagnosticsPartial => '一部の結果';
+
+  @override
+  String get diagnosticsAvailable => '利用可能';
+
+  @override
+  String get diagnosticsUnavailable => '利用不可';
+
+  @override
+  String get diagnosticsInvalidResponse => '無効な応答';
+
+  @override
+  String get diagnosticsFamilyMismatch => 'アドレスファミリーの不一致';
+
+  @override
+  String get diagnosticsUnknownError => 'リクエスト失敗';
+
+  @override
+  String get diagnosticsConnectError => '接続失敗';
+
+  @override
+  String get diagnosticsDnsError => 'DNS 名前解決失敗';
+
+  @override
+  String get diagnosticsTlsError => 'TLS ハンドシェイク失敗';
+
+  @override
+  String get diagnosticsHttpError => 'HTTP リクエスト失敗';
+
+  @override
+  String get diagnosticsTestObject => 'テスト対象';
+
+  @override
+  String get diagnosticsChooseGroup => 'グループを選択';
+
+  @override
+  String get diagnosticsChooseNode => 'ノードを選択';
+
+  @override
+  String get diagnosticsTestDelay => '遅延をテスト';
+
+  @override
+  String get diagnosticsDelayNote => '現在の選択を変更せず、コアの URL テストを新たに実行します。';
+
+  @override
+  String get diagnosticsRouteNote => '以下の経路は直近の出口診断リクエストのもので、現在有効なルールに従っています。';
+
+  @override
+  String get diagnosticsAttributionNote =>
+      '接続の詳細はサンプリングされています。プロセス情報の欠落や短時間の接続により、一部のトラフィックが分類されない場合があります。';
+
+  @override
+  String get diagnosticsNoProfile => '有効なプロファイルがありません';
+
+  @override
+  String get diagnosticsChecking => '確認中';
+
+  @override
+  String get diagnosticsCancelled => 'キャンセル済み';
+
+  @override
   String get trafficUsage => 'トラフィック統計';
 
   @override

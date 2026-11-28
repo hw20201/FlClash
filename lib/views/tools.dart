@@ -9,6 +9,7 @@ import 'package:fl_clash/views/access.dart';
 import 'package:fl_clash/views/backup_and_restore.dart';
 import 'package:fl_clash/views/config/general.dart';
 import 'package:fl_clash/views/hotkey.dart';
+import 'package:fl_clash/views/network_toolbox.dart';
 import 'package:fl_clash/widgets/widgets.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,6 +70,13 @@ class _ToolViewState extends ConsumerState<ToolsView> {
         if (system.isDesktop) const _HotkeyItem(),
         if (system.isAndroid) const _AccessItem(),
         const _BackupItem(),
+        ListItem.open(
+          key: const ValueKey('settings-network-toolbox'),
+          leading: const GlyphIcon(AppGlyphs.tools),
+          title: Text(context.appLocalizations.networkToolbox),
+          subtitle: Text(context.appLocalizations.networkToolboxDesc),
+          widget: const NetworkToolboxView(),
+        ),
         const _AdvancedConfigItem(),
         const _GeneralItem(),
       ],

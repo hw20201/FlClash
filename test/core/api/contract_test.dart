@@ -18,7 +18,6 @@ const _notCalledByDart = {
   'tun.start',
   'tun.stop',
   'dns.flushFakeIp',
-  'dns.query',
   'provider.healthCheck',
   'proxy.states',
 };
@@ -138,6 +137,12 @@ final Map<String, _Call> _calls = {
   'network.update': (api) =>
       api.updateNetwork(dnsServers: ['1.1.1.1'], interfaceChanged: true),
   'dns.clearCache': (api) => api.clearDnsCache(),
+  'dns.query': (api) => api.queryDns(
+    'example.com',
+    type: 'AAAA',
+    timeout: const Duration(seconds: 5),
+    cancellation: CoreCancellationToken(),
+  ),
   'log.watch': (api) => _first(api.watchLogs(level: LogLevel.info)),
   'dns.watch': (api) => _first(api.watchDns()),
   'route.watch': (api) => _first(api.watchRoute()),

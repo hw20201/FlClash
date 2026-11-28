@@ -67,6 +67,219 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resources => 'Ресурсы';
 
   @override
+  String get networkToolbox => 'Набор инструментов';
+
+  @override
+  String get networkToolboxDesc => 'DNS, диагностика и трафик в одном месте';
+
+  @override
+  String get toolboxTrafficDesc =>
+      'Использование, динамика и рейтинг приложений';
+
+  @override
+  String get dnsLookup => 'DNS-запрос';
+
+  @override
+  String get dnsLookupDesc => 'Запрос записей через текущий DNS-резолвер ядра';
+
+  @override
+  String get dnsLookupName => 'Домен';
+
+  @override
+  String get dnsLookupNameHint => 'example.com';
+
+  @override
+  String get dnsLookupRecordType => 'Тип записи';
+
+  @override
+  String get dnsLookupRun => 'Запросить';
+
+  @override
+  String get dnsLookupQuerying => 'Выполняется запрос…';
+
+  @override
+  String get dnsLookupResolver => 'Текущий DNS-резолвер ядра';
+
+  @override
+  String get dnsLookupResolverDesc =>
+      'Используются текущие DNS-серверы, политики и кэш; клиентские hosts и Fake-IP обходятся.';
+
+  @override
+  String get dnsLookupMetadataUnavailable =>
+      'Этот API не сообщает вышестоящий сервер и факт попадания в кэш для данного запроса.';
+
+  @override
+  String get dnsLookupCancelNote =>
+      'Отмена прекращает ожидание; общая обработка DNS в ядре может продолжаться.';
+
+  @override
+  String get dnsLookupEmptyTitle => 'Начните с домена';
+
+  @override
+  String get dnsLookupEmptyDesc =>
+      'Запрашивайте DNS-записи, TTL и статус ответа.';
+
+  @override
+  String get dnsLookupInvalidName =>
+      'Введите домен в ASCII или Punycode без URL, порта и пути.';
+
+  @override
+  String get dnsLookupTimedOut =>
+      'Время ожидания DNS-запроса истекло. Можно повторить попытку.';
+
+  @override
+  String get dnsLookupFailed => 'Резолверу не удалось завершить этот запрос.';
+
+  @override
+  String get dnsLookupUnavailable =>
+      'Примените профиль и дождитесь подключения ядра.';
+
+  @override
+  String get dnsLookupCancelled => 'Запрос отменён';
+
+  @override
+  String get dnsLookupStale =>
+      'Конфигурация или сеть изменилась. Повторите запрос для получения актуальных результатов.';
+
+  @override
+  String get dnsLookupNoRecords => 'Записи этого типа не возвращены.';
+
+  @override
+  String get dnsLookupNameNotFound => 'Домен не существует (NXDOMAIN).';
+
+  @override
+  String get dnsLookupResponseError => 'DNS-ответ сообщает об ошибке.';
+
+  @override
+  String get dnsLookupAuthorities => 'Авторитетные записи';
+
+  @override
+  String get dnsLookupAdditionals => 'Дополнительные записи';
+
+  @override
+  String get dnsLookupFlags => 'Флаги ответа';
+
+  @override
+  String get dnsLookupTtl => 'TTL (секунды)';
+
+  @override
+  String get dnsLookupCopy => 'Копировать отчёт';
+
+  @override
+  String get networkDiagnostics => 'Диагностика сети';
+
+  @override
+  String get networkDiagnosticsDesc =>
+      'Выходные адреса, DNS, трафик и маршрутизация';
+
+  @override
+  String get diagnosticsExit => 'Выход';
+
+  @override
+  String get diagnosticsPolicy => 'Маршрутизация';
+
+  @override
+  String get diagnosticsRun => 'Запустить диагностику';
+
+  @override
+  String get diagnosticsNotRun => 'Готово к проверке';
+
+  @override
+  String get diagnosticsOffline =>
+      'Установите соединение, чтобы проверить его маршрут';
+
+  @override
+  String get diagnosticsCurrentRoute => 'Текущий маршрут';
+
+  @override
+  String get diagnosticsObservedDns => 'Наблюдаемые DNS-запросы';
+
+  @override
+  String get diagnosticsDnsUnverified => 'Не проверено извне';
+
+  @override
+  String get diagnosticsDnsNote =>
+      'Это DNS-запросы, наблюдаемые ядром. Они показывают используемый вышестоящий DNS-сервер, но не доказывают отсутствие утечек DNS.';
+
+  @override
+  String get diagnosticsNoDns => 'DNS-запросы пока не наблюдались';
+
+  @override
+  String get diagnosticsAsn => 'ASN';
+
+  @override
+  String get diagnosticsOrganization => 'Оператор сети';
+
+  @override
+  String get diagnosticsCheckedAt => 'Время проверки';
+
+  @override
+  String get diagnosticsDetails => 'Подробности';
+
+  @override
+  String get diagnosticsPartial => 'Частичный результат';
+
+  @override
+  String get diagnosticsAvailable => 'Доступно';
+
+  @override
+  String get diagnosticsUnavailable => 'Недоступно';
+
+  @override
+  String get diagnosticsInvalidResponse => 'Некорректный ответ';
+
+  @override
+  String get diagnosticsFamilyMismatch => 'Несоответствие семейства адресов';
+
+  @override
+  String get diagnosticsUnknownError => 'Ошибка запроса';
+
+  @override
+  String get diagnosticsConnectError => 'Ошибка соединения';
+
+  @override
+  String get diagnosticsDnsError => 'Ошибка разрешения DNS';
+
+  @override
+  String get diagnosticsTlsError => 'Ошибка рукопожатия TLS';
+
+  @override
+  String get diagnosticsHttpError => 'Ошибка HTTP-запроса';
+
+  @override
+  String get diagnosticsTestObject => 'Объект проверки';
+
+  @override
+  String get diagnosticsChooseGroup => 'Выберите группу';
+
+  @override
+  String get diagnosticsChooseNode => 'Выберите узел';
+
+  @override
+  String get diagnosticsTestDelay => 'Проверить задержку';
+
+  @override
+  String get diagnosticsDelayNote =>
+      'Выполняется новая проверка URL через ядро без изменения текущего выбора.';
+
+  @override
+  String get diagnosticsRouteNote =>
+      'Цепочка ниже относится к последней проверке выходного адреса и соответствует действующим правилам.';
+
+  @override
+  String get diagnosticsAttributionNote =>
+      'Сведения о соединениях собираются выборочно. Из-за отсутствия данных о процессе и коротких соединений часть трафика может остаться без категории.';
+
+  @override
+  String get diagnosticsNoProfile => 'Нет активного профиля';
+
+  @override
+  String get diagnosticsChecking => 'Проверка';
+
+  @override
+  String get diagnosticsCancelled => 'Отменено';
+
+  @override
   String get trafficUsage => 'Статистика трафика';
 
   @override

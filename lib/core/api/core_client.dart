@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:fl_clash/common/common.dart';
 import 'package:fl_clash/enum/enum.dart';
 
+import 'cancellation.dart';
 import 'dto.dart';
 import 'errors.dart';
 import 'frame_channel.dart';
@@ -75,8 +76,15 @@ class _Pending {
   final Completer<Object?> completer = Completer<Object?>();
   final Decoder<Object?> decode;
   Timer? timer;
+  void Function()? detachCancellation;
 
   _Pending(this.decode);
+
+  void dispose() {
+    timer?.cancel();
+    detachCancellation?.call();
+    detachCancellation = null;
+  }
 }
 
 typedef _Opened<S> = ({int sub, S? snapshot});
@@ -123,13 +131,27 @@ final class CoreClient {
   /// The last hello of the live session, null while there is none.
   HelloResult? get session => _session;
 
-  Future<HelloResult> ready([Duration? timeout]) async {
+  Future<HelloResult> ready([Duration? timeout]) => _ready(timeout);
+
+  Future<HelloResult> _ready(
+    Duration? timeout, {
+    CoreCancellationToken? cancellation,
+  }) async {
+    if (cancellation?.isCancelled ?? false) {
+      throw _cancelled();
+    }
     if (_closed) {
       throw _unavailable('Core client is closed', 'transport_disconnected');
     }
     final int generation;
     try {
-      generation = await _channel.waitUntilConnected(timeout ?? connectTimeout);
+      final wait = timeout ?? connectTimeout;
+      generation = cancellation == null
+          ? await _channel.waitUntilConnected(wait)
+          : await _withCancellation(
+              _channel.waitUntilConnected(wait),
+              cancellation,
+            );
     } on TimeoutException {
       throw _unavailable('Core is not connected', 'core_unavailable');
     } on CoreMethodException {
@@ -141,11 +163,16 @@ final class CoreClient {
         details: error.toString(),
       );
     }
+    if (cancellation?.isCancelled ?? false) {
+      throw _cancelled();
+    }
     if (_helloGeneration != generation || _hello == null) {
       _helloGeneration = generation;
       _hello = _sayHello(generation);
     }
-    return _hello!;
+    return cancellation == null
+        ? _hello!
+        : _withCancellation(_hello!, cancellation);
   }
 
   Future<HelloResult> _sayHello(int generation) async {
@@ -178,10 +205,20 @@ final class CoreClient {
     Object? params,
     required Decoder<T> decode,
     Duration? timeout,
+    CoreCancellationToken? cancellation,
   }) async {
     final wait = timeout ?? _defaultTimeout;
-    await ready(wait < connectTimeout ? wait : connectTimeout);
-    return _begin<T>(method, params, decode, wait).result;
+    await _ready(
+      wait < connectTimeout ? wait : connectTimeout,
+      cancellation: cancellation,
+    );
+    return _begin<T>(
+      method,
+      params,
+      decode,
+      wait,
+      cancellation: cancellation,
+    ).result;
   }
 
   /// Reads a stream's snapshot and unsubscribes at once.
@@ -237,8 +274,12 @@ final class CoreClient {
     String method,
     Object? params,
     Decoder<T> decode,
-    Duration timeout,
-  ) {
+    Duration timeout, {
+    CoreCancellationToken? cancellation,
+  }) {
+    if (cancellation?.isCancelled ?? false) {
+      return (id: 0, result: Future<T>.error(_cancelled()));
+    }
     if (_closed) {
       return (
         id: 0,
@@ -254,16 +295,31 @@ final class CoreClient {
       if (_pending.remove(id) == null) {
         return;
       }
+      pending.dispose();
       _notify('\$/cancel', {'id': id});
       pending.completer.completeError(
         TimeoutException('Core method $method timed out', timeout),
       );
     });
+    if (cancellation != null) {
+      void cancel() {
+        if (_pending.remove(id) == null) {
+          return;
+        }
+        pending.dispose();
+        _notify(r'$/cancel', {'id': id});
+        pending.completer.completeError(_cancelled());
+      }
+
+      pending.detachCancellation = () => cancellation.removeListener(cancel);
+      cancellation.addListener(cancel);
+    }
+
     void failed(Object error) {
       if (_pending.remove(id) == null) {
         return;
       }
-      pending.timer?.cancel();
+      pending.dispose();
       pending.completer.completeError(
         CoreMethodException(
           code: 'transport_error',
@@ -297,7 +353,10 @@ final class CoreClient {
     final queued = _sendTail;
     final large = _encodesToAtLeast(message, coreOffloadBytes);
     if (queued == null && !large) {
-      _channel.send(_encoder.convert(message));
+      final frame = _encoder.convert(message);
+      if (!_closed && (isWanted?.call() ?? true)) {
+        _channel.send(frame);
+      }
       return;
     }
     late final Future<void> sent;
@@ -403,7 +462,7 @@ final class CoreClient {
     if (current == null) {
       return;
     }
-    current.timer?.cancel();
+    current.dispose();
     if (outcome is _Failed) {
       current.completer.completeError(outcome.error);
     } else {
@@ -420,7 +479,7 @@ final class CoreClient {
     if (pending == null) {
       return;
     }
-    pending.timer?.cancel();
+    pending.dispose();
     final error = message['error'];
     if (error is Map) {
       pending.completer.completeError(
@@ -471,7 +530,7 @@ final class CoreClient {
     final pending = List.of(_pending.values);
     _pending.clear();
     for (final entry in pending) {
-      entry.timer?.cancel();
+      entry.dispose();
       if (!entry.completer.isCompleted) {
         entry.completer.completeError(error);
       }
@@ -489,6 +548,44 @@ final class CoreClient {
     _failAll(_unavailable('Core client is closed'));
     await _frameSubscription.cancel();
     await _eventSubscription.cancel();
+  }
+}
+
+CoreMethodException _cancelled() => const CoreMethodException(
+  code: 'cancelled',
+  message: 'Core request cancelled',
+);
+
+Future<T> _withCancellation<T>(
+  Future<T> operation,
+  CoreCancellationToken cancellation,
+) async {
+  final result = Completer<T>();
+  void cancel() {
+    if (!result.isCompleted) {
+      result.completeError(_cancelled());
+    }
+  }
+
+  cancellation.addListener(cancel);
+  unawaited(
+    operation.then<void>(
+      (value) {
+        if (!result.isCompleted) {
+          result.complete(value);
+        }
+      },
+      onError: (Object error, StackTrace stack) {
+        if (!result.isCompleted) {
+          result.completeError(error, stack);
+        }
+      },
+    ),
+  );
+  try {
+    return await result.future;
+  } finally {
+    cancellation.removeListener(cancel);
   }
 }
 

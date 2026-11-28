@@ -6,6 +6,7 @@ import 'package:fl_clash/core/core.dart';
 import 'package:fl_clash/l10n/l10n.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:prism_ui/l10n.dart';
 
@@ -13,6 +14,11 @@ var _currentLocale = const Locale('en');
 
 AppLocalizations get currentAppLocalizations =>
     lookupAppLocalizations(_currentLocale);
+
+Future<void> initializeAppLocalizations(Locale locale) async {
+  await initializeDateFormatting();
+  loadAppLocalizations(locale);
+}
 
 AppLocalizations loadAppLocalizations(Locale locale) {
   _currentLocale = AppLocalizations.delegate.isSupported(locale)
